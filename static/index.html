@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chrono</title>
+<meta name="theme-color" content="#13223a">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/vendor/echarts.min.js"></script>
+<script src="/static/app.js"></script>
+<script defer src="/static/vendor/alpine.min.js"></script>
+</head>
+<body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4M12 2v3"/></svg>
+      Chrono
+    </div>
+    <select class="sem-select" aria-label="Semester" x-model.number="semesterId" @change="changeSemester()">
+      <template x-for="s in semesters" :key="s.id">
+        <option :value="s.id" x-text="s.code"></option>
+      </template>
+    </select>
+    <nav class="tabs" role="tablist">
+      <button role="tab" :aria-selected="tab==='dash'" @click="tab='dash'">Dashboard</button>
+      <button role="tab" :aria-selected="tab==='log'" @click="tab='log'">Log</button>
+      <button role="tab" :aria-selected="tab==='courses'" @click="tab='courses'">Courses</button>
+    </nav>
+    <button class="icon-btn" @click="toggleTheme()" :title="'Theme: ' + theme" aria-label="Switch theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+  <!-- ===================== TIMER (always visible) ===================== -->
+  <section class="panel hero" aria-label="Timer">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-course">
+          <template x-if="timer.state==='idle'">
+            <span x-text="selectedCourse ? 'Ready: ' + selectedCourse.name : (openCourses.length ? 'Pick a course to start' : 'Add a course in the Courses tab to start tracking')"></span>
+          </template>
+          <template x-if="timer.state!=='idle' && timer.course">
+            <span style="display:flex;align-items:center;gap:10px">
+              <span class="swatch" :style="sw(timer.course.category)"></span>
+              <strong x-text="timer.course.name"></strong>
+              <span class="state-pill" :class="timer.state"><span class="dot"></span><span x-text="timer.state==='running' ? 'Studying' : 'On break'"></span></span>
+            </span>
+          </template>
+        </div>
+        <div class="clock" :class="{idle: timer.state==='idle'}" aria-live="off">
+          <span x-text="clockMain()"></span><span class="sec" x-text="clockSec()"></span>
+        </div>
+        <div class="break-line">
+          <span x-show="timer.state==='paused'" x-text="'Break ' + hms(pauseNow) + ' — resume when you’re back'"></span>
+          <span x-show="timer.state==='running'" class="muted" x-text="'Started ' + hm(timer.session_start) + (timer.accumulated_sec ? ', with breaks' : '')"></span>
+        </div>
+      </div>
+
+      <div>
+        <div class="controls" x-show="timer.state==='idle'">
+          <button class="btn ghost" @click="openEntry()">Add past entry</button>
+          <button class="btn primary big" :disabled="!selectedId" @click="start()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Start
+          </button>
+        </div>
+        <div class="controls" x-show="timer.state==='running'">
+          <button class="btn danger" @click="openStop()">Stop</button>
+          <button class="btn primary big" @click="pause()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>Pause
+          </button>
+        </div>
+        <div x-show="timer.state==='paused'" style="display:grid;gap:10px;justify-items:end">
+          <div class="resume-choice">
+            <span>Resume — the break was</span>
+            <template x-for="bt in meta.break_types" :key="bt">
+              <button class="btn" :class="{primary: bt===meta.break_types[0]}" @click="resume(bt)" x-text="bt.toLowerCase()"></button>
+            </template>
+          </div>
+          <button class="btn danger small" @click="openStop()">Stop and save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="picker" role="group" aria-label="Course">
+      <template x-for="c in openCourses" :key="c.id">
+        <button class="chip" :aria-pressed="(timer.state==='idle' ? selectedId : timer.course?.id) === c.id"
+                :disabled="timer.state!=='idle'" @click="selectedId = c.id; remember()">
+          <span class="swatch" :style="sw(c.category)"></span><span x-text="c.code.toUpperCase()"></span>
+        </button>
+      </template>
+    </div>
+
+    <div class="daystrip" x-show="stats">
+      <div class="daystrip-meta">
+        <span>Today, <b x-text="hoursFmt(todayHours())"></b> studied</span>
+        <span x-text="dayStripRange().label"></span>
+      </div>
+      <div class="daystrip-track">
+        <template x-for="seg in daySegments()" :key="seg.key">
+          <div class="daystrip-seg" :class="{live: seg.live}" :style="seg.style" :title="seg.title"></div>
+        </template>
+        <div class="daystrip-now" :style="'left:' + nowPct() + '%'"></div>
+      </div>
+      <div class="daystrip-scale"><template x-for="t in dayStripRange().ticks"><span x-text="t"></span></template></div>
+    </div>
+  </section>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <main x-show="tab==='dash'" class="stack" x-cloak>
+    <section class="panel" x-show="stats">
+      <div class="panel-head">
+        <h2 x-text="(stats?.semester.code || '') + ' at a glance'"></h2>
+        <span class="sub" x-text="stats ? 'Week ' + stats.range.week_index + ' of the semester, started ' + dmy(stats.range.start) : ''"></span>
+      </div>
+      <div class="panel-body" style="padding-bottom:0"></div>
+      <div class="figures" x-show="stats">
+        <div class="figure">
+          <div class="k">ECTS earned (finished courses count in full)</div>
+          <div class="v"><span x-text="fx(stats?.summary.ects_done, 1)"></span> <small x-text="'of ' + fx(stats?.summary.ects_target, 0)"></small></div>
+          <div class="ectsbar">
+            <template x-for="seg in ectsSegments()" :key="seg.key"><i :style="seg.style" :title="seg.title"></i></template>
+          </div>
+        </div>
+        <div class="figure"><div class="k">This week</div><div class="v"><span x-text="fx(stats?.summary.this_week,1)"></span><small> h</small></div></div>
+        <div class="figure"><div class="k">Ø last 4 weeks</div><div class="v"><span x-text="fx(stats?.summary.avg_4w,1)"></span><small> h/wk</small></div></div>
+        <div class="figure"><div class="k">Ø semester</div><div class="v"><span x-text="fx(stats?.summary.avg_week,1)"></span><small> h/wk</small></div></div>
+        <div class="figure"><div class="k">Study streak</div><div class="v"><span x-text="stats?.summary.streak ?? 0"></span><small x-text="(stats?.summary.streak === 1 ? ' day' : ' days')"></small></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Time per course</h2>
+        <span class="sub">Weekly hours compared with the pace each course needs to reach its ECTS by the deadline (30 h per ECTS)</span>
+      </div>
+      <div class="panel-body">
+        <template x-if="!stats || !stats.courses.length">
+          <div class="empty">No courses in this semester yet. <button class="btn small" @click="tab='courses'">Add a course</button></div>
+        </template>
+        <table class="ctable" x-show="stats && stats.courses.length">
+          <thead><tr>
+            <th>Course</th><th>Progress</th><th>This week</th><th class="opt">Ø semester</th><th>Ø last 4 wk</th><th class="opt2">Needed</th><th>Pace</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="c in sortedCourses()" :key="c.id">
+              <tr :class="{done: c.finished}">
+                <td><div class="cname"><span class="swatch" :style="sw(c.category)"></span><span class="code" x-text="c.code"></span><span class="nm" x-text="c.name" :title="c.name"></span></div></td>
+                <td>
+                  <div class="prog">
+                    <span class="bar"><i :style="'width:' + Math.min(100, c.hours / Math.max(c.target_hours, 0.01) * 100) + '%;' + bg(c.category)"></i></span>
+                    <span class="txt"><span class="num" x-text="fx(c.hours, 1)"></span> <span class="muted" x-text="'/ ' + fx(c.target_hours, 0) + ' h'"></span></span>
+                  </div>
+                </td>
+                <td class="num" x-text="hoursOrDash(c.this_week)"></td>
+                <td class="opt" x-text="hoursOrDash(c.avg_week)"></td>
+                <td class="num" x-text="hoursOrDash(c.avg_4w)"></td>
+                <td class="opt2" x-text="c.finished ? '' : (c.needed_week == null ? (c.hours >= c.target_hours ? 'done' : 'past deadline') : fx(c.needed_week,1) + ' h')"></td>
+                <td>
+                  <template x-if="c.finished"><span class="grade" x-text="'✓ ' + (c.grade || 'done')"></span></template>
+                  <template x-if="!c.finished"><span class="pace" :class="paceOf(c).cls">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" x-html="paceOf(c).icon"></svg>
+                    <span x-text="paceOf(c).label"></span>
+                  </span></template>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="chart-row">
+      <section class="panel">
+        <div class="panel-head"><h2>Hours per week</h2><span class="sub">by category</span></div>
+        <div class="panel-body">
+          <div class="legend"><template x-for="cat in usedCategories()" :key="cat.key"><span><span class="swatch" :style="sw(cat.key)"></span><span x-text="cat.label"></span></span></template></div>
+          <div id="weeklyChart" class="chart"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Daily rhythm</h2><span class="sub">hours per day this semester</span></div>
+        <div class="panel-body"><div id="calChart" class="chart"></div></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Breaks</h2><span class="sub">logged when you resume after a pause</span></div>
+      <div class="panel-body">
+        <div class="breakfacts">
+          <template x-for="bt in breakTypes()" :key="bt">
+            <div><div class="v" x-text="fx(stats?.break_totals[bt] || 0, 1) + ' h'"></div><div class="k" x-text="bt"></div></div>
+          </template>
+          <div><div class="v" x-text="breakRatio()"></div><div class="k">break time per study hour</div></div>
+        </div>
+        <div id="breakChart" class="chart short"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== LOG ===================== -->
+  <main x-show="tab==='log'" class="stack" x-cloak>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Sessions</h2>
+        <span class="sub" x-text="filteredSessions().length + ' entries, ' + hoursFmt(filteredSessions().reduce((a,s)=>a+s.duration_sec,0)/3600)"></span>
+        <div class="right toolbar">
+          <select class="field-inline" x-model.number="logCourse" aria-label="Filter by course">
+            <option value="0">All courses</option>
+            <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="c.code.toUpperCase() + ' – ' + c.name"></option></template>
+          </select>
+          <button class="btn primary" @click="openEntry()">Add entry</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <template x-if="!filteredSessions().length">
+          <div class="empty">Nothing logged here yet. Start the timer, or add a past entry for a day you missed.</div>
+        </template>
+        <template x-for="g in groupedSessions()" :key="g.date">
+          <div class="day-group">
+            <h3><span x-text="longDate(g.date)"></span><span class="muted" x-text="hoursFmt(g.total)"></span></h3>
+            <template x-for="s in g.items" :key="s.id">
+              <div class="log-row">
+                <div class="when"><span x-text="hm(s.start) + '–' + hm(s.end)"></span><div class="src" x-text="s.source === 'timer' ? '' : (s.source === 'manual' ? 'added by hand' : 'imported')"></div></div>
+                <div class="what">
+                  <div style="display:flex;gap:8px;align-items:center"><span class="swatch" :style="sw(s.category)"></span><b x-text="s.course_code.toUpperCase()"></b><span class="muted" x-text="s.course_name"></span></div>
+                  <div class="notes" x-show="s.notes" x-text="s.notes"></div>
+                </div>
+                <div class="dur" x-text="dur(s.duration_sec)"></div>
+                <div class="acts">
+                  <button class="icon-btn" title="Edit" aria-label="Edit entry" @click="openEntry(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+                  <button class="icon-btn" title="Delete" aria-label="Delete entry" @click="deleteSession(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== COURSES ===================== -->
+  <main x-show="tab==='courses'" class="stack" x-cloak>
+    <section class="panel" x-show="currentSemester">
+      <div class="panel-head"><h2 x-text="'Semester ' + (currentSemester?.code || '')"></h2><span class="sub">Weekly averages count from the start date</span>
+        <div class="right"><button class="btn small" @click="openSemester()">New semester</button></div>
+      </div>
+      <div class="panel-body">
+        <form class="sem-dates" @submit.prevent="saveSemester()">
+          <label class="f">Start date<input type="date" x-model="semForm.start_date"></label>
+          <label class="f">Last tracked day<input type="date" x-model="semForm.end_date"></label>
+          <button class="btn" type="submit">Save dates</button>
+        </form>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Courses</h2><div class="right"><button class="btn primary" @click="openCourse()">Add course</button></div></div>
+      <div class="panel-body">
+        <template x-if="!courses.length"><div class="empty">No courses yet. Add the courses you take this semester.</div></template>
+        <template x-for="c in courses" :key="c.id">
+          <div class="admin-row">
+            <div class="cname"><span class="swatch" :style="sw(c.category)"></span><span class="code" x-text="c.code"></span><span x-text="c.name"></span></div>
+            <div class="opt" x-text="fx(c.ects, 0) + ' ECTS'"></div>
+            <div class="opt" x-text="c.deadline ? dmy(c.deadline) : '–'"></div>
+            <div class="opt muted" x-text="c.finished ? 'Finished, ' + (c.grade || 'no grade') : catLabel(c.category)"></div>
+            <div class="acts"><button class="btn small ghost" @click="openCourse(c)">Edit</button></div>
+          </div>
+        </template>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===================== DIALOGS ===================== -->
+<dialog id="entryDlg" @close="entryErr=''">
+  <form method="dialog" @submit.prevent="saveEntry()">
+    <h2 x-text="entry.id ? 'Edit entry' : 'Add past entry'"></h2>
+    <label class="f">Course
+      <select x-model.number="entry.course_id" required>
+        <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="c.code.toUpperCase() + ' – ' + c.name"></option></template>
+      </select>
+    </label>
+    <div class="grid3">
+      <label class="f">Date<input type="date" x-model="entry.date" required></label>
+      <label class="f">From<input type="time" x-model="entry.from" required @change="syncDuration()"></label>
+      <label class="f">To<input type="time" x-model="entry.to" required @change="syncDuration()"></label>
+    </div>
+    <label class="f">Time actually studied (minutes)
+      <input type="number" min="1" step="1" x-model.number="entry.minutes" required>
+      <span class="hint">Defaults to the full span. Lower it if you took breaks in between.</span>
+    </label>
+    <label class="f">Notes<textarea x-model="entry.notes" placeholder="What did you work on?"></textarea></label>
+    <div class="error" x-show="entryErr" x-text="entryErr"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Cancel</button>
+      <button type="submit" class="btn primary" x-text="entry.id ? 'Save changes' : 'Add entry'"></button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="stopDlg">
+  <form method="dialog" @submit.prevent="stop(true)">
+    <h2 x-text="'Save ' + dur(elapsedNow) + ' of ' + (timer.course?.code || '').toUpperCase() + '?'"></h2>
+    <label class="f">Notes<textarea x-model="stopNotes" placeholder="What did you work on?" x-ref="stopNotes"></textarea></label>
+    <div class="actions">
+      <button type="button" class="btn ghost danger left" @click="if (confirm('Discard this session? The time will not be logged.')) stop(false)">Discard</button>
+      <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Keep studying</button>
+      <button type="submit" class="btn primary">Save session</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="courseDlg" @close="courseErr=''">
+  <form method="dialog" @submit.prevent="saveCourse()">
+    <h2 x-text="courseForm.id ? 'Edit course' : 'Add course'"></h2>
+    <div class="grid2" style="grid-template-columns: 110px 1fr">
+      <label class="f">Initials<input x-model="courseForm.code" required maxlength="8" placeholder="qft2"></label>
+      <label class="f">Name<input x-model="courseForm.name" required placeholder="Quantum Field Theory 2"></label>
+    </div>
+    <div class="grid3">
+      <label class="f">ECTS<input type="number" step="0.5" min="0" x-model.number="courseForm.ects" required></label>
+      <label class="f">Deadline<input type="date" x-model="courseForm.deadline"></label>
+      <label class="f">Category
+        <select x-model="courseForm.category">
+          <option value="">None</option>
+          <template x-for="cat in meta.categories" :key="cat.key"><option :value="cat.key" x-text="cat.label"></option></template>
+        </select>
+      </label>
+    </div>
+    <div class="grid2">
+      <label class="check"><input type="checkbox" x-model="courseForm.finished"> Finished</label>
+      <label class="f" x-show="courseForm.finished">Grade<input x-model="courseForm.grade" placeholder="5.5 or passed"></label>
+    </div>
+    <div class="error" x-show="courseErr" x-text="courseErr"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost danger left" x-show="courseForm.id" @click="deleteCourse()">Delete</button>
+      <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Cancel</button>
+      <button type="submit" class="btn primary" x-text="courseForm.id ? 'Save changes' : 'Add course'"></button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="semDlg">
+  <form method="dialog" @submit.prevent="createSemester()">
+    <h2>New semester</h2>
+    <label class="f">Code<input x-model="newSem.code" required placeholder="FS27"></label>
+    <div class="grid2">
+      <label class="f">Start date<input type="date" x-model="newSem.start_date"></label>
+      <label class="f">Last tracked day<input type="date" x-model="newSem.end_date"></label>
+    </div>
+    <div class="error" x-show="semErr" x-text="semErr"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Cancel</button>
+      <button type="submit" class="btn primary">Create semester</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" x-show="toastMsg" x-transition.opacity x-text="toastMsg" role="status"></div>
+</body>
+</html>
