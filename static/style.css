@@ -151,7 +151,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* today strip — the day's sessions on a clock track */
 .daystrip { margin-top: 22px; }
-.daystrip-track { position: relative; height: 26px; border-radius: 7px; background: var(--track); overflow: hidden; }
+.daystrip-track { position: relative; height: 26px; border-radius: 7px; background: var(--track); overflow: hidden; isolation: isolate; }
+.daystrip-tick {
+  position: absolute; bottom: 0; height: 9px; width: 1px; margin-left: -0.5px;
+  background: #fff; mix-blend-mode: difference; pointer-events: none;
+}
 .daystrip-seg { position: absolute; top: 0; bottom: 0; border-radius: 4px; min-width: 3px; box-shadow: 0 0 0 1px var(--panel); }
 .daystrip-seg.live { animation: pulse 1.6s ease-in-out infinite; }
 .daystrip-now { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); border-radius: 2px; }

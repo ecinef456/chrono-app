@@ -103,6 +103,9 @@
         <template x-for="seg in daySegments()" :key="seg.key">
           <div class="daystrip-seg" :class="{live: seg.live}" :style="seg.style" :title="seg.title"></div>
         </template>
+        <template x-for="t in hourTicks()" :key="t.h">
+          <div class="daystrip-tick" :style="'left:' + t.left + '%'"></div>
+        </template>
         <div class="daystrip-now" :style="'left:' + nowPct() + '%'"></div>
       </div>
       <div class="daystrip-scale"><template x-for="t in dayStripRange().ticks"><span x-text="t"></span></template></div>

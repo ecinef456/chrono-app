@@ -282,6 +282,13 @@ function chrono() {
       const ticks = []; for (let h = lo; h <= hi; h += STEP) ticks.push(`${pad(h % 24)}:00`);
       return { lo, hi, ticks, label: "" };
     },
+    hourTicks() {
+      this.tick;
+      const { lo, hi } = this.dayStripRange();
+      const out = [];
+      for (let h = lo + 1; h < hi; h++) out.push({ h, left: (h - lo) / (hi - lo) * 100 });
+      return out;
+    },
     pct(d) { const { lo, hi } = this.dayStripRange(); const start = new Date(); start.setHours(0, 0, 0, 0); const h = (d - start) / 36e5; return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
     nowPct() { this.tick; return this.pct(new Date()); },
     daySegments() {
