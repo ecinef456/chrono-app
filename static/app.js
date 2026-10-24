@@ -25,12 +25,6 @@ const isoLocal = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}
 const parseLocal = s => { const [d, t = "00:00:00"] = s.split("T"); const [y, m, dd] = d.split("-").map(Number); const [h, mi, se = 0] = t.split(":").map(Number); return new Date(y, m - 1, dd, h, mi, se); };
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
-const ICONS = {
-  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
-  alert: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>',
-  down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
-  flag: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
-};
 
 function chrono() {
   return {
@@ -228,13 +222,12 @@ function chrono() {
       const cs = [...(this.stats?.courses || [])];
       return cs.sort((a, b) => (a.finished - b.finished) || (a.sort - b.sort));
     },
-    paceOf(c) {
-      if (c.needed_week == null) return c.hours >= c.target_hours ? { cls: "good", label: "Complete", icon: ICONS.check } : { cls: "bad", label: "Deadline passed", icon: ICONS.flag };
-      if (c.needed_week <= 0.05) return { cls: "good", label: "Complete", icon: ICONS.check };
-      const r = c.avg_4w / c.needed_week;
-      if (r >= 1) return { cls: "good", label: "On pace", icon: ICONS.check };
-      if (r >= 0.75) return { cls: "warn", label: "Slightly behind", icon: ICONS.alert };
-      return { cls: "bad", label: "Behind", icon: ICONS.down };
+    neededOf(c) {
+      // Green when the semester average already covers the weekly pace still needed.
+      if (c.finished) return { cls: "good", text: "✓ " + (c.grade || "done") };
+      if (c.hours >= c.target_hours) return { cls: "good", text: "done" };
+      if (c.needed_week == null) return { cls: "bad", text: "past deadline" };
+      return { cls: c.avg_week >= c.needed_week ? "good" : "bad", text: this.fx(c.needed_week, 1) + " h" };
     },
     ectsSegments() {
       if (!this.stats) return [];
@@ -266,7 +259,7 @@ function chrono() {
       return sec / 3600;
     },
     dayStripRange() {
-      const DAY_START = 6, DAY_END = 24, STEP = 2;   // bar from 06:00 to 24:00, a label every 2 h
+      const DAY_START = 8, DAY_END = 22, STEP = 2;   // bar from 08:00 to 22:00, a label every 2 h
       let lo = DAY_START, hi = DAY_END;
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const hours = d => (d - start) / 36e5;

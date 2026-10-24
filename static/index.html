@@ -129,7 +129,6 @@
           </div>
         </div>
         <div class="figure"><div class="k">This week</div><div class="v"><span x-text="fx(stats?.summary.this_week,1)"></span><small> h</small></div></div>
-        <div class="figure"><div class="k">Ø last 4 weeks</div><div class="v"><span x-text="fx(stats?.summary.avg_4w,1)"></span><small> h/wk</small></div></div>
         <div class="figure"><div class="k">Ø semester</div><div class="v"><span x-text="fx(stats?.summary.avg_week,1)"></span><small> h/wk</small></div></div>
         <div class="figure"><div class="k">Study streak</div><div class="v"><span x-text="stats?.summary.streak ?? 0"></span><small x-text="(stats?.summary.streak === 1 ? ' day' : ' days')"></small></div></div>
       </div>
@@ -138,7 +137,7 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Time per course</h2>
-        <span class="sub">Weekly hours compared with the pace each course needs to reach its ECTS by the deadline (30 h per ECTS)</span>
+        <span class="sub">Needed is the weekly pace to reach the ECTS by the deadline (30 h per ECTS): green when your semester average covers it, red when it doesn’t</span>
       </div>
       <div class="panel-body">
         <template x-if="!stats || !stats.courses.length">
@@ -146,29 +145,21 @@
         </template>
         <table class="ctable" x-show="stats && stats.courses.length">
           <thead><tr>
-            <th>Course</th><th>Progress</th><th>This week</th><th class="opt">Ø semester</th><th>Ø last 4 wk</th><th class="opt2">Needed</th><th>Pace</th>
+            <th>Course</th><th class="pbar"></th><th>Progress</th><th class="opt2">Deadline</th><th>This week</th><th class="opt">Ø semester</th><th>Needed</th>
           </tr></thead>
           <tbody>
             <template x-for="c in sortedCourses()" :key="c.id">
               <tr :class="{done: c.finished}">
                 <td><div class="cname"><span class="swatch" :style="sw(c.category)"></span><span class="code" x-text="c.code"></span><span class="nm" x-text="c.name" :title="c.name"></span></div></td>
-                <td>
-                  <div class="prog">
-                    <span class="bar"><i :style="'width:' + Math.min(100, c.hours / Math.max(c.target_hours, 0.01) * 100) + '%;' + bg(c.category)"></i></span>
-                    <span class="txt"><span class="num" x-text="fx(c.hours, 1)"></span> <span class="muted" x-text="'/ ' + fx(c.target_hours, 0) + ' h'"></span></span>
-                  </div>
+                <td class="pbar"><span class="bar"><i :style="'width:' + Math.min(100, c.hours / Math.max(c.target_hours, 0.01) * 100) + '%;' + bg(c.category)"></i></span></td>
+                <td class="ptxt"><span class="num" x-text="fx(c.hours, 1)"></span> <span class="muted" x-text="'/ ' + fx(c.target_hours, 0) + ' h'"></span></td>
+                <td class="opt2 deadline">
+                  <span x-text="c.deadline ? dmy(c.deadline) : '–'"></span>
+                  <span class="muted" x-show="!c.finished && c.days_left > 0" x-text="c.days_left + ' d'"></span>
                 </td>
                 <td class="num" x-text="hoursOrDash(c.this_week)"></td>
                 <td class="opt" x-text="hoursOrDash(c.avg_week)"></td>
-                <td class="num" x-text="hoursOrDash(c.avg_4w)"></td>
-                <td class="opt2" x-text="c.finished ? '' : (c.needed_week == null ? (c.hours >= c.target_hours ? 'done' : 'past deadline') : fx(c.needed_week,1) + ' h')"></td>
-                <td>
-                  <template x-if="c.finished"><span class="grade" x-text="'✓ ' + (c.grade || 'done')"></span></template>
-                  <template x-if="!c.finished"><span class="pace" :class="paceOf(c).cls">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" x-html="paceOf(c).icon"></svg>
-                    <span x-text="paceOf(c).label"></span>
-                  </span></template>
-                </td>
+                <td class="needed" :class="neededOf(c).cls" x-text="neededOf(c).text"></td>
               </tr>
             </template>
           </tbody>

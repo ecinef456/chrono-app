@@ -481,10 +481,9 @@ def stats(semester_id: int):
     last_week = _monday(max(upto, max(sess_dates) if sess_dates else upto))
     n_weeks = (last_week - week0).days // 7 + 1
     this_monday = _monday(today)
-    four_wk_start = today - timedelta(days=27)
 
     cat_of = {c["id"]: c["category"] or "none" for c in courses}
-    per_course = defaultdict(lambda: {"total": 0, "last4": 0, "week": 0, "first": None, "last": None})
+    per_course = defaultdict(lambda: {"total": 0, "week": 0, "first": None, "last": None})
     weekly_cat = defaultdict(lambda: defaultdict(float))
     weekly_course = defaultdict(lambda: defaultdict(float))
     daily = defaultdict(float)
@@ -493,8 +492,6 @@ def stats(semester_id: int):
         h = s["duration_sec"] / 3600
         pc = per_course[s["course_id"]]
         pc["total"] += h
-        if four_wk_start <= d <= today:
-            pc["last4"] += h
         if this_monday <= d <= today:
             pc["week"] += h
         pc["last"] = max(pc["last"], d) if pc["last"] else d
@@ -523,7 +520,6 @@ def stats(semester_id: int):
             "target_hours": target,
             "ects_done": round(pc["total"] / ECTS_HOURS, 3),
             "avg_week": round(pc["total"] / elapsed_weeks, 3),
-            "avg_4w": round(pc["last4"] / 4, 3),
             "this_week": round(pc["week"], 3),
             "needed_week": round(needed, 3) if needed is not None else None,
             "days_left": days_left,
@@ -575,7 +571,6 @@ def stats(semester_id: int):
             "ects_done": round(ects_done, 2),
             "ects_target": ects_target,
             "avg_week": round(total_h / elapsed_weeks, 2),
-            "avg_4w": round(sum(c["avg_4w"] for c in out_courses), 2),
             "this_week": round(sum(c["this_week"] for c in out_courses), 2),
             "today": round(daily.get(today.isoformat(), 0), 2),
             "streak": streak,

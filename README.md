@@ -43,11 +43,10 @@ To import again from scratch, add `--replace`. This wipes the database first.
 
 | Column | Meaning |
 |---|---|
+| Deadline | The course deadline and the days left |
 | This week | Hours since Monday |
 | Ø semester | Total hours ÷ weeks since the semester start date |
-| Ø last 4 wk | Hours in the last 28 days ÷ 4 |
-| Needed | (ECTS × 30 h − hours done) ÷ weeks left until the deadline |
-| Pace | Compares Ø last 4 wk with Needed: on pace (≥ 100 %), slightly behind (≥ 75 %), behind |
+| Needed | (ECTS × 30 h − hours done) ÷ weeks left until the deadline. Green when Ø semester ≥ Needed, red otherwise |
 
 For the semester's ECTS total, finished courses count in full, the same as in the old script.
 
