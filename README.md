@@ -36,6 +36,7 @@ To import again from scratch, add `--replace`. This wipes the database first.
 - **Stop.** Stop asks for notes before saving, and you can also discard the session there.
 - **The timer lives in the database.** Closing the tab, closing the browser or rebooting won't lose a running session.
 - **Add past entry** (on the timer, or in the Log tab). Pick a date, the from/to times and the minutes you actually studied.
+- **Rate your sessions.** When you stop (or add/edit an entry), you can rate from 0 to 10 *how satisfied you are with what you got done*, compared with what you hoped to get done in that time. It's optional; unrated sessions, including all imported ones, are simply left out of the satisfaction charts.
 - **Log tab.** Shows every session grouped by day. You can edit or delete any entry.
 - **Courses tab.** Add, edit or finish courses (with grade), set semester dates, and create new semesters.
 
@@ -47,6 +48,10 @@ To import again from scratch, add `--replace`. This wipes the database first.
 | This week | Hours since Monday |
 | Ø semester | Total hours ÷ weeks since the semester start date |
 | Needed | (ECTS × 30 h − hours done) ÷ weeks left until the deadline. Green when Ø semester ≥ Needed, red otherwise |
+
+### Satisfaction
+
+All satisfaction averages are weighted by time studied, so a 3 h session counts six times as much as a 30 min one. The hour-of-day chart spreads each session over the clock hours it covers and hides hours with less than 15 min of rated study. The hour axis runs from 05:00 to 04:00, so late-night sessions appear after 23:00.
 
 For the semester's ECTS total, finished courses count in full, the same as in the old script.
 
@@ -67,7 +72,7 @@ It sets up a small background service that starts Chrono every time you log in. 
 ## Your data
 
 - `data/chrono.db` is the real data store, a single SQLite file. To back it up, copy it somewhere safe.
-- `logs/<SEMESTER>/<code>_study_log.txt` holds readable text logs in the same format as the old script: a header with progress and pace, sessions grouped by day, and notes. They are rewritten after every change (start/stop, a manual entry, an edit, a deletion), so they always match the app. Editing them has no effect, so make changes in the app. They also stay compatible with `import_legacy.py`.
+- `logs/<SEMESTER>/<code>_study_log.txt` holds readable text logs in the same format as the old script: a header with progress and pace, sessions grouped by day, notes, and the rating as `[satisfaction 7/10]` at the end of a session line. They are rewritten after every change (start/stop, a manual entry, an edit, a deletion), so they always match the app. Editing them has no effect, so make changes in the app. They also stay compatible with `import_legacy.py`.
 
 ## Customise
 

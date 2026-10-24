@@ -35,7 +35,7 @@ function chrono() {
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
     logCourse: 0, tick: 0, toastMsg: "",
-    entry: {}, entryErr: "", stopNotes: "",
+    entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
 
@@ -114,10 +114,10 @@ function chrono() {
       try { this.timer = await api("/api/timer/resume", { method: "POST", body: { break_type: bt } }); this.timerFetchedAt = Date.now(); this.loadStats(); }
       catch (e) { this.toast(e.message); await this.refreshTimer(); }
     },
-    openStop() { this.stopNotes = ""; document.getElementById("stopDlg").showModal(); this.$nextTick(() => this.$refs.stopNotes.focus()); },
+    openStop() { this.stopNotes = ""; this.stopRating = null; document.getElementById("stopDlg").showModal(); this.$nextTick(() => this.$refs.stopNotes.focus()); },
     async stop(save) {
       try {
-        const r = await api("/api/timer/stop", { method: "POST", body: { save, notes: this.stopNotes } });
+        const r = await api("/api/timer/stop", { method: "POST", body: { save, notes: this.stopNotes, satisfaction: this.stopRating } });
         document.getElementById("stopDlg").close();
         this.toast(save && r.saved_session_id ? `Saved ${this.dur(r.duration_sec)}` : "Session discarded");
         await this.refreshTimer(); await this.loadSemester();
@@ -139,10 +139,10 @@ function chrono() {
       this.entryErr = "";
       if (s) {
         const st = parseLocal(s.start), en = parseLocal(s.end);
-        this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, minutes: Math.round(s.duration_sec / 60), notes: s.notes || "" };
+        this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, minutes: Math.round(s.duration_sec / 60), notes: s.notes || "", satisfaction: s.satisfaction ?? null };
       } else {
         const now = new Date(), from = new Date(now - 3600e3);
-        this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, minutes: 60, notes: "" };
+        this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, minutes: 60, notes: "", satisfaction: null };
       }
       document.getElementById("entryDlg").showModal();
     },
@@ -154,7 +154,7 @@ function chrono() {
     syncDuration() { if (!this.entry.from || !this.entry.to) return; const [st, en] = this.entrySpan(); this.entry.minutes = Math.round((en - st) / 60000); },
     async saveEntry() {
       const [st, en] = this.entrySpan();
-      const body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: Math.round(this.entry.minutes * 60), notes: this.entry.notes };
+      const body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: Math.round(this.entry.minutes * 60), notes: this.entry.notes, satisfaction: this.entry.satisfaction };
       try {
         if (this.entry.id) await api(`/api/sessions/${this.entry.id}`, { method: "PUT", body });
         else await api("/api/sessions", { method: "POST", body });
@@ -344,13 +344,80 @@ function chrono() {
           visualMap: { show: false, min: 0, max, inRange: { color: dark ? ["#184f95", "#3987e5", "#9ec5f4"] : ["#cde2fb", "#3987e5", "#0d366b"] } },
           calendar: {
             top: 30, left: 34, right: 8, orient: "horizontal", range: [r.start, r.end], cellSize: [cell, cell],
-            splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: 3, borderRadius: 3 },
+            splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3, borderRadius: cell < 16 ? 2 : 3 },
             yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: ["S", "M", "T", "W", "T", "F", "S"], color: ink3, fontSize: 11, ...font },
             monthLabel: { color: ink2, ...font, fontSize: 12 },
           },
-          series: [{ type: "heatmap", coordinateSystem: "calendar", data, itemStyle: { borderRadius: 3, borderColor: panel, borderWidth: 3 } }],
+          series: [{ type: "heatmap", coordinateSystem: "calendar", data, itemStyle: { borderRadius: cell < 16 ? 2 : 3, borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3 } }],
         }, true);
         el.style.height = `${30 + cell * 7 + 24}px`; cal.resize();
+      }
+
+      // Satisfaction: by hour of day, by day (calendar), by week. Fixed 0-10 scale everywhere.
+      const sat = this.stats.satisfaction;
+      if (sat && sat.rated_sessions) {
+        const satColor = cssVar("--sat");
+        const ramp = [cssVar("--sat-lo"), cssVar("--sat"), cssVar("--sat-hi")];
+        const avgLine = sat.average == null ? undefined : { symbol: "none", silent: true, lineStyle: { color: ink2, type: "dashed", width: 1.2 },
+          label: { formatter: `average ${sat.average.toFixed(1)}`, color: ink2, position: "insideEndTop", ...font }, data: [{ yAxis: sat.average }] };
+        const yAxis10 = { type: "value", min: 0, max: 10, interval: 2, splitLine: { lineStyle: { color: rule, type: [3, 4] } }, axisLabel: { color: ink3, ...font } };
+
+        const MIN_HOURS = 0.25; // hours with less rated time than this are too thin to show
+        // The axis runs 05:00 -> 04:00, so late-night sessions sit after 23:00 instead of opening a gap.
+        const order = [...sat.by_hour.slice(5), ...sat.by_hour.slice(0, 5)];
+        const used = order.map((b, i) => (b.hours >= MIN_HOURS ? i : -1)).filter(i => i >= 0);
+        const hours = order.slice(Math.min(...used), Math.max(...used) + 1);
+        const hc = get("satHourChart");
+        if (hc && used.length) hc.setOption({
+          animation: false, textStyle: font,
+          grid: { left: 30, right: 10, top: 18, bottom: 26 },
+          tooltip: { ...tooltipBase, trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: dark ? "rgba(255,255,255,.04)" : "rgba(19,34,58,.05)" } },
+            formatter: ps => { const b = hours[ps[0].dataIndex]; return b.hours < MIN_HOURS ? `${pad(b.hour)}:00–${pad((b.hour + 1) % 24)}:00<br><span style="color:${ink2}">not enough rated time</span>` : `${pad(b.hour)}:00–${pad((b.hour + 1) % 24)}:00<br><b>${b.average.toFixed(1)}</b> / 10<br><span style="color:${ink2}">from ${this.hoursFmt(b.hours)} of rated study</span>`; } },
+          xAxis: { type: "category", data: hours.map(b => pad(b.hour)), ...axisCommon },
+          yAxis: yAxis10,
+          series: [{ type: "bar", barMaxWidth: 22, data: hours.map(b => b.hours >= MIN_HOURS ? b.average : null),
+            itemStyle: { color: satColor, borderRadius: [4, 4, 0, 0] }, markLine: avgLine }],
+        }, true);
+
+        const sc = get("satCalChart");
+        if (sc) {
+          const r = this.stats.range;
+          const data = Object.entries(sat.daily).filter(([d, v]) => v != null && d >= r.start && d <= r.end).map(([d, v]) => [d, v]);
+          const el = document.getElementById("satCalChart");
+          const weeksN = Math.ceil((new Date(r.end) - new Date(r.start)) / 864e5 / 7) + 1;
+          const cell = Math.max(10, Math.min(22, Math.floor((el.clientWidth - 50) / weeksN)));
+          sc.setOption({
+            animation: false, textStyle: font,
+            tooltip: { ...tooltipBase, formatter: p => `${this.longDate(p.value[0])}<br><b>${p.value[1].toFixed(1)}</b> / 10` },
+            visualMap: { show: false, min: 0, max: 10, inRange: { color: ramp } },
+            calendar: {
+              top: 22, left: 34, right: 8, range: [r.start, r.end], cellSize: [cell, cell],
+              splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3, borderRadius: cell < 16 ? 2 : 3 },
+              yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: ["S", "M", "T", "W", "T", "F", "S"], color: ink3, fontSize: 11, ...font },
+              monthLabel: { color: ink2, ...font, fontSize: 12 },
+            },
+            series: [{ type: "heatmap", coordinateSystem: "calendar", data, itemStyle: { borderRadius: cell < 16 ? 2 : 3, borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3 } }],
+          }, true);
+          el.style.height = `${22 + cell * 7 + 34}px`; sc.resize();
+          sc.setOption({ graphic: [{ type: "group", right: 8, bottom: 2, children: [
+            { type: "text", left: 0, top: 0, style: { text: "0", fill: ink3, font: "11px Hanken Grotesk" } },
+            { type: "rect", left: 12, top: 2, shape: { width: 90, height: 8, r: 2 }, style: { fill: new echarts.graphic.LinearGradient(0, 0, 1, 0, ramp.map((c, i) => ({ offset: i / 2, color: c }))) } },
+            { type: "text", left: 108, top: 0, style: { text: "10", fill: ink3, font: "11px Hanken Grotesk" } },
+          ] }] });
+        }
+
+        const wk = get("satWeekChart");
+        if (wk) wk.setOption({
+          animation: false, textStyle: font,
+          grid: { left: 30, right: 12, top: 18, bottom: 26 },
+          tooltip: { ...tooltipBase, trigger: "axis", formatter: ps => { const i = ps[0].dataIndex, v = sat.weekly[i];
+            return `Week ${weeks[i].index}, from ${this.dmy(weeks[i].start)}<br>` + (v == null ? `<span style="color:${ink2}">no rated sessions</span>` : `<b>${v.toFixed(1)}</b> / 10<br><span style="color:${ink2}">from ${this.hoursFmt(sat.weekly_hours[i])} of rated study</span>`); } },
+          xAxis: { type: "category", data: labels, ...axisCommon },
+          yAxis: yAxis10,
+          series: [{ type: "line", data: sat.weekly, connectNulls: false, symbol: "circle", symbolSize: 8,
+            lineStyle: { color: satColor, width: 2 }, itemStyle: { color: satColor, borderColor: panel, borderWidth: 2 },
+            markLine: avgLine && { ...avgLine, label: { ...avgLine.label, position: "insideStartTop" } } }],
+        }, true);
       }
 
       // Breaks per week.

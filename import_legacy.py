@@ -30,6 +30,7 @@ SEMESTER_DATES = {
 DATE_RE = re.compile(r"^\s*(\d{2})\.(\d{2})\.(\d{4})\s*$")
 SESSION_RE = re.compile(
     r"^\s*(?:(\d+) days?, )?(\d+):(\d{2}):(\d{2})\s*\(\s*(\d{2}):(\d{2}):(\d{2})\s*-\s*(\d{2}):(\d{2}):(\d{2})\s*\)")
+SAT_RE = re.compile(r"\[satisfaction (\d{1,2})/10\]")
 NOTE_RE = re.compile(r"^\s+-\s+(.*)$")
 
 
@@ -67,7 +68,9 @@ def parse_log(path: Path):
             span = int((e_t - s_t).total_seconds())
             if span < dur:
                 s_t = e_t - timedelta(seconds=dur)
-            current = {"start": s_t, "end": e_t, "duration_sec": dur, "notes": []}
+            sat = SAT_RE.search(line)
+            current = {"start": s_t, "end": e_t, "duration_sec": dur, "notes": [],
+                       "satisfaction": min(int(sat[1]), 10) if sat else None}
             sessions.append(current)
             continue
         m = NOTE_RE.match(line)
@@ -158,10 +161,11 @@ def main():
                          parse_deadline(c.get("deadline")), cat, int(bool(c.get("finished"))),
                          None if grade is None else str(grade), ci + 1)).lastrowid
                 for s in sess:
-                    con.execute("INSERT INTO sessions (course_id,start,end,duration_sec,notes,source)"
-                                " VALUES (?,?,?,?,?,'legacy')",
+                    con.execute("INSERT INTO sessions (course_id,start,end,duration_sec,notes,source,satisfaction)"
+                                " VALUES (?,?,?,?,?,'legacy',?)",
                                 (cid, s["start"].strftime("%Y-%m-%dT%H:%M:%S"),
-                                 s["end"].strftime("%Y-%m-%dT%H:%M:%S"), s["duration_sec"], s["notes"]))
+                                 s["end"].strftime("%Y-%m-%dT%H:%M:%S"), s["duration_sec"], s["notes"],
+                                 s["satisfaction"]))
         for d, types in breaks.items():
             for b_type, secs in types.items():
                 secs = int(secs)

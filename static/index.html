@@ -182,6 +182,31 @@
     </div>
 
     <section class="panel">
+      <div class="panel-head">
+        <h2>Satisfaction</h2>
+        <span class="sub">your 0–10 ratings, weighted by time studied; unrated sessions are left out</span>
+      </div>
+      <div class="panel-body">
+        <template x-if="!stats?.satisfaction?.rated_sessions">
+          <div class="empty">No rated sessions yet. When you stop the timer, rate how satisfied you are with what you got done, and your patterns show up here.</div>
+        </template>
+        <div x-show="stats?.satisfaction?.rated_sessions">
+          <div class="breakfacts">
+            <div><div class="v" x-text="fx(stats?.satisfaction?.average, 1)"></div><div class="k">semester average</div></div>
+            <div><div class="v" x-text="stats?.satisfaction?.this_week == null ? '–' : fx(stats.satisfaction.this_week, 1)"></div><div class="k">this week</div></div>
+            <div><div class="v" x-text="stats?.satisfaction?.rated_sessions ?? 0"></div><div class="k" x-text="'rated sessions, ' + hoursFmt(stats?.satisfaction?.rated_hours || 0)"></div></div>
+          </div>
+          <div class="sat-grid">
+            <div><h3 class="chart-title">By hour of day</h3><div id="satHourChart" class="chart short"></div></div>
+            <div><h3 class="chart-title">By day</h3><div id="satCalChart" class="chart short"></div></div>
+          </div>
+          <h3 class="chart-title">By week</h3>
+          <div id="satWeekChart" class="chart short"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
       <div class="panel-head"><h2>Breaks</h2><span class="sub">logged when you resume after a pause</span></div>
       <div class="panel-body">
         <div class="breakfacts">
@@ -223,7 +248,7 @@
                   <div style="display:flex;gap:8px;align-items:center"><span class="swatch" :style="sw(s.category)"></span><b x-text="s.course_code.toUpperCase()"></b><span class="muted" x-text="s.course_name"></span></div>
                   <div class="notes" x-show="s.notes" x-text="s.notes"></div>
                 </div>
-                <div class="dur" x-text="dur(s.duration_sec)"></div>
+                <div class="dur"><span x-text="dur(s.duration_sec)"></span><div class="sat-badge" x-show="s.satisfaction != null" x-text="s.satisfaction + '/10'" :title="'Satisfaction ' + s.satisfaction + ' of 10'"></div></div>
                 <div class="acts">
                   <button class="icon-btn" title="Edit" aria-label="Edit entry" @click="openEntry(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
                   <button class="icon-btn" title="Delete" aria-label="Delete entry" @click="deleteSession(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
@@ -286,6 +311,16 @@
       <input type="number" min="1" step="1" x-model.number="entry.minutes" required>
       <span class="hint">Defaults to the full span. Lower it if you took breaks in between.</span>
     </label>
+    <fieldset class="rating">
+      <legend>How satisfied are you with what you got done?</legend>
+      <span class="hint">Compared with what you hoped to get done in this time. Optional.</span>
+      <div class="scale" role="radiogroup" aria-label="Satisfaction from 0 to 10">
+        <template x-for="n in 11" :key="n">
+          <button type="button" role="radio" :aria-checked="entry.satisfaction === n - 1" @click="entry.satisfaction = (entry.satisfaction === n - 1 ? null : n - 1)" x-text="n - 1"></button>
+        </template>
+      </div>
+      <div class="scale-ends"><span>Not at all</span><span>Completely</span></div>
+    </fieldset>
     <label class="f">Notes<textarea x-model="entry.notes" placeholder="What did you work on?"></textarea></label>
     <div class="error" x-show="entryErr" x-text="entryErr"></div>
     <div class="actions">
@@ -298,6 +333,16 @@
 <dialog id="stopDlg">
   <form method="dialog" @submit.prevent="stop(true)">
     <h2 x-text="'Save ' + dur(elapsedNow) + ' of ' + (timer.course?.code || '').toUpperCase() + '?'"></h2>
+    <fieldset class="rating">
+      <legend>How satisfied are you with what you got done?</legend>
+      <span class="hint">Compared with what you hoped to get done in this time. Optional.</span>
+      <div class="scale" role="radiogroup" aria-label="Satisfaction from 0 to 10">
+        <template x-for="n in 11" :key="n">
+          <button type="button" role="radio" :aria-checked="stopRating === n - 1" @click="stopRating = (stopRating === n - 1 ? null : n - 1)" x-text="n - 1"></button>
+        </template>
+      </div>
+      <div class="scale-ends"><span>Not at all</span><span>Completely</span></div>
+    </fieldset>
     <label class="f">Notes<textarea x-model="stopNotes" placeholder="What did you work on?" x-ref="stopNotes"></textarea></label>
     <div class="actions">
       <button type="button" class="btn ghost danger left" @click="if (confirm('Discard this session? The time will not be logged.')) stop(false)">Discard</button>

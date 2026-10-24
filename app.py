@@ -17,7 +17,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     end TEXT NOT NULL,
     duration_sec INTEGER NOT NULL,-- time actually studied (excludes breaks)
     notes TEXT DEFAULT '',
-    source TEXT DEFAULT 'timer'   -- timer | manual | legacy
+    source TEXT DEFAULT 'timer',  -- timer | manual | legacy
+    satisfaction INTEGER          -- 0-10 rating of the session; NULL = not rated
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_course ON sessions(course_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_start ON sessions(start);
@@ -101,6 +102,9 @@ def init_db():
     DATA_DIR.mkdir(exist_ok=True)
     with db() as con:
         con.executescript(SCHEMA)
+        cols = [r["name"] for r in con.execute("PRAGMA table_info(sessions)")]
+        if "satisfaction" not in cols:  # databases created before ratings existed
+            con.execute("ALTER TABLE sessions ADD COLUMN satisfaction INTEGER")
 
 
 @contextmanager
@@ -157,6 +161,7 @@ class SessionIn(BaseModel):
     end: str
     duration_sec: Optional[int] = None  # defaults to end - start
     notes: str = ""
+    satisfaction: Optional[int] = Field(None, ge=0, le=10)
 
 
 class StartIn(BaseModel):
@@ -170,6 +175,7 @@ class ResumeIn(BaseModel):
 class StopIn(BaseModel):
     save: bool = True
     notes: str = ""
+    satisfaction: Optional[int] = Field(None, ge=0, le=10)
 
 
 app = FastAPI(title="Chrono")
@@ -320,9 +326,9 @@ def _session_values(body: SessionIn):
 def create_session(body: SessionIn):
     start, end, dur = _session_values(body)
     with db() as con:
-        cur = con.execute("INSERT INTO sessions (course_id,start,end,duration_sec,notes,source)"
-                          " VALUES (?,?,?,?,?, 'manual')",
-                          (body.course_id, start, end, dur, body.notes.strip()))
+        cur = con.execute("INSERT INTO sessions (course_id,start,end,duration_sec,notes,source,satisfaction)"
+                          " VALUES (?,?,?,?,?,'manual',?)",
+                          (body.course_id, start, end, dur, body.notes.strip(), body.satisfaction))
         return {"id": cur.lastrowid}
 
 
@@ -330,8 +336,9 @@ def create_session(body: SessionIn):
 def update_session(sid: int, body: SessionIn):
     start, end, dur = _session_values(body)
     with db() as con:
-        con.execute("UPDATE sessions SET course_id=?, start=?, end=?, duration_sec=?, notes=? WHERE id=?",
-                    (body.course_id, start, end, dur, body.notes.strip(), sid))
+        con.execute("UPDATE sessions SET course_id=?, start=?, end=?, duration_sec=?, notes=?, satisfaction=?"
+                    " WHERE id=?",
+                    (body.course_id, start, end, dur, body.notes.strip(), body.satisfaction, sid))
     return {"ok": True}
 
 
@@ -430,9 +437,10 @@ def timer_stop(body: StopIn):
             end = parse(t["pause_start"])  # a pause before Stop doesn't count as study time
         saved = None
         if body.save and acc > 0:
-            cur = con.execute("INSERT INTO sessions (course_id,start,end,duration_sec,notes,source)"
-                              " VALUES (?,?,?,?,?,'timer')",
-                              (t["course_id"], t["session_start"], fmt(end), acc, body.notes.strip()))
+            cur = con.execute("INSERT INTO sessions (course_id,start,end,duration_sec,notes,source,satisfaction)"
+                              " VALUES (?,?,?,?,?,'timer',?)",
+                              (t["course_id"], t["session_start"], fmt(end), acc, body.notes.strip(),
+                               body.satisfaction))
             saved = cur.lastrowid
         con.execute("UPDATE timer SET course_id=NULL, session_start=NULL, segment_start=NULL,"
                     " pause_start=NULL, accumulated_sec=0 WHERE id=1")
@@ -449,6 +457,65 @@ def _monday(d: date) -> date:
     return d - timedelta(days=d.weekday())
 
 
+def _satisfaction(sess, week0, n_weeks, this_monday, today):
+    """Averages of the 0-10 session ratings. Unrated sessions are ignored.
+
+    Every average is weighted by time studied, so a 3 h session counts six times as much
+    as a 30 min one. For the hour-of-day profile, a session's studied time is spread over
+    the clock hours it covers (breaks inside it are spread evenly).
+    """
+    def acc():
+        return [0.0, 0.0]  # [sum of rating*hours, hours]
+
+    daily, weekly, hourly, total, week_now = defaultdict(acc), defaultdict(acc), defaultdict(acc), acc(), acc()
+    rated = 0
+    for s in sess:
+        r = s.get("satisfaction")
+        if r is None:
+            continue
+        rated += 1
+        st, en = parse(s["start"]), parse(s.get("end") or s["start"])
+        h = s["duration_sec"] / 3600
+        d = st.date()
+        for bucket in (daily[d.isoformat()], total):
+            bucket[0] += r * h
+            bucket[1] += h
+        wi = (_monday(d) - week0).days // 7
+        if 0 <= wi < n_weeks:
+            weekly[wi][0] += r * h
+            weekly[wi][1] += h
+        if this_monday <= d <= today:
+            week_now[0] += r * h
+            week_now[1] += h
+        span = (en - st).total_seconds()
+        if span <= 0:
+            hourly[st.hour][0] += r * h
+            hourly[st.hour][1] += h
+            continue
+        studied_share = s["duration_sec"] / span
+        t = st
+        while t < en:
+            nxt = min(en, t.replace(minute=0, second=0) + timedelta(hours=1))
+            w = (nxt - t).total_seconds() * studied_share / 3600
+            hourly[t.hour][0] += r * w
+            hourly[t.hour][1] += w
+            t = nxt
+
+    def avg(b):
+        return round(b[0] / b[1], 2) if b[1] > 0 else None
+
+    return {
+        "rated_sessions": rated,
+        "rated_hours": round(total[1], 2),
+        "average": avg(total),
+        "this_week": avg(week_now),
+        "daily": {k: avg(v) for k, v in daily.items()},
+        "weekly": [avg(weekly[i]) for i in range(n_weeks)],
+        "weekly_hours": [round(weekly[i][1], 2) for i in range(n_weeks)],
+        "by_hour": [{"hour": hr, "average": avg(hourly[hr]), "hours": round(hourly[hr][1], 2)} for hr in range(24)],
+    }
+
+
 @app.get("/api/stats")
 def stats(semester_id: int):
     today = date.today()
@@ -460,7 +527,8 @@ def stats(semester_id: int):
         courses = rows(con.execute("SELECT * FROM courses WHERE semester_id=? ORDER BY sort, id",
                                    (semester_id,)))
         sess = rows(con.execute(
-            "SELECT s.course_id, s.start, s.duration_sec FROM sessions s JOIN courses c ON c.id=s.course_id"
+            "SELECT s.course_id, s.start, s.end, s.duration_sec, s.satisfaction"
+            " FROM sessions s JOIN courses c ON c.id=s.course_id"
             " WHERE c.semester_id=?", (semester_id,)))
         timer = _timer(con)
 
@@ -579,6 +647,7 @@ def stats(semester_id: int):
         "weeks": weeks,
         "daily": {k: round(v, 3) for k, v in daily.items()},
         "break_totals": {k: round(v, 2) for k, v in break_totals.items()},
+        "satisfaction": _satisfaction(sess, week0, n_weeks, this_monday, today),
     }
 
 
@@ -631,7 +700,8 @@ def export_logs():
                         current_day = st.date()
                         lines += ["", "=" * 50, current_day.strftime("%d.%m.%Y"), "=" * 50]
                     lines += ["", "--- SESSION START ---",
-                              f"{timedelta(seconds=s['duration_sec'])} ({st:%H:%M:%S} - {en:%H:%M:%S})"]
+                              f"{timedelta(seconds=s['duration_sec'])} ({st:%H:%M:%S} - {en:%H:%M:%S})"
+                              + ("" if s["satisfaction"] is None else f"  [satisfaction {s['satisfaction']}/10]")]
                     lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
                     lines += ["--- SESSION END ---"]
                 path = folder / f"{c['code']}_study_log.txt"
