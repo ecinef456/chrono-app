@@ -337,20 +337,20 @@ function chrono() {
         const days = (new Date(r.end) - new Date(r.start)) / 864e5;
         const weeksN = Math.ceil(days / 7) + 1;
         const el = document.getElementById("calChart");
-        const cell = Math.max(10, Math.min(26, Math.floor((el.clientWidth - 50) / weeksN)));
+        // Square cells as large as fit the chart box, so it matches the height of "Hours per week".
+        const cell = Math.max(10, Math.min(32, Math.floor((el.clientWidth - 50) / weeksN), Math.floor((el.clientHeight - 40) / 7)));
         cal.setOption({
           animation: false, textStyle: font,
           tooltip: { ...tooltipBase, formatter: p => `${this.longDate(p.value[0])}<br><b>${this.hoursFmt(p.value[1])}</b>` },
           visualMap: { show: false, min: 0, max, inRange: { color: dark ? ["#184f95", "#3987e5", "#9ec5f4"] : ["#cde2fb", "#3987e5", "#0d366b"] } },
           calendar: {
-            top: 30, left: 34, right: 8, orient: "horizontal", range: [r.start, r.end], cellSize: [cell, cell],
+            top: "middle", left: 34, right: 8, orient: "horizontal", range: [r.start, r.end], cellSize: [cell, cell],
             splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3, borderRadius: cell < 16 ? 2 : 3 },
             yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: ["S", "M", "T", "W", "T", "F", "S"], color: ink3, fontSize: 11, ...font },
             monthLabel: { color: ink2, ...font, fontSize: 12 },
           },
           series: [{ type: "heatmap", coordinateSystem: "calendar", data, itemStyle: { borderRadius: cell < 16 ? 2 : 3, borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3 } }],
         }, true);
-        el.style.height = `${30 + cell * 7 + 24}px`; cal.resize();
       }
 
       // Satisfaction: by hour of day, by day (calendar), by week. Fixed 0-10 scale everywhere.
