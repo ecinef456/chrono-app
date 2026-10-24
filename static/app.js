@@ -266,12 +266,20 @@ function chrono() {
       return sec / 3600;
     },
     dayStripRange() {
-      let lo = 7, hi = 24;
+      const DAY_START = 6, DAY_END = 24, STEP = 2;   // bar from 06:00 to 24:00, a label every 2 h
+      let lo = DAY_START, hi = DAY_END;
       const start = new Date(); start.setHours(0, 0, 0, 0);
-      for (const s of this.todaySessions()) { const h = Math.max(0, (parseLocal(s.start) - start) / 36e5); lo = Math.min(lo, Math.floor(h)); }
-      if (this.timer.session_start) { const h = (parseLocal(this.timer.session_start) - start) / 36e5; if (h >= 0) lo = Math.min(lo, Math.floor(h)); }
-      lo = Math.max(0, lo - (lo % 3));
-      const ticks = []; for (let h = lo; h <= hi; h += 3) ticks.push(`${pad(h % 24)}:00`);
+      const hours = d => (d - start) / 36e5;
+      const times = this.todaySessions().flatMap(s => [parseLocal(s.start), parseLocal(s.end)]);
+      if (this.timer.session_start) times.push(parseLocal(this.timer.session_start), new Date());
+      for (const t of times) {
+        const h = hours(t);
+        if (h < lo) lo = Math.max(0, Math.floor(h));
+        if (h > hi) hi = Math.min(24, Math.ceil(h));
+      }
+      lo -= lo % STEP;
+      hi = Math.min(24, lo + Math.ceil((hi - lo) / STEP) * STEP);
+      const ticks = []; for (let h = lo; h <= hi; h += STEP) ticks.push(`${pad(h % 24)}:00`);
       return { lo, hi, ticks, label: "" };
     },
     pct(d) { const { lo, hi } = this.dayStripRange(); const start = new Date(); start.setHours(0, 0, 0, 0); const h = (d - start) / 36e5; return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
