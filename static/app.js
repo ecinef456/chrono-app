@@ -23,6 +23,15 @@ const pad = n => String(n).padStart(2, "0");
 const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const isoLocal = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 const parseLocal = s => { const [d, t = "00:00:00"] = s.split("T"); const [y, m, dd] = d.split("-").map(Number); const [h, mi, se = 0] = t.split(":").map(Number); return new Date(y, m - 1, dd, h, mi, se); };
+// Clock time in hours relative to today's midnight (e.g. 13:10 -> 13.17; tomorrow 01:00 -> 25).
+// Uses the wall clock, not elapsed time, so the 23 h and 25 h days when summer time starts or ends
+// don't shift the today bar by an hour.
+const clockHours = d => {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dayDiff = Math.round((day - today) / 864e5);
+  return dayDiff * 24 + d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+};
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 
@@ -259,10 +268,9 @@ function chrono() {
       return sec / 3600;
     },
     dayStripRange() {
-      const DAY_START = 8, DAY_END = 22, STEP = 2;   // bar from 08:00 to 22:00, a label every 2 h
+      const DAY_START = 0, DAY_END = 24, STEP = 2;   // bar from 00:00 to 24:00, a label every 2 h
       let lo = DAY_START, hi = DAY_END;
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const hours = d => (d - start) / 36e5;
+      const hours = clockHours;
       const times = this.todaySessions().flatMap(s => [parseLocal(s.start), parseLocal(s.end)]);
       if (this.timer.session_start) times.push(parseLocal(this.timer.session_start), new Date());
       for (const t of times) {
@@ -282,7 +290,7 @@ function chrono() {
       for (let h = lo + 1; h < hi; h++) out.push({ h, left: (h - lo) / (hi - lo) * 100 });
       return out;
     },
-    pct(d) { const { lo, hi } = this.dayStripRange(); const start = new Date(); start.setHours(0, 0, 0, 0); const h = (d - start) / 36e5; return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
+    pct(d) { const { lo, hi } = this.dayStripRange(); const h = clockHours(d); return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
     nowPct() { this.tick; return this.pct(new Date()); },
     daySegments() {
       this.tick;
