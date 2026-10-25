@@ -26,8 +26,15 @@ const parseLocal = s => { const [d, t = "00:00:00"] = s.split("T"); const [y, m,
 // Clock time in hours relative to today's midnight (e.g. 13:10 -> 13.17; tomorrow 01:00 -> 25).
 // Uses the wall clock, not elapsed time, so the 23 h and 25 h days when summer time starts or ends
 // don't shift the today bar by an hour.
+// "Now" as shown on the computer's clock, taken from the Chrono server rather than from the
+// window. The window's own timezone can be wrong (privacy settings, embedded engines, the
+// summer/winter time switch), while the server always uses the system clock.
+let serverClock = null; // { wall: Date built from the server's local time, at: Date.now() when received }
+const syncClock = t => { if (t && t.server_now) serverClock = { wall: parseLocal(t.server_now), at: Date.now() }; };
+const wallNow = () => (serverClock ? new Date(serverClock.wall.getTime() + (Date.now() - serverClock.at)) : new Date());
+
 const clockHours = d => {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = wallNow(); today.setHours(0, 0, 0, 0);
   const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const dayDiff = Math.round((day - today) / 864e5);
   return dayDiff * 24 + d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
@@ -53,7 +60,7 @@ function chrono() {
       this.applyTheme();
       this.meta = await api("/api/meta");
       this.semesters = await api("/api/semesters");
-      const today = isoDate(new Date());
+      const today = this.meta.today;
       const current = this.semesters.find(s => s.start_date && s.start_date <= today && (!s.end_date || today <= s.end_date));
       const saved = store.get("chrono-semester", null);
       this.semesterId = (this.semesters.find(s => s.id === saved) || current || this.semesters.filter(s => s.course_count).pop() || this.semesters[0] || {}).id ?? null;
@@ -90,7 +97,7 @@ function chrono() {
     async changeSemester() { store.set("chrono-semester", this.semesterId); await this.loadSemester(); },
     async refreshTimer() {
       this.timer = await api("/api/timer");
-      this.timerFetchedAt = Date.now();
+      this.timerFetchedAt = Date.now(); syncClock(this.timer);
     },
 
     /* ---------------- derived */
@@ -112,15 +119,15 @@ function chrono() {
     remember() { store.set("chrono-course", this.selectedId); },
     async start() {
       if (!this.selectedId) return;
-      try { this.timer = await api("/api/timer/start", { method: "POST", body: { course_id: this.selectedId } }); this.timerFetchedAt = Date.now(); this.remember(); this.loadStats(); }
+      try { this.timer = await api("/api/timer/start", { method: "POST", body: { course_id: this.selectedId } }); this.timerFetchedAt = Date.now(); syncClock(this.timer); this.remember(); this.loadStats(); }
       catch (e) { this.toast(e.message); await this.refreshTimer(); }
     },
     async pause() {
-      try { this.timer = await api("/api/timer/pause", { method: "POST" }); this.timerFetchedAt = Date.now(); }
+      try { this.timer = await api("/api/timer/pause", { method: "POST" }); this.timerFetchedAt = Date.now(); syncClock(this.timer); }
       catch (e) { this.toast(e.message); await this.refreshTimer(); }
     },
     async resume(bt) {
-      try { this.timer = await api("/api/timer/resume", { method: "POST", body: { break_type: bt } }); this.timerFetchedAt = Date.now(); this.loadStats(); }
+      try { this.timer = await api("/api/timer/resume", { method: "POST", body: { break_type: bt } }); this.timerFetchedAt = Date.now(); syncClock(this.timer); this.loadStats(); }
       catch (e) { this.toast(e.message); await this.refreshTimer(); }
     },
     openStop() { this.stopNotes = ""; this.stopRating = null; document.getElementById("stopDlg").showModal(); this.$nextTick(() => this.$refs.stopNotes.focus()); },
@@ -133,6 +140,8 @@ function chrono() {
       } catch (e) { this.toast(e.message); }
     },
     hotkey(e) {
+      // F5 / Ctrl+R reload the page, which the desktop window doesn't do on its own.
+      if (e.key === "F5" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r")) { e.preventDefault(); location.reload(); return; }
       if (e.code !== "Space" || e.repeat) return;
       const t = e.target; if (t.closest("input,textarea,select,button,dialog")) return;
       e.preventDefault();
@@ -150,7 +159,7 @@ function chrono() {
         const st = parseLocal(s.start), en = parseLocal(s.end);
         this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, minutes: Math.round(s.duration_sec / 60), notes: s.notes || "", satisfaction: s.satisfaction ?? null };
       } else {
-        const now = new Date(), from = new Date(now - 3600e3);
+        const now = wallNow(), from = new Date(now - 3600e3);
         this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, minutes: 60, notes: "", satisfaction: null };
       }
       document.getElementById("entryDlg").showModal();
@@ -258,13 +267,13 @@ function chrono() {
 
     /* today strip */
     todaySessions() {
-      const today = isoDate(new Date());
+      const today = isoDate(wallNow());
       return this.recent.filter(s => s.start.slice(0, 10) === today || s.end.slice(0, 10) === today);
     },
     todayHours() {
       this.tick;
       let sec = this.todaySessions().reduce((a, s) => a + s.duration_sec, 0);
-      if (this.timer.state !== "idle" && this.timer.session_start?.slice(0, 10) === isoDate(new Date())) sec += this.elapsedNow;
+      if (this.timer.state !== "idle" && this.timer.session_start?.slice(0, 10) === isoDate(wallNow())) sec += this.elapsedNow;
       return sec / 3600;
     },
     dayStripRange() {
@@ -272,7 +281,7 @@ function chrono() {
       let lo = DAY_START, hi = DAY_END;
       const hours = clockHours;
       const times = this.todaySessions().flatMap(s => [parseLocal(s.start), parseLocal(s.end)]);
-      if (this.timer.session_start) times.push(parseLocal(this.timer.session_start), new Date());
+      if (this.timer.session_start) times.push(parseLocal(this.timer.session_start), wallNow());
       for (const t of times) {
         const h = hours(t);
         if (h < lo) lo = Math.max(0, Math.floor(h));
@@ -291,7 +300,7 @@ function chrono() {
       return out;
     },
     pct(d) { const { lo, hi } = this.dayStripRange(); const h = clockHours(d); return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
-    nowPct() { this.tick; return this.pct(new Date()); },
+    nowPct() { this.tick; return this.pct(wallNow()); },
     daySegments() {
       this.tick;
       const segs = this.todaySessions().map(s => {
@@ -300,7 +309,7 @@ function chrono() {
       });
       if (this.timer.state !== "idle" && this.timer.session_start) {
         const a = this.pct(parseLocal(this.timer.session_start));
-        const endT = this.timer.state === "running" ? new Date() : parseLocal(this.timer.pause_start);
+        const endT = this.timer.state === "running" ? wallNow() : parseLocal(this.timer.pause_start);
         const b = this.pct(endT);
         segs.push({ key: "live", live: this.timer.state === "running", style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;${this.bg(this.timer.course?.category)}`, title: "Current session" });
       }

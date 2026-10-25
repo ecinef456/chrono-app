@@ -58,7 +58,8 @@ def main():
         start_server()
 
     STORAGE.mkdir(parents=True, exist_ok=True)
-    webview.create_window("Chrono", URL, width=1280, height=900, min_size=(380, 500),
+    # The ?launch= value is new on every start, so the window can never reuse an old cached page.
+    webview.create_window("Chrono", f"{URL}/?launch={int(time.time())}", width=1280, height=900, min_size=(380, 500),
                           background_color="#e8ecf0", text_select=True)
     # private_mode=False keeps the small per-window settings (theme, last course) between launches.
     webview.start(gui="qt", private_mode=False, storage_path=str(STORAGE), icon=ICON)

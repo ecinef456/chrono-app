@@ -711,6 +711,15 @@ def export_logs():
 
 
 @app.middleware("http")
+async def always_fresh(request, call_next):
+    # Make the window/browser check for a newer file on every load, so edits to static/
+    # show up after a plain reload instead of an old cached copy being used.
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.middleware("http")
 async def mirror_logs(request, call_next):
     response = await call_next(request)
     if request.method != "GET" and request.url.path.startswith("/api/") and response.status_code < 400:
