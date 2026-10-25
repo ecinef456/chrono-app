@@ -57,7 +57,15 @@ For the semester's ECTS total, finished courses count in full, the same as in th
 
 ## Make it an app
 
-In Chrome or Edge, open http://127.0.0.1:8765 and use **Install Chrono** from the install icon in the address bar, or from the ⋮ menu → *Cast, save and share* → *Install page as app*. It then gets its own window and icon. The server still has to be running.
+Run this once to get Chrono as its own desktop app, with no browser involved:
+
+```bash
+./install-desktop.sh
+```
+
+Chrono then appears in your app menu (search for "Chrono") with its own window, icon and taskbar entry. Right-click it to pin it. If the background service from `./install.sh` is running, the window connects to it. Otherwise the window starts the server itself and stops it when you close the window. The first run downloads the Qt window toolkit (about 150 MB). Re-run the script if you move the folder.
+
+You can still open http://127.0.0.1:8765 in any browser at the same time; both show the same data.
 
 ## Start automatically (Linux, recommended)
 
