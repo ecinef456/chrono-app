@@ -223,6 +223,10 @@ fieldset.rating legend { padding: 0; font-size: 13px; font-weight: 600; color: v
 .breakfacts .k { font-size: 13px; color: var(--ink-2); }
 
 /* ---------- log */
+.range-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 22px 0; font-size: 13.5px; color: var(--ink-2); }
+.range-bar label { display: inline-flex; align-items: center; gap: 6px; }
+.range-bar .field-inline { padding: 5px 8px; }
+.range-bar .btn:last-child { margin-left: auto; }
 .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .field-inline { border: 1px solid var(--rule); background: var(--panel); border-radius: 10px; padding: 7px 10px; }
 .day-group h3 { font-size: 13.5px; font-weight: 700; margin: 22px 0 6px; display: flex; gap: 10px; align-items: baseline; }

@@ -40,6 +40,32 @@ def start_server():
     sys.exit("Chrono's server did not start. Is port 8765 used by something else?")
 
 
+def enable_downloads(webview):
+    """Let the window save files (e.g. Log > Export .txt) through a normal save dialog.
+
+    pywebview's own handler targets Qt5 and proposes the URL path as file name, so we use the
+    name the server suggests and default to ~/Downloads instead.
+    """
+    from qtpy.QtWidgets import QFileDialog
+    from webview.platforms import qt as webview_qt
+
+    def on_download_requested(view, download):
+        name = download.downloadFileName() or "chrono-export.txt"
+        downloads = Path.home() / "Downloads"
+        start_dir = downloads if downloads.is_dir() else Path.home()
+        path, _ = QFileDialog.getSaveFileName(view, "Save export", str(start_dir / name),
+                                              "Text files (*.txt);;All files (*)")
+        if not path:
+            download.cancel()
+            return
+        download.setDownloadDirectory(str(Path(path).parent))
+        download.setDownloadFileName(Path(path).name)
+        download.accept()
+
+    webview_qt.BrowserView.on_download_requested = on_download_requested
+    webview.settings["ALLOW_DOWNLOADS"] = True
+
+
 def main():
     os.environ.setdefault("QT_QPA_PLATFORMTHEME", "kde")
     import webview
@@ -56,6 +82,8 @@ def main():
 
     if not server_running():
         start_server()
+
+    enable_downloads(webview)
 
     STORAGE.mkdir(parents=True, exist_ok=True)
     # The ?launch= value is new on every start, so the window can never reuse an old cached page.

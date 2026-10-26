@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -672,6 +672,82 @@ def service_worker():
 #   logs/<SEMESTER>/<code>_study_log.txt
 # Regenerated after every change, so it always matches what the app shows.
 
+def _hm(sec):
+    m = round(sec / 60)
+    return f"{m // 60} h {m % 60:02d} min"
+
+
+def session_blocks(sess, with_course=False, day_totals=False):
+    """Sessions (sorted by start) in the text-log format, grouped by day."""
+    lines, current_day = [], None
+    day_sum = defaultdict(int)
+    for s in sess:
+        day_sum[parse(s["start"]).date()] += s["duration_sec"]
+    for s in sess:
+        st, en = parse(s["start"]), parse(s["end"])
+        if st.date() != current_day:
+            current_day = st.date()
+            lines += ["", "=" * 50, current_day.strftime("%d.%m.%Y"), "=" * 50]
+            if day_totals:
+                lines.append(f"Day total: {_hm(day_sum[current_day])}")
+        prefix = f"[{s['course_code'].upper()}] " if with_course else ""
+        lines += ["", "--- SESSION START ---",
+                  prefix + f"{timedelta(seconds=s['duration_sec'])} ({st:%H:%M:%S} - {en:%H:%M:%S})"
+                  + ("" if s["satisfaction"] is None else f"  [satisfaction {s['satisfaction']}/10]")]
+        lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
+        lines += ["--- SESSION END ---"]
+    return lines
+
+
+@app.get("/api/export")
+def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0):
+    """Plain-text log of one course (or all courses of a semester) between two dates, both included."""
+    try:
+        d0, d1 = date.fromisoformat(start), date.fromisoformat(end)
+    except ValueError:
+        raise HTTPException(400, "Dates must look like 2026-10-19.")
+    if d1 < d0:
+        raise HTTPException(400, "The end date is before the start date.")
+    q = ("SELECT s.*, c.code AS course_code, c.name AS course_name FROM sessions s"
+         " JOIN courses c ON c.id = s.course_id WHERE s.start >= ? AND s.start < ?")
+    args = [d0.isoformat(), (d1 + timedelta(days=1)).isoformat()]
+    with db() as con:
+        if course_id:
+            course = con.execute("SELECT * FROM courses WHERE id=?", (course_id,)).fetchone()
+            if not course:
+                raise HTTPException(404, "Course not found.")
+            title, slug = f"{course['name']} ({course['code'].upper()})", course["code"]
+            q += " AND s.course_id=?"
+            args.append(course_id)
+        else:
+            sem = con.execute("SELECT * FROM semesters WHERE id=?", (semester_id,)).fetchone()
+            if not sem:
+                raise HTTPException(404, "Semester not found.")
+            title, slug = f"All courses, {sem['code']}", f"{sem['code'].lower()}_all"
+            q += " AND c.semester_id=?"
+            args.append(semester_id)
+        sess = rows(con.execute(q + " ORDER BY s.start", args))
+
+    total = sum(s["duration_sec"] for s in sess)
+    lines = [title, f"Period: {d0:%d.%m.%Y} - {d1:%d.%m.%Y}",
+             f"Total: {_hm(total)} in {len(sess)} session{'s' if len(sess) != 1 else ''}"]
+    rated = [s for s in sess if s["satisfaction"] is not None]
+    if rated:
+        w = sum(s["duration_sec"] for s in rated)
+        lines.append(f"Satisfaction: {sum(s['satisfaction'] * s['duration_sec'] for s in rated) / w:.1f}/10"
+                     f" ({len(rated)} rated)")
+    if not course_id and sess:
+        per = defaultdict(int)
+        for s in sess:
+            per[s["course_code"].upper()] += s["duration_sec"]
+        lines.append("By course: " + ", ".join(f"{k} {_hm(v)}" for k, v in sorted(per.items(), key=lambda kv: -kv[1])))
+    lines.append("=" * 50)
+    lines += session_blocks(sess, with_course=not course_id, day_totals=True) if sess else ["", "No sessions in this period."]
+    filename = f"{slug}_{d0.isoformat()}_to_{d1.isoformat()}.txt"
+    return PlainTextResponse("\n".join(lines) + "\n",
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 def export_logs():
     today = date.today()
     with db() as con:
@@ -693,17 +769,7 @@ def export_logs():
                     remaining = max(c["ects"] * ECTS_HOURS - total_h, 0)
                     lines.append(f"Pace Needed: {remaining / max(days / 7, 0.1):.2f} h/week ({days} days left)")
                 lines.append("=" * 50)
-                current_day = None
-                for s in sess:
-                    st, en = parse(s["start"]), parse(s["end"])
-                    if st.date() != current_day:
-                        current_day = st.date()
-                        lines += ["", "=" * 50, current_day.strftime("%d.%m.%Y"), "=" * 50]
-                    lines += ["", "--- SESSION START ---",
-                              f"{timedelta(seconds=s['duration_sec'])} ({st:%H:%M:%S} - {en:%H:%M:%S})"
-                              + ("" if s["satisfaction"] is None else f"  [satisfaction {s['satisfaction']}/10]")]
-                    lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
-                    lines += ["--- SESSION END ---"]
+                lines += session_blocks(sess)
                 path = folder / f"{c['code']}_study_log.txt"
                 tmp = path.with_suffix(".tmp")
                 tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")

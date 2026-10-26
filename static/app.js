@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, tick: 0, toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", tick: 0, toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
@@ -199,7 +199,26 @@ function chrono() {
       await api(`/api/sessions/${s.id}`, { method: "DELETE" });
       this.toast("Entry deleted"); await this.loadSemester();
     },
-    filteredSessions() { return this.logCourse ? this.sessions.filter(s => s.course_id === this.logCourse) : this.sessions; },
+    filteredSessions() {
+      return this.sessions.filter(s => (!this.logCourse || s.course_id === this.logCourse)
+        && (!this.logFrom || s.start.slice(0, 10) >= this.logFrom)
+        && (!this.logTo || s.start.slice(0, 10) <= this.logTo));
+    },
+    setRange(which) {
+      const mon = wallNow(); mon.setHours(12, 0, 0, 0);
+      mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7) - (which === "last" ? 7 : 0));
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      this.logFrom = isoDate(mon); this.logTo = isoDate(sun);
+    },
+    exportTxt() {
+      // Exports exactly what the Log shows: the selected course (or all) between the two dates, both included.
+      const oldest = this.sessions.length ? this.sessions[this.sessions.length - 1].start.slice(0, 10) : null;
+      const from = this.logFrom || this.currentSemester?.start_date || oldest || isoDate(wallNow());
+      const to = this.logTo || isoDate(wallNow());
+      if (to < from) { this.toast("The end date is before the start date"); return; }
+      const q = new URLSearchParams({ start: from, end: to, course_id: this.logCourse || 0, semester_id: this.semesterId });
+      window.location.href = `/api/export?${q}`;
+    },
     groupedSessions() {
       const groups = [];
       for (const s of this.filteredSessions()) {

@@ -7,9 +7,9 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=3">
+<link rel="stylesheet" href="/static/style.css?v=4">
 <script src="/static/vendor/echarts.min.js"></script>
-<script src="/static/app.js?v=4"></script>
+<script src="/static/app.js?v=5"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -233,6 +233,14 @@
           </select>
           <button class="btn primary" @click="openEntry()">Add entry</button>
         </div>
+      </div>
+      <div class="range-bar">
+        <label>From <input type="date" class="field-inline" x-model="logFrom" aria-label="From date"></label>
+        <label>to <input type="date" class="field-inline" x-model="logTo" aria-label="To date"></label>
+        <button class="btn small ghost" @click="setRange('this')">This week</button>
+        <button class="btn small ghost" @click="setRange('last')">Last week</button>
+        <button class="btn small ghost" x-show="logFrom || logTo" @click="logFrom = ''; logTo = ''">All dates</button>
+        <button class="btn small" @click="exportTxt()" :title="'Download the entries shown below as a text file'">Export .txt</button>
       </div>
       <div class="panel-body">
         <template x-if="!filteredSessions().length">
