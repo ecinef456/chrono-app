@@ -157,10 +157,11 @@ function chrono() {
       this.entryErr = "";
       if (s) {
         const st = parseLocal(s.start), en = parseLocal(s.end);
-        this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, minutes: Math.round(s.duration_sec / 60), notes: s.notes || "", satisfaction: s.satisfaction ?? null };
+        const length = Math.round((en - st) / 60000);
+        this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, length, breaks: Math.max(0, length - Math.round(s.duration_sec / 60)), notes: s.notes || "", satisfaction: s.satisfaction ?? null };
       } else {
         const now = wallNow(), from = new Date(now - 3600e3);
-        this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, minutes: 60, notes: "", satisfaction: null };
+        this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, length: 60, breaks: 0, notes: "", satisfaction: null };
       }
       document.getElementById("entryDlg").showModal();
     },
@@ -169,10 +170,22 @@ function chrono() {
       if (en <= st) en = new Date(en.getTime() + 864e5); // past midnight
       return [st, en];
     },
-    syncDuration() { if (!this.entry.from || !this.entry.to) return; const [st, en] = this.entrySpan(); this.entry.minutes = Math.round((en - st) / 60000); },
+    // From, To and Duration are linked: changing From or To updates Duration;
+    // changing Duration keeps the end time and moves the start time.
+    syncLength() { if (!this.entry.from || !this.entry.to) return; const [st, en] = this.entrySpan(); this.entry.length = Math.round((en - st) / 60000); },
+    syncFrom() {
+      const len = Math.round(Number(this.entry.length));
+      if (!this.entry.to || !(len > 0) || len >= 1440) return;
+      const [, en] = this.entrySpan();
+      const st = new Date(en.getTime() - len * 60000);
+      this.entry.date = isoDate(st);
+      this.entry.from = `${pad(st.getHours())}:${pad(st.getMinutes())}`;
+    },
+    entryStudied() { return Math.round(Number(this.entry.length) || 0) - Math.round(Number(this.entry.breaks) || 0); },
     async saveEntry() {
       const [st, en] = this.entrySpan();
-      const body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: Math.round(this.entry.minutes * 60), notes: this.entry.notes, satisfaction: this.entry.satisfaction };
+      if (this.entryStudied() <= 0) { this.entryErr = "Breaks must be shorter than the session."; return; }
+      const body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: this.entryStudied() * 60, notes: this.entry.notes, satisfaction: this.entry.satisfaction };
       try {
         if (this.entry.id) await api(`/api/sessions/${this.entry.id}`, { method: "PUT", body });
         else await api("/api/sessions", { method: "POST", body });

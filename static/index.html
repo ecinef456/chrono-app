@@ -9,7 +9,7 @@
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css?v=3">
 <script src="/static/vendor/echarts.min.js"></script>
-<script src="/static/app.js?v=3"></script>
+<script src="/static/app.js?v=4"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -304,13 +304,19 @@
     </label>
     <div class="grid3">
       <label class="f">Date<input type="date" x-model="entry.date" required></label>
-      <label class="f">From<input type="time" x-model="entry.from" required @change="syncDuration()"></label>
-      <label class="f">To<input type="time" x-model="entry.to" required @change="syncDuration()"></label>
+      <label class="f">From<input type="time" x-model="entry.from" required @input="syncLength()"></label>
+      <label class="f">To<input type="time" x-model="entry.to" required @input="syncLength()"></label>
     </div>
-    <label class="f">Time actually studied (minutes)
-      <input type="number" min="1" step="1" x-model.number="entry.minutes" required>
-      <span class="hint">Defaults to the full span. Lower it if you took breaks in between.</span>
-    </label>
+    <div class="grid2">
+      <label class="f">Duration (minutes)
+        <input type="number" min="1" max="1439" step="1" x-model.number="entry.length" required @input="syncFrom()">
+        <span class="hint">Keeps the end time and moves the start.</span>
+      </label>
+      <label class="f">Breaks in between (minutes)
+        <input type="number" min="0" step="1" x-model.number="entry.breaks">
+        <span class="hint" x-text="entryStudied() > 0 ? 'Counted as studied: ' + dur(entryStudied() * 60) : 'Breaks must be shorter than the session'"></span>
+      </label>
+    </div>
     <fieldset class="rating">
       <legend>How satisfied are you with what you got done?</legend>
       <span class="hint">Compared with what you hoped to get done in this time. Optional.</span>

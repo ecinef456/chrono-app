@@ -35,7 +35,7 @@ To import again from scratch, add `--replace`. This wipes the database first.
 - **Resume after a pause.** Resuming asks whether the break was necessary, which logs the break like before.
 - **Stop.** Stop asks for notes before saving, and you can also discard the session there.
 - **The timer lives in the database.** Closing the tab, closing the browser or rebooting won't lose a running session.
-- **Add past entry** (on the timer, or in the Log tab). Pick a date, the from/to times and the minutes you actually studied.
+- **Add past entry** (on the timer, or in the Log tab). Pick a date and the from/to times, or type a duration: it keeps the end time and moves the start. Breaks in between go in their own field and are subtracted from the time counted.
 - **Rate your sessions.** When you stop (or add/edit an entry), you can rate from 0 to 10 *how satisfied you are with what you got done*, compared with what you hoped to get done in that time. It's optional; unrated sessions, including all imported ones, are simply left out of the satisfaction charts.
 - **Log tab.** Shows every session grouped by day. You can edit or delete any entry.
 - **Courses tab.** Add, edit or finish courses (with grade), set semester dates, and create new semesters.
