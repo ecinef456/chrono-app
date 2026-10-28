@@ -233,13 +233,13 @@ function chrono() {
     /* ---------------- courses & semesters */
     openCourse(c = null) {
       this.courseErr = "";
-      this.courseForm = c ? { ...c, category: c.category || "", deadline: c.deadline || "", grade: c.grade || "" }
-                          : { id: null, code: "", name: "", ects: 3, deadline: this.currentSemester?.end_date || "", category: "master", finished: false, grade: "" };
+      this.courseForm = c ? { ...c, category: c.category || "", deadline: c.deadline || "", grade: c.grade || "", spans: !!c.spans, start_date: c.start_date || "" }
+                          : { id: null, semester_id: this.semesterId, code: "", name: "", ects: 3, deadline: this.currentSemester?.end_date || "", category: "master", finished: false, grade: "", spans: false, start_date: "" };
       document.getElementById("courseDlg").showModal();
     },
     async saveCourse() {
       const f = this.courseForm;
-      const body = { semester_id: this.semesterId, code: f.code, name: f.name, ects: Number(f.ects), deadline: f.deadline || null, category: f.category || null, finished: !!f.finished, grade: f.finished ? (f.grade || null) : null };
+      const body = { semester_id: f.semester_id || this.semesterId, spans: !!f.spans, start_date: f.spans ? (f.start_date || null) : null, code: f.code, name: f.name, ects: Number(f.ects), deadline: f.deadline || null, category: f.category || null, finished: !!f.finished, grade: f.finished ? (f.grade || null) : null };
       try {
         if (f.id) await api(`/api/courses/${f.id}`, { method: "PUT", body });
         else await api("/api/courses", { method: "POST", body });
@@ -268,9 +268,15 @@ function chrono() {
     },
 
     /* ---------------- dashboard helpers */
+    spanTitle(c) {
+      const span = `${c.start_date ? this.dmy(c.start_date) : "?"} to ${c.deadline ? this.dmy(c.deadline) : "?"}`;
+      const home = this.semesters.find(s => s.id === c.semester_id)?.code || "its own semester";
+      const here = c.hours_here != null ? `; ${this.hoursFmt(c.hours_here)} in this semester` : "";
+      return `Runs ${span}. ECTS count in ${home}${here}.`;
+    },
     sortedCourses() {
       const cs = [...(this.stats?.courses || [])];
-      return cs.sort((a, b) => (a.finished - b.finished) || (a.sort - b.sort));
+      return cs.sort((a, b) => (a.finished - b.finished) || ((a.home === false) - (b.home === false)) || (a.sort - b.sort));
     },
     neededOf(c) {
       // Green when the semester average already covers the weekly pace still needed.

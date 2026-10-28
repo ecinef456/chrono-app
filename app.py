@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS courses (
     finished INTEGER NOT NULL DEFAULT 0,
     grade TEXT,
     sort INTEGER DEFAULT 0,
+    start_date TEXT,              -- YYYY-MM-DD; only used when spans = 1
+    spans INTEGER NOT NULL DEFAULT 0, -- 1 = runs across semesters (e.g. a thesis); semester_id = where its ECTS count
     UNIQUE (semester_id, code)
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -105,6 +107,10 @@ def init_db():
         cols = [r["name"] for r in con.execute("PRAGMA table_info(sessions)")]
         if "satisfaction" not in cols:  # databases created before ratings existed
             con.execute("ALTER TABLE sessions ADD COLUMN satisfaction INTEGER")
+        ccols = [r["name"] for r in con.execute("PRAGMA table_info(courses)")]
+        if "spans" not in ccols:  # databases created before multi-semester courses existed
+            con.execute("ALTER TABLE courses ADD COLUMN start_date TEXT")
+            con.execute("ALTER TABLE courses ADD COLUMN spans INTEGER NOT NULL DEFAULT 0")
 
 
 @contextmanager
@@ -153,6 +159,8 @@ class CourseIn(BaseModel):
     category: Optional[str] = None
     finished: bool = False
     grade: Optional[str] = None
+    spans: bool = False              # runs across several semesters (e.g. a master thesis)
+    start_date: Optional[str] = None  # first day, for spanning courses
 
 
 class SessionIn(BaseModel):
@@ -242,23 +250,76 @@ def update_semester(sid: int, body: SemesterIn):
 def list_courses(semester_id: Optional[int] = None):
     with db() as con:
         if semester_id:
-            return rows(con.execute("SELECT * FROM courses WHERE semester_id=? ORDER BY sort, id",
-                                    (semester_id,)))
+            sem = con.execute("SELECT * FROM semesters WHERE id=?", (semester_id,)).fetchone()
+            if not sem:
+                raise HTTPException(404, "Semester not found.")
+            return _visible_courses(con, dict(sem))
         return rows(con.execute("SELECT * FROM courses ORDER BY semester_id, sort, id"))
+
+
+# ---------------------------------------------------------------- multi-semester courses
+# A spanning course (e.g. a thesis) belongs to the semester where its ECTS count (semester_id),
+# but also shows up in every other semester its start_date..deadline overlaps. In those
+# semesters only the sessions inside the semester's window count for weekly numbers and charts.
+
+def _sem_window(con, sem):
+    """(first day, first day of the next semester or None). None if the semester has no start date."""
+    if not sem.get("start_date"):
+        return None
+    nxt = con.execute("SELECT MIN(start_date) FROM semesters WHERE start_date > ?", (sem["start_date"],)).fetchone()[0]
+    return date.fromisoformat(sem["start_date"]), (date.fromisoformat(nxt) if nxt else None)
+
+
+def _in_window(window, d: date) -> bool:
+    return window is None or (window[0] <= d and (window[1] is None or d < window[1]))
+
+
+def _visible_courses(con, sem):
+    own = rows(con.execute("SELECT * FROM courses WHERE semester_id=? ORDER BY sort, id", (sem["id"],)))
+    for c in own:
+        c["home"] = True
+    window = _sem_window(con, sem)
+    if window is None:
+        return own
+    others = rows(con.execute("SELECT c.*, s.code AS home_code FROM courses c JOIN semesters s ON s.id = c.semester_id"
+                              " WHERE c.spans = 1 AND c.semester_id != ? ORDER BY c.sort, c.id", (sem["id"],)))
+    for c in others:
+        c_start = _d(c["start_date"]) or window[0]
+        c_end = _d(c["deadline"])
+        if (window[1] is None or c_start < window[1]) and (c_end is None or c_end >= window[0]):
+            c["home"] = False
+            own.append(c)
+    return own
+
+
+def _counts_here(course, window, d: date) -> bool:
+    """Does a session on day d count for this semester's weekly numbers?"""
+    return not course.get("spans") or _in_window(window, d)
+
+
+def check_spans(body: CourseIn):
+    if not body.spans:
+        return
+    if not body.start_date or not body.deadline:
+        raise HTTPException(400, "A course across semesters needs a start date and a deadline.")
+    if body.start_date > body.deadline:
+        raise HTTPException(400, "The start date is after the deadline.")
 
 
 @app.post("/api/courses")
 def create_course(body: CourseIn):
     check_category(body.category)
+    check_spans(body)
     with db() as con:
         try:
             sort = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM courses WHERE semester_id=?",
                                (body.semester_id,)).fetchone()[0]
             cur = con.execute(
-                "INSERT INTO courses (semester_id,code,name,ects,deadline,category,finished,grade,sort)"
-                " VALUES (?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO courses (semester_id,code,name,ects,deadline,category,finished,grade,sort,spans,start_date)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                 (body.semester_id, body.code.strip().lower(), body.name.strip(), body.ects,
-                 body.deadline, body.category, int(body.finished), body.grade, sort))
+                 body.deadline, body.category, int(body.finished), body.grade, sort,
+                 int(body.spans), body.start_date if body.spans else None))
         except sqlite3.IntegrityError:
             raise HTTPException(409, f"A course with initials '{body.code}' already exists in this semester.")
         return {"id": cur.lastrowid}
@@ -267,13 +328,15 @@ def create_course(body: CourseIn):
 @app.put("/api/courses/{cid}")
 def update_course(cid: int, body: CourseIn):
     check_category(body.category)
+    check_spans(body)
     with db() as con:
         try:
             con.execute(
                 "UPDATE courses SET semester_id=?, code=?, name=?, ects=?, deadline=?, category=?,"
-                " finished=?, grade=? WHERE id=?",
+                " finished=?, grade=?, spans=?, start_date=? WHERE id=?",
                 (body.semester_id, body.code.strip().lower(), body.name.strip(), body.ects,
-                 body.deadline, body.category, int(body.finished), body.grade, cid))
+                 body.deadline, body.category, int(body.finished), body.grade,
+                 int(body.spans), body.start_date if body.spans else None, cid))
         except sqlite3.IntegrityError:
             raise HTTPException(409, f"A course with initials '{body.code}' already exists in this semester.")
     return {"ok": True}
@@ -299,16 +362,28 @@ def list_sessions(semester_id: Optional[int] = None, course_id: Optional[int] = 
     q = ("SELECT s.*, c.code AS course_code, c.name AS course_name, c.category"
          " FROM sessions s JOIN courses c ON c.id = s.course_id WHERE 1=1")
     args = []
-    if semester_id:
-        q += " AND c.semester_id=?"
-        args.append(semester_id)
     if course_id:
         q += " AND s.course_id=?"
         args.append(course_id)
-    q += " ORDER BY s.start DESC LIMIT ?"
-    args.append(limit)
     with db() as con:
-        return rows(con.execute(q, args))
+        if not semester_id:
+            return rows(con.execute(q + " ORDER BY s.start DESC LIMIT ?", args + [limit]))
+        sem = con.execute("SELECT * FROM semesters WHERE id=?", (semester_id,)).fetchone()
+        if not sem:
+            raise HTTPException(404, "Semester not found.")
+        sem = dict(sem)
+        return _semester_sessions(con, sem, q, args)[:limit]
+
+
+def _semester_sessions(con, sem, q, args):
+    """Sessions of the semester's courses, plus those of spanning courses that fall in its window."""
+    courses = {c["id"]: c for c in _visible_courses(con, sem)}
+    if not courses:
+        return []
+    window = _sem_window(con, sem)
+    marks = ",".join("?" * len(courses))
+    out = rows(con.execute(q + f" AND s.course_id IN ({marks}) ORDER BY s.start DESC", args + list(courses)))
+    return [s for s in out if _counts_here(courses[s["course_id"]], window, parse(s["start"]).date())]
 
 
 def _session_values(body: SessionIn):
@@ -524,18 +599,25 @@ def stats(semester_id: int):
         if not sem:
             raise HTTPException(404, "Semester not found.")
         sem = dict(sem)
-        courses = rows(con.execute("SELECT * FROM courses WHERE semester_id=? ORDER BY sort, id",
-                                   (semester_id,)))
-        sess = rows(con.execute(
-            "SELECT s.course_id, s.start, s.end, s.duration_sec, s.satisfaction"
-            " FROM sessions s JOIN courses c ON c.id=s.course_id"
-            " WHERE c.semester_id=?", (semester_id,)))
+        courses = _visible_courses(con, sem)
+        window = _sem_window(con, sem)
+        ids = [c["id"] for c in courses]
+        all_sess = rows(con.execute(
+            "SELECT s.course_id, s.start, s.end, s.duration_sec, s.satisfaction FROM sessions s"
+            f" WHERE s.course_id IN ({','.join('?' * len(ids)) or 'NULL'})", ids)) if ids else []
         timer = _timer(con)
 
     # Include the live timer so numbers move while you study.
-    if timer["state"] != "idle" and timer.get("course") and any(c["id"] == timer["course"]["id"] for c in courses):
-        sess.append({"course_id": timer["course"]["id"], "start": timer["session_start"],
-                     "duration_sec": timer["elapsed_sec"]})
+    if timer["state"] != "idle" and timer.get("course") and timer["course"]["id"] in ids:
+        all_sess.append({"course_id": timer["course"]["id"], "start": timer["session_start"],
+                         "duration_sec": timer["elapsed_sec"]})
+
+    by_id = {c["id"]: c for c in courses}
+    # Progress counts every hour of a course; everything weekly counts only this semester's hours.
+    all_hours = defaultdict(float)
+    for s in all_sess:
+        all_hours[s["course_id"]] += s["duration_sec"] / 3600
+    sess = [s for s in all_sess if _counts_here(by_id[s["course_id"]], window, parse(s["start"]).date())]
 
     sess_dates = [parse(s["start"]).date() for s in sess]
     start = _d(sem["start_date"]) or (min(sess_dates) if sess_dates else today)
@@ -572,8 +654,9 @@ def stats(semester_id: int):
     out_courses = []
     for c in courses:
         pc = per_course[c["id"]]
+        done_h = all_hours[c["id"]]  # all semesters, for a spanning course
         target = c["ects"] * ECTS_HOURS
-        remaining = max(target - pc["total"], 0)
+        remaining = max(target - done_h, 0)
         dl = _d(c["deadline"])
         needed = None
         days_left = None
@@ -584,9 +667,11 @@ def stats(semester_id: int):
         out_courses.append({
             **c,
             "finished": bool(c["finished"]),
-            "hours": round(pc["total"], 3),
+            "spans": bool(c.get("spans")),
+            "hours": round(done_h, 3),
+            "hours_here": round(pc["total"], 3),
             "target_hours": target,
-            "ects_done": round(pc["total"] / ECTS_HOURS, 3),
+            "ects_done": round(done_h / ECTS_HOURS, 3),
             "avg_week": round(pc["total"] / elapsed_weeks, 3),
             "this_week": round(pc["week"], 3),
             "needed_week": round(needed, 3) if needed is not None else None,
@@ -594,9 +679,11 @@ def stats(semester_id: int):
             "last_session": pc["last"].isoformat() if pc["last"] else None,
         })
 
-    total_h = sum(c["hours"] for c in out_courses)
-    ects_target = sum(c["ects"] for c in courses)
-    ects_done = sum(c["ects"] if c["finished"] else min(c["ects_done"], c["ects"]) for c in out_courses)
+    total_h = sum(c["hours_here"] for c in out_courses)
+    # ECTS count only in the semester a course belongs to, so a thesis isn't counted twice.
+    ects_courses = [c for c in out_courses if c["home"]]
+    ects_target = sum(c["ects"] for c in ects_courses)
+    ects_done = sum(c["ects"] if c["finished"] else min(c["ects_done"], c["ects"]) for c in ects_courses)
 
     weeks = []
     for i in range(n_weeks):
@@ -724,9 +811,9 @@ def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0)
             if not sem:
                 raise HTTPException(404, "Semester not found.")
             title, slug = f"All courses, {sem['code']}", f"{sem['code'].lower()}_all"
-            q += " AND c.semester_id=?"
-            args.append(semester_id)
-        sess = rows(con.execute(q + " ORDER BY s.start", args))
+            sess = sorted(_semester_sessions(con, dict(sem), q, args), key=lambda s: s["start"])
+        if course_id:
+            sess = rows(con.execute(q + " ORDER BY s.start", args))
 
     total = sum(s["duration_sec"] for s in sess)
     lines = [title, f"Period: {d0:%d.%m.%Y} - {d1:%d.%m.%Y}",

@@ -40,6 +40,7 @@ To import again from scratch, add `--replace`. This wipes the database first.
 - **Log tab.** Shows every session grouped by day. You can edit or delete any entry.
 - **Export .txt** (Log tab). Pick a course (or all courses) and a date range, or use *This week* / *Last week*, then press *Export .txt*. You get the entries shown, both dates included, in the same format as the text logs plus totals per day and for the period.
 - **Courses tab.** Add, edit or finish courses (with grade), set semester dates, and create new semesters.
+- **Courses across semesters** (e.g. a master thesis). In the course form, tick *Runs across several semesters*, set a start date and deadline, and pick the semester where its ECTS count. It then appears in every semester between those dates (each semester needs a start date). Progress adds up all its hours; *Ø semester* and the charts count only the hours of the semester you are viewing, including the break before the next one starts. Its ECTS are counted only once, in the semester you picked.
 
 ## What the numbers mean
 
