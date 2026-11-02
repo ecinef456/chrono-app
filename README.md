@@ -42,6 +42,15 @@ To import again from scratch, add `--replace`. This wipes the database first.
 - **Courses tab.** Add, edit or finish courses (with grade), set semester dates, and create new semesters.
 - **Courses across semesters** (e.g. a master thesis). In the course form, tick *Runs across several semesters*, set a start date and deadline, and pick the semester where its ECTS count. It then appears in every semester between those dates (each semester needs a start date). Progress adds up all its hours; *Ø semester* and the charts count only the hours of the semester you are viewing, including the break before the next one starts. Its ECTS are counted only once, in the semester you picked.
 
+## Teach (live lesson plan)
+
+The *Teach* tab shows where you should be in a lesson right now: the current part in large type, the current step under it, time left for both, what comes next, and the whole plan with the current row highlighted. It is completely separate from the study timer and saves nothing in your logs.
+
+- **Load a lesson:** paste the timetable block from your notes (`#let lesson = ( ... )`), or drop the `.typ` file anywhere on the window (you can drop the notes and the preamble together).
+- **Settings come from the timetable** (`start`, `hour-length`, `break-length`, optional `hour-2-start`, `title`, `date`). Missing ones fall back to the preamble's values, then to 08:00 / 45 / 5. You can also change them in the tab.
+- **Start now** moves the whole plan so it starts this minute; *−1 / +1 min* nudge it; clicking a row in the plan makes that step start now (handy when you are running late). *Back to plan* undoes the shift.
+- Space does nothing in this tab, so it can't start the study timer by accident.
+
 ## What the numbers mean
 
 | Column | Meaning |

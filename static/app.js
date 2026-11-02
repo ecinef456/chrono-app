@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", tick: 0, toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
@@ -66,6 +66,9 @@ function chrono() {
       this.semesterId = (this.semesters.find(s => s.id === saved) || current || this.semesters.filter(s => s.course_count).pop() || this.semesters[0] || {}).id ?? null;
       await this.refreshTimer();
       await this.loadSemester();
+      // Dropping a .typ file anywhere opens it in Teach.
+      window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
+      window.addEventListener("drop", e => { if (e.dataTransfer?.files?.length && this.tab !== "teach") { e.preventDefault(); this.tab = "teach"; this.teachFiles(e.dataTransfer.files); } });
       this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); });
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
@@ -142,12 +145,17 @@ function chrono() {
     hotkey(e) {
       // F5 / Ctrl+R reload the page, which the desktop window doesn't do on its own.
       if (e.key === "F5" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r")) { e.preventDefault(); location.reload(); return; }
-      if (e.code !== "Space" || e.repeat) return;
+      if (e.code !== "Space" || e.repeat || this.tab === "teach") return;
       const t = e.target; if (t.closest("input,textarea,select,button,dialog")) return;
       e.preventDefault();
       if (this.timer.state === "idle") this.start(); else if (this.timer.state === "running") this.pause();
     },
     updateTitle() {
+      if (this.tab === "teach" && this.teach && this.timer.state === "idle") {
+        const left = this.tLeft(1);
+        document.title = (left === null ? "" : this.mmss(left) + " ") + this.tHeader().replace(/<[^>]+>/g, "");
+        return;
+      }
       if (this.timer.state === "idle") document.title = "Chrono";
       else document.title = `${this.timer.state === "paused" ? "❚❚ " : ""}${this.hms(this.elapsedNow)} ${this.timer.course?.code.toUpperCase() || ""}`;
     },
@@ -488,6 +496,126 @@ function chrono() {
         yAxis: { type: "value", splitLine: { lineStyle: { color: rule, type: [3, 4] } }, axisLabel: { color: ink3, ...font, formatter: "{value} h" } },
         series: types.map((t, i) => ({ name: t, type: "bar", stack: "b", barMaxWidth: 26, data: weeks.map(w => +(w.breaks?.[t] || 0).toFixed(2)), itemStyle: { color: bcolors[i % bcolors.length], borderColor: panel, borderWidth: 1 } })),
       }, true);
+    },
+
+    /* ---------------- teach: live lesson plan (nothing here touches the study logs) */
+    async teachFiles(fileList) {
+      const files = await Promise.all([...fileList].map(async f => ({ name: f.name, text: await f.text() })));
+      this.teachLoad(files);
+    },
+    teachDrop(e) { this.teachDrag = false; if (e.dataTransfer?.files?.length) this.teachFiles(e.dataTransfer.files); },
+    teachLoad(files) {
+      try {
+        const r = ChronoTeach.parseFiles(files);
+        const settings = { start1: "08:00", start2: null, hourLength: 45, breakLength: 5, ...r.settings };
+        this.teach = { hours: r.hours, settings, title: r.title.week || r.title.course || r.fileName || "Lesson", date: r.date, shiftSec: 0, shiftDay: null };
+        this.teachErr = ""; this.teachPaste = "";
+        this.teachSave();
+        this.toast("Timetable loaded");
+      } catch (e) { this.teachErr = e.message; this.tab = "teach"; if (this.teach) this.toast(e.message); }
+    },
+    teachSave() { store.set("chrono-teach", this.teach); },
+    teachReset() { this.teach = null; this.teachSave(); },
+    tSet(k, v) { this.teach.settings[k] = v; this.teachSave(); },
+    tShiftSec() { return this.teach && this.teach.shiftDay === this.today() ? this.teach.shiftSec : 0; },
+    tShift(delta) {
+      this.teach.shiftSec = delta === null ? 0 : this.tShiftSec() + delta;
+      this.teach.shiftDay = this.today(); this.teachSave();
+    },
+    tNowSec() { this.tick; const d = wallNow(); return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); },
+    tStartNow() { this.tShift(this.tNowSec() - ChronoTeach.hmToSec(this.teach.settings.start1) - this.tShiftSec()); },
+    tJump(item) { this.tShift(this.tNowSec() - item.start); },
+    tShiftLabel() {
+      const m = Math.round(this.tShiftSec() / 60), a = Math.abs(m);
+      if (m === 0) return "shifted < 1 min";
+      return `${a >= 60 ? Math.floor(a / 60) + " h " + (a % 60) + " min" : a + " min"} ${m > 0 ? "later" : "earlier"} than planned`;
+    },
+    today() { return isoDate(wallNow()); },
+    tSchedule() {
+      if (!this.teach) return [];
+      return ChronoTeach.buildSchedule(this.teach.hours, { ...this.teach.settings, shiftSec: this.tShiftSec() });
+    },
+    tState() { return this.teach ? ChronoTeach.locate(this.tSchedule(), this.tNowSec()) : { phase: "empty" }; },
+    tClock() { this.tick; const d = wallNow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; },
+    tStatus() {
+      const s = this.tState();
+      if (s.phase === "before") return `starts at ${this.clockOf(s.until)}`;
+      if (s.phase === "after") return `ended at ${this.clockOf(s.ended)}`;
+      if (s.phase === "break") return `break until ${this.clockOf(s.until)}`;
+      if (s.hour) return `${s.hour.name}, ${this.clockOf(s.hour.start)}–${this.clockOf(s.hour.end)}, ends in ${this.mmss(s.hour.end - this.tNowSec())}`;
+      return "";
+    },
+    tHeader() {
+      const s = this.tState();
+      return { before: "Starts soon", after: "Lesson over", break: "Break", buffer: "Spare time", activity: this.typst(s.act?.title || ""), empty: "" }[s.phase];
+    },
+    tSubHeader() {
+      const s = this.tState();
+      if (s.phase === "activity") return s.detail ? this.typst(s.detail.title) : (s.wrapUp ? "Wrap up" : "");
+      if (s.phase === "before" && s.next) return "First: " + this.typst(s.next.item.title);
+      if (s.phase === "break" && s.nextHour) return `${s.nextHour.name} starts at ${this.clockOf(s.nextHour.start)}`;
+      return "";
+    },
+    tLeft(level) {
+      const s = this.tState(), now = this.tNowSec();
+      if (level === 1) {
+        if (s.phase === "activity") return s.act.end - now;
+        if (["before", "break", "buffer"].includes(s.phase)) return s.until - now;
+        return null;
+      }
+      if (s.phase === "activity" && s.detail) return Math.min(s.detail.end, s.act.end) - now;
+      return null;
+    },
+    tLeftLabel(level) {
+      const s = this.tState();
+      if (level === 1) return s.phase === "activity" ? `left of ${s.act.minutes} min` : s.phase === "before" ? "until start" : "left";
+      return s.detail ? `of ${s.detail.minutes} min` : "";
+    },
+    tProgress(level) {
+      const s = this.tState(), now = this.tNowSec();
+      const p = (a, b) => Math.max(0, Math.min(1, (now - a) / Math.max(1, b - a)));
+      if (level === 1 && s.phase === "activity") return p(s.act.start, s.act.end);
+      if (level === 1 && s.phase === "break") return p(s.hour.breakAfter.start, s.hour.breakAfter.end);
+      if (level === 2 && s.phase === "activity" && s.detail) return p(s.detail.start, Math.min(s.detail.end, s.act.end));
+      return null;
+    },
+    tSpan(level) {
+      const s = this.tState();
+      if (s.phase === "activity") return `${this.clockOf(s.act.start)}–${this.clockOf(s.act.end)}`;
+      if (s.phase === "break") return `${this.clockOf(s.hour.breakAfter.start)}–${this.clockOf(s.hour.breakAfter.end)}`;
+      return "";
+    },
+    tNext() {
+      const n = this.tState().next;
+      if (!n || this.tState().phase === "before") return "";
+      return `${this.typst(n.item.title)} <span class="muted">· ${n.item.minutes} min · at ${this.clockOf(n.item.start)}</span>`;
+    },
+    tRowClass(item) {
+      const now = this.tNowSec();
+      if (item.start == null) return "";
+      return now >= item.end ? "past" : now >= item.start ? "current" : "";
+    },
+    tStrip() {
+      const sch = this.tSchedule();
+      if (!sch.length) return { segs: [], ticks: [], now: null };
+      const a = sch[0].start, b = Math.max(...sch.map(h => Math.max(h.end, h.activitiesEnd)));
+      const pc = t => ((t - a) / (b - a)) * 100;
+      const segs = [], ticks = [];
+      sch.forEach((h, hi) => {
+        h.activities.forEach((x, i) => segs.push({ key: x.key, cls: (i % 2 ? "odd " : "") + this.tRowClass(x), style: `left:${pc(x.start)}%;width:${pc(x.end) - pc(x.start)}%`, title: `${x.title.replace(/[$*]/g, "")} (${x.minutes} min)` }));
+        if (h.breakAfter) segs.push({ key: "b" + hi, cls: "brk " + this.tRowClass(h.breakAfter), style: `left:${pc(h.breakAfter.start)}%;width:${pc(h.breakAfter.end) - pc(h.breakAfter.start)}%`, title: "Break" });
+        ticks.push({ key: "s" + hi, left: pc(h.start), label: this.clockOf(h.start) });
+      });
+      ticks.push({ key: "end", left: 100, label: this.clockOf(b) });
+      const now = this.tNowSec();
+      return { segs, ticks, now: now >= a && now <= b ? pc(now) : null };
+    },
+    typst(t) { return ChronoTeach.typstHtml(t); },
+    clockOf(sec) { sec = ((Math.round(sec) % 86400) + 86400) % 86400; return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec % 3600 / 60))}`; },
+    mmss(sec) {
+      sec = Math.max(0, Math.round(sec));
+      const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+      return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
     },
 
     /* ---------------- theme */
