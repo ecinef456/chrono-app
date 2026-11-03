@@ -542,7 +542,7 @@ function chrono() {
       if (s.phase === "before") return `starts at ${this.clockOf(s.until)}`;
       if (s.phase === "after") return `ended at ${this.clockOf(s.ended)}`;
       if (s.phase === "break") return `break until ${this.clockOf(s.until)}`;
-      if (s.hour) return `${s.hour.name}, ${this.clockOf(s.hour.start)}–${this.clockOf(s.hour.end)}, ends in ${this.mmss(s.hour.end - this.tNowSec())}`;
+      if (s.hour) return `${s.hour.name} ends in ${this.mmss(s.hour.end - this.tNowSec())}`;
       return "";
     },
     tHeader() {
@@ -568,7 +568,7 @@ function chrono() {
     },
     tLeftLabel(level) {
       const s = this.tState();
-      if (level === 1) return s.phase === "activity" ? `left of ${s.act.minutes} min` : s.phase === "before" ? "until start" : "left";
+      if (level === 1) return s.phase === "activity" ? `of ${s.act.minutes} min` : s.phase === "before" ? "until start" : "left";
       return s.detail ? `of ${s.detail.minutes} min` : "";
     },
     tProgress(level) {
@@ -588,7 +588,7 @@ function chrono() {
     tNext() {
       const n = this.tState().next;
       if (!n || this.tState().phase === "before") return "";
-      return `${this.typst(n.item.title)} <span class="muted">· ${n.item.minutes} min · at ${this.clockOf(n.item.start)}</span>`;
+      return `${this.typst(n.item.title)} <span class="muted">(${n.item.minutes} min)</span>`;
     },
     tRowClass(item) {
       const now = this.tNowSec();

@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=6">
+<link rel="stylesheet" href="/static/style.css?v=9">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=1"></script>
-<script src="/static/app.js?v=7"></script>
+<script src="/static/app.js?v=9"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -290,12 +290,17 @@
 
     <template x-if="teach">
       <div class="stack">
+        <div class="teach-bar-top">
+          <div class="teach-title" x-text="teach.title"></div>
+          <button class="btn teach-load-btn" @click="teachReset()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+            Load another lesson
+          </button>
+        </div>
+
         <section class="panel teach-hero" :class="'phase-' + tState().phase">
           <div class="teach-top">
-            <div class="teach-status">
-              <span class="teach-week" x-text="teach.title"></span>
-              <span x-text="tStatus()"></span>
-            </div>
+            <div class="teach-status" x-text="tStatus()"></div>
             <div class="teach-clock" x-text="tClock()"></div>
           </div>
 
@@ -306,7 +311,6 @@
             </div>
           </div>
           <div class="teach-bar" x-show="tProgress(1) !== null"><i :style="'width:' + (tProgress(1) * 100) + '%'"></i></div>
-          <div class="teach-span" x-text="tSpan(1)"></div>
 
           <div class="teach-sub" x-show="tSubHeader()">
             <div class="teach-main">
@@ -318,7 +322,7 @@
             <div class="teach-bar thin" x-show="tProgress(2) !== null"><i :style="'width:' + (tProgress(2) * 100) + '%'"></i></div>
           </div>
 
-          <div class="teach-next" x-show="tNext()"><span class="k">Next</span> <span x-html="tNext()"></span></div>
+          <div class="teach-next" x-show="tNext()"><span class="k">Next:</span> <span x-html="tNext()"></span></div>
 
           <div class="lesson-strip" aria-hidden="true">
             <div class="lesson-track">
@@ -351,7 +355,6 @@
 
         <section class="panel">
           <div class="panel-head"><h2>Plan</h2><span class="sub">Click a row to start it now</span>
-            <div class="right"><button class="btn small ghost" @click="teachReset()">Load another lesson</button></div>
           </div>
           <div class="panel-body plan">
             <template x-for="(h, hi) in tSchedule()" :key="h.name">
