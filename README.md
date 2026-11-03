@@ -43,6 +43,20 @@ To import again from scratch, add `--replace`. This wipes the database first.
 - **Courses tab.** Add, edit or finish courses (with grade), set semester dates, and create new semesters.
 - **Courses across semesters** (e.g. a master thesis). In the course form, tick *Runs across several semesters*, set a start date and deadline, and pick the semester where its ECTS count. It then appears in every semester between those dates (each semester needs a start date). Progress adds up all its hours; *Ø semester* and the charts count only the hours of the semester you are viewing, including the break before the next one starts. Its ECTS are counted only once, in the semester you picked.
 
+## Sport & Code
+
+Sport and coding are tracked like courses, in every semester, but **never count as study time** (not in hours, ECTS, charts, streak or the "studied today" figure).
+
+- **Timing:** their chips sit after the courses, with a dashed outline. Start, pause and stop work as usual; past entries go through *Add past entry* (grouped as Courses / Sport / Code / Not study time).
+- **Today bar:** sport, code and timed *Other* entries show as dotted blocks, so the bar has no unexplained gaps but study time stays solid.
+- **Sport & Code tab:** for each group, this week / this month / average per week, and stacked bars per week (16 weeks) and per month (12 months), one colour per type.
+- **Commits:** each code project can point to its local clone (e.g. `~/git/chrono-app`). Chrono reads your commits there with `git log` (all branches, including fetched remote ones), so private repos work and no GitHub login is needed. It shows commits per week, lines added/removed and the latest commits. Commits made elsewhere show up after a `git pull` / `git fetch`. Only your commits count: those matching the repo's `user.email` or your GitHub user.
+- **Types:** add, rename, hide or delete sport types and code projects under *Edit sport types* / *Edit code projects*. A type with history can only be hidden, so its hours stay in your charts.
+
+### chrono.local.json (personal, not in git)
+
+Your starting types and GitHub user live in `chrono.local.json`, which is gitignored (see `chrono.local.example.json`). It is read once, the first time the server starts with it; after that, change types in the app.
+
 ## Teach (live lesson plan)
 
 The *Teach* tab shows where you should be in a lesson right now: the current part in large type, the current step under it, time left for both, what comes next, and the whole plan with the current row highlighted. It is completely separate from the study timer and saves nothing in your logs.

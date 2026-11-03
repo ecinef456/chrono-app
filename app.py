@@ -5,6 +5,10 @@ Run:  python app.py            (opens http://127.0.0.1:8765 in your browser)
       python app.py --no-browser --port 9000
 """
 import argparse
+import json
+import os
+import subprocess
+import time
 import sqlite3
 import threading
 import webbrowser
@@ -23,7 +27,12 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "chrono.db"
 STATIC_DIR = BASE_DIR / "static"
-LOGS_DIR = BASE_DIR / "logs"  # readable .txt copies of your sessions (see export_logs)
+LOGS_DIR = BASE_DIR / "logs"
+LOCAL_FILE = BASE_DIR / "chrono.local.json"  # personal setup (activity types, GitHub user); gitignored
+
+# Activity groups: tracked like courses, across all semesters, but never counted as study time.
+ACTIVITY_GROUPS = {"sport": "Sport", "code": "Code"}
+NON_STUDY = ("other",) + tuple(ACTIVITY_GROUPS)  # readable .txt copies of your sessions (see export_logs)
 
 ECTS_HOURS = 30  # hours of work per ECTS credit
 
@@ -64,7 +73,8 @@ CREATE TABLE IF NOT EXISTS courses (
     sort INTEGER DEFAULT 0,
     start_date TEXT,              -- YYYY-MM-DD; only used when spans = 1
     spans INTEGER NOT NULL DEFAULT 0, -- 1 = runs across semesters (e.g. a thesis); semester_id = where its ECTS count
-    kind TEXT NOT NULL DEFAULT 'course', -- 'course' or 'other' (the built-in "Other": notes on days off, never study time)
+    kind TEXT NOT NULL DEFAULT 'course', -- 'course', 'other' (notes on days off), 'sport', 'code' (never study time)
+    repo_path TEXT,               -- code projects: local git clone, for commit stats
     UNIQUE (semester_id, code)
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -114,7 +124,43 @@ def init_db():
             con.execute("ALTER TABLE courses ADD COLUMN spans INTEGER NOT NULL DEFAULT 0")
         if "kind" not in [r["name"] for r in con.execute("PRAGMA table_info(courses)")]:
             con.execute("ALTER TABLE courses ADD COLUMN kind TEXT NOT NULL DEFAULT 'course'")
+        if "repo_path" not in [r["name"] for r in con.execute("PRAGMA table_info(courses)")]:
+            con.execute("ALTER TABLE courses ADD COLUMN repo_path TEXT")
+        con.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
         ensure_other(con)
+        seed_activities(con)
+
+
+def load_local():
+    try:
+        return json.loads(LOCAL_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def seed_activities(con):
+    """Create the sport/code types listed in chrono.local.json, once. Later changes happen in the app."""
+    if con.execute("SELECT value FROM settings WHERE key='activities_seeded'").fetchone():
+        return
+    anchor = con.execute("SELECT id FROM semesters ORDER BY sort, id LIMIT 1").fetchone()
+    if not anchor:
+        return
+    if not LOCAL_FILE.exists():
+        return  # nothing to seed yet; add types in the app, or create chrono.local.json and restart
+    local = load_local()
+    for kind in ACTIVITY_GROUPS:
+        for i, item in enumerate(local.get(kind, [])):
+            name, repo = (item, None) if isinstance(item, str) else (item.get("name"), item.get("repo"))
+            if not name or con.execute("SELECT 1 FROM courses WHERE kind=? AND name=?", (kind, name)).fetchone():
+                continue
+            con.execute("INSERT INTO courses (semester_id,code,name,ects,category,sort,kind,repo_path)"
+                        " VALUES (?,?,?,0,?,?,?,?)", (anchor[0], _slug(name), name, kind, 1000 + i, kind, repo))
+    con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('activities_seeded','1')")
+
+
+def _slug(name):
+    out = "".join(ch if ch.isalnum() else "-" for ch in name.lower()).strip("-")
+    return "-".join(p for p in out.split("-") if p)[:24] or "item"
 
 
 def ensure_other(con):
@@ -248,6 +294,7 @@ def create_semester(body: SemesterIn):
         except sqlite3.IntegrityError:
             raise HTTPException(409, f"Semester {body.code} already exists.")
         ensure_other(con)
+        seed_activities(con)
         return {"id": cur.lastrowid}
 
 
@@ -290,13 +337,14 @@ def _in_window(window, d: date) -> bool:
 
 
 def _visible_courses(con, sem):
-    own = rows(con.execute("SELECT * FROM courses WHERE semester_id=? AND kind != 'other' ORDER BY sort, id", (sem["id"],)))
+    own = rows(con.execute("SELECT * FROM courses WHERE semester_id=? AND kind = 'course' ORDER BY sort, id", (sem["id"],)))
     for c in own:
         c["home"] = True
-    other = con.execute("SELECT * FROM courses WHERE kind='other'").fetchone()
+    everywhere = [dict(r, home=False) for r in rows(con.execute(
+        "SELECT * FROM courses WHERE kind != 'course' ORDER BY CASE kind WHEN 'sport' THEN 1 WHEN 'code' THEN 2 ELSE 9 END, sort, id"))]
     window = _sem_window(con, sem)
     if window is None:
-        return own + ([dict(other, home=False)] if other else [])
+        return own + everywhere
     others = rows(con.execute("SELECT c.*, s.code AS home_code FROM courses c JOIN semesters s ON s.id = c.semester_id"
                               " WHERE c.spans = 1 AND c.semester_id != ? ORDER BY c.sort, c.id", (sem["id"],)))
     for c in others:
@@ -305,14 +353,12 @@ def _visible_courses(con, sem):
         if (window[1] is None or c_start < window[1]) and (c_end is None or c_end >= window[0]):
             c["home"] = False
             own.append(c)
-    if other:
-        own.append(dict(other, home=False))
-    return own
+    return own + everywhere
 
 
 def _counts_here(course, window, d: date) -> bool:
     """Does a session on day d count for this semester's weekly numbers?"""
-    return not (course.get("spans") or course.get("kind") == "other") or _in_window(window, d)
+    return not (course.get("spans") or course.get("kind", "course") != "course") or _in_window(window, d)
 
 
 def check_spans(body: CourseIn):
@@ -363,7 +409,7 @@ def update_course(cid: int, body: CourseIn):
 @app.delete("/api/courses/{cid}")
 def delete_course(cid: int):
     with db() as con:
-        if con.execute("SELECT 1 FROM courses WHERE id=? AND kind='other'", (cid,)).fetchone():
+        if con.execute("SELECT 1 FROM courses WHERE id=? AND kind != 'course'", (cid,)).fetchone():
             raise HTTPException(409, "Other is built in and can't be deleted.")
         n = con.execute("SELECT COUNT(*) FROM sessions WHERE course_id=?", (cid,)).fetchone()[0]
         if n:
@@ -465,7 +511,7 @@ def _timer(con):
     elapsed = t["accumulated_sec"] or 0
     if t["segment_start"]:
         elapsed += int((n - parse(t["segment_start"])).total_seconds())
-    c = con.execute("SELECT id, code, name, category FROM courses WHERE id=?", (t["course_id"],)).fetchone()
+    c = con.execute("SELECT id, code, name, category, kind FROM courses WHERE id=?", (t["course_id"],)).fetchone()
     return {
         "state": "running" if t["segment_start"] else "paused",
         "course": dict(c) if c else None,
@@ -629,7 +675,7 @@ def stats(semester_id: int):
         if not sem:
             raise HTTPException(404, "Semester not found.")
         sem = dict(sem)
-        courses = [c for c in _visible_courses(con, sem) if c.get("kind") != "other"]
+        courses = [c for c in _visible_courses(con, sem) if c.get("kind") == "course"]
         window = _sem_window(con, sem)
         ids = [c["id"] for c in courses]
         all_sess = rows(con.execute(
@@ -768,6 +814,208 @@ def stats(semester_id: int):
     }
 
 
+# ---------------------------------------------------------------- sport & code (activities)
+
+class ActivityTypeIn(BaseModel):
+    kind: str
+    name: str
+    repo_path: Optional[str] = None
+    archived: bool = False
+
+
+def _check_kind(kind):
+    if kind not in ACTIVITY_GROUPS:
+        raise HTTPException(400, f"Unknown group '{kind}'.")
+
+
+@app.post("/api/activity-types")
+def create_activity_type(body: ActivityTypeIn):
+    _check_kind(body.kind)
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(400, "Give it a name.")
+    with db() as con:
+        anchor = con.execute("SELECT id FROM semesters ORDER BY sort, id LIMIT 1").fetchone()
+        if not anchor:
+            raise HTTPException(409, "Create a semester first.")
+        if con.execute("SELECT 1 FROM courses WHERE kind=? AND lower(name)=lower(?)", (body.kind, name)).fetchone():
+            raise HTTPException(409, f"'{name}' already exists.")
+        sort = con.execute("SELECT COALESCE(MAX(sort),1000)+1 FROM courses WHERE kind=?", (body.kind,)).fetchone()[0]
+        code = _slug(name)
+        while con.execute("SELECT 1 FROM courses WHERE semester_id=? AND code=?", (anchor[0], code)).fetchone():
+            code += "-2"
+        cur = con.execute("INSERT INTO courses (semester_id,code,name,ects,category,sort,kind,repo_path)"
+                          " VALUES (?,?,?,0,?,?,?,?)",
+                          (anchor[0], code, name, body.kind, sort, body.kind, (body.repo_path or "").strip() or None))
+        return {"id": cur.lastrowid}
+
+
+@app.put("/api/activity-types/{tid}")
+def update_activity_type(tid: int, body: ActivityTypeIn):
+    _check_kind(body.kind)
+    with db() as con:
+        if not con.execute("SELECT 1 FROM courses WHERE id=? AND kind=?", (tid, body.kind)).fetchone():
+            raise HTTPException(404, "Not found.")
+        con.execute("UPDATE courses SET name=?, repo_path=?, finished=? WHERE id=?",
+                    (body.name.strip(), (body.repo_path or "").strip() or None, int(body.archived), tid))
+    _GIT_CACHE.clear()
+    return {"ok": True}
+
+
+@app.delete("/api/activity-types/{tid}")
+def delete_activity_type(tid: int):
+    with db() as con:
+        if not con.execute("SELECT 1 FROM courses WHERE id=? AND kind IN ('sport','code')", (tid,)).fetchone():
+            raise HTTPException(404, "Not found.")
+        n = con.execute("SELECT COUNT(*) FROM sessions WHERE course_id=?", (tid,)).fetchone()[0]
+        if n:
+            raise HTTPException(409, f"It has {n} logged sessions. Hide it instead, so they stay in your history.")
+        con.execute("DELETE FROM courses WHERE id=?", (tid,))
+    return {"ok": True}
+
+
+_GIT_CACHE = {}
+
+
+def git_commits(path, since: date, github_user=None):
+    """Your commits in a local clone since a date (all branches, incl. fetched remote ones).
+    Returns (list of {when, subject, added, deleted}, error or None). Cached for a minute."""
+    key = (path, since, github_user)
+    hit = _GIT_CACHE.get(key)
+    if hit and time.time() - hit[0] < 60:
+        return hit[1]
+    result = _git_commits(path, since, github_user)
+    _GIT_CACHE[key] = (time.time(), result)
+    return result
+
+
+def _git_commits(path, since, github_user):
+    if not path:
+        return [], "No local folder set."
+    repo = Path(os.path.expanduser(path))
+    if not (repo / ".git").exists():
+        return [], f"No git repository at {path}."
+    def run(*args):
+        return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=20)
+    try:
+        email = run("config", "user.email").stdout.strip().lower()
+        out = run("log", "--all", "--no-merges", f"--since={since.isoformat()}",
+                  "--pretty=format:%x1e%H%x1f%ae%x1f%an%x1f%aI%x1f%s", "--numstat")
+    except (OSError, subprocess.SubprocessError) as e:
+        return [], f"Could not run git: {e}"
+    if out.returncode:
+        return [], (out.stderr.strip() or "git log failed")[:200]
+    user = (github_user or "").lower()
+    commits = []
+    for rec in out.stdout.split("\x1e"):
+        if not rec.strip():
+            continue
+        head, *stat = rec.strip("\n").split("\n")
+        parts = head.split("\x1f")
+        if len(parts) < 5:
+            continue
+        _, ae, an, when, subject = parts[:5]
+        ae, an = ae.lower(), an.lower()
+        if (email or user) and not ((email and ae == email) or (user and (user in ae or user == an))):
+            continue
+        added = deleted = 0
+        for line in stat:
+            cols = line.split("\t")
+            if len(cols) >= 2:
+                added += int(cols[0]) if cols[0].isdigit() else 0
+                deleted += int(cols[1]) if cols[1].isdigit() else 0
+        commits.append({"when": datetime.fromisoformat(when).astimezone().replace(tzinfo=None),
+                        "subject": subject, "added": added, "deleted": deleted})
+    return commits, None
+
+
+def _month_start(d: date, back: int) -> date:
+    y, m = d.year, d.month - back
+    while m <= 0:
+        m += 12
+        y -= 1
+    return date(y, m, 1)
+
+
+@app.get("/api/activities")
+def activities(weeks: int = 16, months: int = 12):
+    today = date.today()
+    week0 = _monday(today) - timedelta(weeks=weeks - 1)
+    month0 = _month_start(today, months - 1)
+    since = min(week0, month0)
+    week_starts = [week0 + timedelta(weeks=i) for i in range(weeks)]
+    month_starts = [_month_start(today, months - 1 - i) for i in range(months)]
+    def wi(d):
+        i = (_monday(d) - week0).days // 7
+        return i if 0 <= i < weeks else None
+    def mi(d):
+        i = (d.year - month0.year) * 12 + d.month - month0.month
+        return i if 0 <= i < months else None
+
+    github_user = load_local().get("github_user")
+    with db() as con:
+        types = rows(con.execute("SELECT id, kind, name, code, repo_path, finished AS archived, sort FROM courses"
+                                 " WHERE kind IN ('sport','code') ORDER BY kind, sort, id"))
+        sess = rows(con.execute("SELECT s.course_id, s.start, s.duration_sec FROM sessions s JOIN courses c ON c.id = s.course_id"
+                                " WHERE c.kind IN ('sport','code') AND s.start >= ?", (since.isoformat(),)))
+        timer = _timer(con)
+    if timer["state"] != "idle" and timer.get("course") and any(t["id"] == timer["course"]["id"] for t in types):
+        sess.append({"course_id": timer["course"]["id"], "start": timer["session_start"], "duration_sec": timer["elapsed_sec"]})
+
+    by_id = {t["id"]: t for t in types}
+    out = {}
+    for kind, label in ACTIVITY_GROUPS.items():
+        ktypes = [t for t in types if t["kind"] == kind]
+        for n, t in enumerate(ktypes):
+            t["slot"] = n  # fixed colour slot, in creation order
+            t["archived"] = bool(t["archived"])
+        wk = [[0.0] * weeks for _ in ktypes]
+        mo = [[0.0] * months for _ in ktypes]
+        idx = {t["id"]: n for n, t in enumerate(ktypes)}
+        days = set()
+        for s in sess:
+            if by_id[s["course_id"]]["kind"] != kind:
+                continue
+            d = parse(s["start"]).date()
+            h = s["duration_sec"] / 3600
+            n = idx[s["course_id"]]
+            if (i := wi(d)) is not None:
+                wk[n][i] += h
+            if (i := mi(d)) is not None:
+                mo[n][i] += h
+            if wi(d) is not None:
+                days.add(d)
+        group = {
+            "label": label,
+            "types": ktypes,
+            "weeks": [w.isoformat() for w in week_starts],
+            "months": [m.isoformat() for m in month_starts],
+            "weekly": [[round(v, 3) for v in row] for row in wk],
+            "monthly": [[round(v, 3) for v in row] for row in mo],
+            "this_week": round(sum(row[-1] for row in wk), 2),
+            "this_month": round(sum(row[-1] for row in mo), 2),
+            "avg_week": round(sum(sum(row[:-1]) for row in wk) / max(weeks - 1, 1), 2),  # full weeks only
+            "days_this_week": len([d for d in days if d >= _monday(today)]),
+        }
+        if kind == "code":
+            for t in ktypes:
+                commits, err = git_commits(t["repo_path"], since, github_user)
+                cw, aw, dw = [0] * weeks, [0] * weeks, [0] * weeks
+                cm = [0] * months
+                for c in commits:
+                    d = c["when"].date()
+                    if (i := wi(d)) is not None:
+                        cw[i] += 1; aw[i] += c["added"]; dw[i] += c["deleted"]
+                    if (i := mi(d)) is not None:
+                        cm[i] += 1
+                recent = sorted(commits, key=lambda c: c["when"], reverse=True)[:5]
+                t["git"] = {"error": err, "commits_week": cw, "added_week": aw, "deleted_week": dw, "commits_month": cm,
+                            "recent": [{"when": fmt(c["when"]), "subject": c["subject"], "added": c["added"],
+                                        "deleted": c["deleted"]} for c in recent]}
+        out[kind] = group
+    return out
+
+
 # ---------------------------------------------------------------- static
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -799,7 +1047,7 @@ def session_blocks(sess, with_course=False, day_totals=False):
     lines, current_day = [], None
     day_sum = defaultdict(int)
     for s in sess:
-        if s.get("course_kind") != "other":
+        if s.get("course_kind", "course") == "course":
             day_sum[parse(s["start"]).date()] += s["duration_sec"]
     for s in sess:
         st, en = parse(s["start"]), parse(s["end"])
@@ -808,17 +1056,21 @@ def session_blocks(sess, with_course=False, day_totals=False):
             lines += ["", "=" * 50, current_day.strftime("%d.%m.%Y"), "=" * 50]
             if day_totals:
                 lines.append(f"Day total: {_hm(day_sum[current_day])}" if day_sum[current_day] else "Day total: no study time")
-        prefix = f"[{s['course_code'].upper()}] " if with_course else ""
+        kind = s.get("course_kind", "course")
+        prefix = ""
+        if with_course:
+            name = s.get("course_name") or s.get("course_code", "")
+            prefix = f"[{ACTIVITY_GROUPS[kind].upper()}: {name}] " if kind in ACTIVITY_GROUPS else f"[{s['course_code'].upper()}] "
         if s.get("course_kind") == "other" and s["duration_sec"] == 0:
             lines += ["", "--- OTHER ---", prefix + "whole day"]
             lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
             lines += ["--- END ---"]
             continue
-        lines += ["", "--- OTHER ---" if s.get("course_kind") == "other" else "--- SESSION START ---",
+        lines += ["", "--- OTHER ---" if kind == "other" else ("--- SESSION START ---" if kind == "course" else f"--- {kind.upper()} ---"),
                   prefix + f"{timedelta(seconds=s['duration_sec'])} ({st:%H:%M:%S} - {en:%H:%M:%S})"
                   + ("" if s["satisfaction"] is None else f"  [satisfaction {s['satisfaction']}/10]")]
         lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
-        lines += ["--- END ---" if s.get("course_kind") == "other" else "--- SESSION END ---"]
+        lines += ["--- SESSION END ---" if kind == "course" else "--- END ---"]
     return lines
 
 
@@ -851,12 +1103,17 @@ def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0)
         if course_id:
             sess = rows(con.execute(q + " ORDER BY s.start", args))
 
-    study = [s for s in sess if s["course_kind"] != "other"]
-    n_other = len(sess) - len(study)
+    study = [s for s in sess if s["course_kind"] == "course"]
+    n_other = sum(1 for s in sess if s["course_kind"] == "other")
     total = sum(s["duration_sec"] for s in study)
     lines = [title, f"Period: {d0:%d.%m.%Y} - {d1:%d.%m.%Y}"]
-    if study or not n_other:
+    if study or len(study) == len(sess):
         lines.append(f"Total: {_hm(total)} in {len(study)} session{'s' if len(study) != 1 else ''}")
+    for kind, label in ACTIVITY_GROUPS.items():
+        act = [s for s in sess if s["course_kind"] == kind]
+        if act:
+            lines.append(f"{label}: {_hm(sum(s['duration_sec'] for s in act))} in {len(act)} session{'s' if len(act) != 1 else ''}"
+                         " (not study time)")
     if n_other:
         lines.append(f"Other: {n_other} entr{'ies' if n_other != 1 else 'y'} (not counted as study time)")
     rated = [s for s in study if s["satisfaction"] is not None]
@@ -880,18 +1137,19 @@ def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0)
 def export_logs():
     today = date.today()
     with db() as con:
-        other = con.execute("SELECT * FROM courses WHERE kind='other'").fetchone()
-        if other:
-            sess = rows(con.execute("SELECT s.*, 'other' AS course_kind, 'other' AS course_code FROM sessions s"
-                                    " WHERE course_id=? ORDER BY start", (other["id"],)))
-            LOGS_DIR.mkdir(parents=True, exist_ok=True)
-            text = "\n".join(["Other (not study time)", "=" * 50] + session_blocks(sess)) + "\n"
-            tmp = LOGS_DIR / "other_log.tmp"
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        for kind, title in [("other", "Other (not study time)")] + [(k, f"{v} (not study time)") for k, v in ACTIVITY_GROUPS.items()]:
+            sess = rows(con.execute("SELECT s.*, c.kind AS course_kind, c.code AS course_code, c.name AS course_name"
+                                    " FROM sessions s JOIN courses c ON c.id = s.course_id WHERE c.kind=? ORDER BY s.start", (kind,)))
+            if not sess and kind != "other":
+                continue
+            text = "\n".join([title, "=" * 50] + session_blocks(sess, with_course=kind != "other")) + "\n"
+            tmp = LOGS_DIR / f"{kind}_log.tmp"
             tmp.write_text(text, encoding="utf-8")
-            tmp.replace(LOGS_DIR / "other_log.txt")
+            tmp.replace(LOGS_DIR / f"{kind}_log.txt")
         sems = rows(con.execute("SELECT * FROM semesters"))
         for sem in sems:
-            courses = rows(con.execute("SELECT * FROM courses WHERE semester_id=? AND kind != 'other'", (sem["id"],)))
+            courses = rows(con.execute("SELECT * FROM courses WHERE semester_id=? AND kind = 'course'", (sem["id"],)))
             if not courses:
                 continue
             folder = LOGS_DIR / sem["code"]

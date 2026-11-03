@@ -1,0 +1,7 @@
+{
+  "github_user": "your-github-username",
+  "sport": ["Running", "Climbing"],
+  "code": [
+    { "name": "my-project", "repo": "~/git/my-project" }
+  ]
+}

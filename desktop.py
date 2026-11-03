@@ -67,7 +67,9 @@ def enable_downloads(webview):
 
 
 def main():
-    os.environ.setdefault("QT_QPA_PLATFORMTHEME", "kde")
+    # The Qt bundled with pywebview can't load KDE's own theme plugin, so its dialogs looked dated.
+    # The desktop portal hands file dialogs to KDE itself (native look, your bookmarks and folders).
+    os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
     import webview
     import webview.platforms.qt  # noqa: F401  (loads Qt WebEngine, which must happen before QApplication exists)
     from qtpy.QtGui import QIcon

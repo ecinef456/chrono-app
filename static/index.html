@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=10">
+<link rel="stylesheet" href="/static/style.css?v=11">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=1"></script>
-<script src="/static/app.js?v=10"></script>
+<script src="/static/app.js?v=11"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -30,6 +30,7 @@
       <button role="tab" :aria-selected="tab==='dash'" @click="tab='dash'">Dashboard</button>
       <button role="tab" :aria-selected="tab==='log'" @click="tab='log'">Log</button>
       <button role="tab" :aria-selected="tab==='courses'" @click="tab='courses'">Courses</button>
+      <button role="tab" :aria-selected="tab==='act'" @click="tab='act'">Sport &amp; Code</button>
       <button role="tab" :aria-selected="tab==='teach'" @click="tab='teach'">Teach</button>
     </nav>
     <button class="icon-btn" @click="toggleTheme()" :title="'Theme: ' + theme" aria-label="Switch theme">
@@ -94,6 +95,13 @@
           <span class="swatch" :style="sw(c.category)"></span><span x-text="c.code.toUpperCase()"></span>
         </button>
       </template>
+      <span class="picker-sep" x-show="activityChips.length" aria-hidden="true"></span>
+      <template x-for="c in activityChips" :key="c.id">
+        <button class="chip chip-act" :aria-pressed="(timer.state==='idle' ? selectedId : timer.course?.id) === c.id"
+                :disabled="timer.state!=='idle'" @click="selectedId = c.id; remember()" :title="kindLabel(c.kind) + ': not study time'">
+          <span class="swatch swatch-dots" :style="dots(c.kind)"></span><span x-text="c.name"></span>
+        </button>
+      </template>
     </div>
 
     <div class="daystrip" x-show="stats">
@@ -103,7 +111,7 @@
       </div>
       <div class="daystrip-track">
         <template x-for="seg in daySegments()" :key="seg.key">
-          <div class="daystrip-seg" :class="{live: seg.live}" :style="seg.style" :title="seg.title"></div>
+          <div class="daystrip-seg" :class="{live: seg.live, act: seg.act}" :style="seg.style" :title="seg.title"></div>
         </template>
         <template x-for="t in hourTicks()" :key="t.h">
           <div class="daystrip-tick" :style="'left:' + t.left + '%'"></div>
@@ -227,11 +235,11 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Sessions</h2>
-        <span class="sub" x-text="filteredSessions().length + ' entries, ' + hoursFmt(filteredSessions().reduce((a,s)=>a+(s.course_kind === 'other' ? 0 : s.duration_sec),0)/3600) + ' studied'"></span>
+        <span class="sub" x-text="filteredSessions().length + ' entries, ' + hoursFmt(filteredSessions().reduce((a,s)=>a+(isStudy(s.course_kind) ? s.duration_sec : 0),0)/3600) + ' studied'"></span>
         <div class="right toolbar">
           <select class="field-inline" x-model.number="logCourse" aria-label="Filter by course">
             <option value="0">All courses</option>
-            <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="courseLabel(c)"></option></template>
+            <template x-for="g in courseGroups()" :key="g.label"><optgroup :label="g.label"><template x-for="c in g.items" :key="c.id"><option :value="c.id" x-text="courseLabel(c)"></option></template></optgroup></template>
           </select>
           <button class="btn primary" @click="openEntry()">Add entry</button>
         </div>
@@ -255,10 +263,10 @@
               <div class="log-row">
                 <div class="when"><span x-text="s.course_kind === 'other' && s.duration_sec === 0 ? 'whole day' : hm(s.start) + '–' + hm(s.end)"></span><div class="src" x-text="s.source === 'timer' ? '' : (s.source === 'manual' ? 'added by hand' : 'imported')"></div></div>
                 <div class="what">
-                  <div style="display:flex;gap:8px;align-items:center"><span class="swatch" :class="{ 'swatch-other': s.course_kind === 'other' }" :style="sw(s.category)"></span><b x-text="s.course_kind === 'other' ? 'Other' : s.course_code.toUpperCase()"></b><span class="muted" x-text="s.course_kind === 'other' ? 'not study time' : s.course_name"></span></div>
+                  <div style="display:flex;gap:8px;align-items:center"><span class="swatch" :class="{ 'swatch-other': s.course_kind === 'other', 'swatch-dots': s.course_kind === 'sport' || s.course_kind === 'code' }" :style="s.course_kind === 'sport' || s.course_kind === 'code' ? dots(s.course_kind) : sw(s.category)"></span><b x-text="isStudy(s.course_kind) ? s.course_code.toUpperCase() : kindLabel(s.course_kind)"></b><span class="muted" x-text="s.course_kind === 'other' ? 'not study time' : s.course_name"></span></div>
                   <div class="notes" x-show="s.notes" x-text="s.notes"></div>
                 </div>
-                <div class="dur" :class="{ 'muted': s.course_kind === 'other' }"><span x-text="s.course_kind === 'other' && s.duration_sec === 0 ? '' : dur(s.duration_sec)"></span><div class="sat-badge" x-show="s.satisfaction != null" x-text="s.satisfaction + '/10'" :title="'Satisfaction ' + s.satisfaction + ' of 10'"></div></div>
+                <div class="dur" :class="{ 'muted': !isStudy(s.course_kind) }"><span x-text="s.course_kind === 'other' && s.duration_sec === 0 ? '' : dur(s.duration_sec)"></span><div class="sat-badge" x-show="s.satisfaction != null" x-text="s.satisfaction + '/10'" :title="'Satisfaction ' + s.satisfaction + ' of 10'"></div></div>
                 <div class="acts">
                   <button class="icon-btn" title="Edit" aria-label="Edit entry" @click="openEntry(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
                   <button class="icon-btn" title="Delete" aria-label="Delete entry" @click="deleteSession(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
@@ -272,6 +280,69 @@
   </main>
 
   <!-- ===================== COURSES ===================== -->
+  <!-- ===================== SPORT & CODE (never study time) ===================== -->
+  <main x-show="tab==='act'" class="stack" x-cloak>
+    <template x-if="!act"><section class="panel"><div class="panel-body empty">Loading…</div></section></template>
+    <template x-for="kind in ['sport', 'code']" :key="kind">
+      <section class="panel" x-show="act && act[kind]">
+        <div class="panel-head">
+          <h2 x-text="act?.[kind]?.label"></h2>
+          <span class="sub" x-text="kind === 'code' ? 'hours from the timer, commits from your local clones' : 'hours from the timer and past entries'"></span>
+        </div>
+        <div class="figures act-figures">
+          <div class="figure"><div class="k">This week</div><div class="v"><span x-text="fx(act?.[kind]?.this_week, 1)"></span><small> h</small></div></div>
+          <div class="figure"><div class="k">This month</div><div class="v"><span x-text="fx(act?.[kind]?.this_month, 1)"></span><small> h</small></div></div>
+          <div class="figure"><div class="k">Ø per week (last 15)</div><div class="v"><span x-text="fx(act?.[kind]?.avg_week, 1)"></span><small> h</small></div></div>
+          <div class="figure"><div class="k">Days this week</div><div class="v"><span x-text="act?.[kind]?.days_this_week ?? 0"></span></div></div>
+        </div>
+        <div class="panel-body">
+          <div class="legend" style="margin-bottom:6px">
+            <template x-for="t in (act?.[kind]?.types || []).filter(t => !t.archived)" :key="t.id"><span><span class="swatch" :style="'background:' + actColor(t.slot)"></span><span x-text="t.name"></span></span></template>
+          </div>
+          <div class="chart-row">
+            <div><h3 class="chart-title">Per week</h3><div :id="kind + 'Week'" class="chart short"></div></div>
+            <div><h3 class="chart-title">Per month</h3><div :id="kind + 'Month'" class="chart short"></div></div>
+          </div>
+          <template x-if="kind === 'code'">
+            <div>
+              <h3 class="chart-title">Commits per week</h3>
+              <div id="codeCommits" class="chart short"></div>
+              <div class="commit-cols">
+                <template x-for="t in (act?.code?.types || []).filter(t => !t.archived)" :key="t.id">
+                  <div class="commit-col">
+                    <div class="commit-head"><span class="swatch" :style="'background:' + actColor(t.slot)"></span><b x-text="t.name"></b>
+                      <span class="muted" x-show="t.git && !t.git.error" x-text="t.git ? t.git.commits_week.reduce((a, b) => a + b, 0) + ' commits in 16 weeks, +' + t.git.added_week.reduce((a, b) => a + b, 0) + ' / −' + t.git.deleted_week.reduce((a, b) => a + b, 0) + ' lines' : ''"></span></div>
+                    <div class="warn-text small" x-show="t.git?.error" x-text="t.git?.error"></div>
+                    <template x-for="c in (t.git?.recent || [])" :key="c.when + c.subject">
+                      <div class="commit"><span class="muted" x-text="dmy(c.when).slice(0, 5)"></span><span class="s" x-text="c.subject"></span><span class="muted" x-text="'+' + c.added + ' −' + c.deleted"></span></div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <details class="types">
+            <summary x-text="'Edit ' + (kind === 'sport' ? 'sport types' : 'code projects')"></summary>
+            <template x-for="t in (act?.[kind]?.types || [])" :key="t.id">
+              <div class="type-row" :class="{ archived: t.archived }">
+                <span class="swatch" :style="'background:' + actColor(t.slot)"></span>
+                <input class="field-inline" :value="t.name" @change="saveActType(t, { name: $event.target.value })" aria-label="Name">
+                <input class="field-inline repo" x-show="kind === 'code'" :value="t.repo_path || ''" placeholder="~/git/project" @change="saveActType(t, { repo_path: $event.target.value })" aria-label="Local git folder">
+                <button class="btn small ghost" @click="saveActType(t, { archived: !t.archived })" x-text="t.archived ? 'Show again' : 'Hide'"></button>
+                <button class="btn small ghost danger" @click="deleteActType(t)">Delete</button>
+              </div>
+            </template>
+            <form class="type-row" @submit.prevent="addActType(kind)">
+              <input class="field-inline" x-model="actNew[kind]" :placeholder="kind === 'sport' ? 'New sport, e.g. Climbing' : 'New project, e.g. my-repo'">
+              <button class="btn small" type="submit">Add</button>
+            </form>
+            <div class="error" x-show="actErr" x-text="actErr"></div>
+          </details>
+        </div>
+      </section>
+    </template>
+  </main>
+
   <!-- ===================== TEACH (live lesson plan; stores nothing in the logs) ===================== -->
   <main x-show="tab==='teach'" class="stack teach" x-cloak @dragover.prevent="teachDrag = true" @dragleave.self="teachDrag = false" @drop.prevent="teachDrop($event)">
 
@@ -428,7 +499,7 @@
     <h2 x-text="entry.id ? 'Edit entry' : 'Add past entry'"></h2>
     <label class="f">Course
       <select x-model.number="entry.course_id" required>
-        <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="courseLabel(c)"></option></template>
+        <template x-for="g in courseGroups()" :key="g.label"><optgroup :label="g.label"><template x-for="c in g.items" :key="c.id"><option :value="c.id" x-text="courseLabel(c)"></option></template></optgroup></template>
       </select>
     </label>
     <label class="check" x-show="entryIsOther"><input type="checkbox" x-model="entry.wholeDay"> Whole day, no times</label>
@@ -447,7 +518,7 @@
         <span class="hint" x-text="entryIsOther ? 'Not counted as study time' : (entryStudied() > 0 ? 'Counted as studied: ' + dur(entryStudied() * 60) : 'Breaks must be shorter than the session')"></span>
       </label>
     </div>
-    <fieldset class="rating" x-show="!entryIsOther">
+    <fieldset class="rating" x-show="entryIsStudy">
       <legend>How satisfied are you with what you got done?</legend>
       <span class="hint">Compared with what you hoped to get done in this time. Optional.</span>
       <div class="scale" role="radiogroup" aria-label="Satisfaction from 0 to 10">
@@ -466,10 +537,20 @@
   </form>
 </dialog>
 
+<dialog id="askDlg" class="ask" @cancel.prevent="askDone(false)">
+  <form method="dialog" @submit.prevent="askDone(true)">
+    <p class="ask-msg" x-text="askMsg"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" @click="askDone(false)">Cancel</button>
+      <button type="submit" class="btn primary danger-fill" x-text="askOk"></button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="stopDlg">
   <form method="dialog" @submit.prevent="stop(true)">
     <h2 x-text="'Save ' + dur(elapsedNow) + ' of ' + (timer.course?.code || '').toUpperCase() + '?'"></h2>
-    <fieldset class="rating">
+    <fieldset class="rating" x-show="isStudy(timer.course?.kind)">
       <legend>How satisfied are you with what you got done?</legend>
       <span class="hint">Compared with what you hoped to get done in this time. Optional.</span>
       <div class="scale" role="radiogroup" aria-label="Satisfaction from 0 to 10">
@@ -481,7 +562,7 @@
     </fieldset>
     <label class="f">Notes<textarea x-model="stopNotes" placeholder="What did you work on?" x-ref="stopNotes"></textarea></label>
     <div class="actions">
-      <button type="button" class="btn ghost danger left" @click="if (confirm('Discard this session? The time will not be logged.')) stop(false)">Discard</button>
+      <button type="button" class="btn ghost danger left" @click="(await ask('Discard this session? The time will not be logged.', 'Discard')) && stop(false)">Discard</button>
       <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Keep studying</button>
       <button type="submit" class="btn primary">Save session</button>
     </div>

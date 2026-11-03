@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
@@ -69,7 +69,8 @@ function chrono() {
       // Dropping a .typ file anywhere opens it in Teach.
       window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
       window.addEventListener("drop", e => { if (e.dataTransfer?.files?.length && this.tab !== "teach") { e.preventDefault(); this.tab = "teach"; this.teachFiles(e.dataTransfer.files); } });
-      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); });
+      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "act") this.loadActivities(); });
+      if (this.tab === "act") this.loadActivities();
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
       setInterval(() => { if (this.timer.state === "running") this.loadStats(); }, 60000);
@@ -105,10 +106,28 @@ function chrono() {
 
     /* ---------------- derived */
     get currentSemester() { return this.semesters.find(s => s.id === this.semesterId); },
-    get studyCourses() { return this.courses.filter(c => c.kind !== "other"); },
+    get studyCourses() { return this.courses.filter(c => (c.kind || "course") === "course"); },
+    get activityChips() { return this.courses.filter(c => (c.kind === "sport" || c.kind === "code") && !c.finished); },
+    courseGroups() {
+      // Course list for the entry form and the Log filter, grouped
+      const g = [{ label: "Courses", items: this.studyCourses }];
+      for (const [k, label] of [["sport", "Sport"], ["code", "Code"]]) {
+        const items = this.courses.filter(c => c.kind === k && !c.finished);
+        if (items.length) g.push({ label, items });
+      }
+      g.push({ label: "Not study time", items: this.courses.filter(c => c.kind === "other") });
+      return g;
+    },
+    isStudy(kind) { return (kind || "course") === "course"; },
+    get entryIsStudy() { return this.isStudy(this.courses.find(c => c.id === this.entry.course_id)?.kind); },
+    kindLabel(kind) { return { sport: "Sport", code: "Code", other: "Other" }[kind] || ""; },
     get openCourses() { return this.studyCourses.filter(c => !c.finished); },
     get entryIsOther() { return this.courses.find(c => c.id === this.entry.course_id)?.kind === "other"; },
-    courseLabel(c) { return c.kind === "other" ? "Other (not study time)" : c.code.toUpperCase() + " – " + c.name; },
+    courseLabel(c) {
+      if (c.kind === "other") return "Other (not study time)";
+      if (c.kind === "sport" || c.kind === "code") return `${this.kindLabel(c.kind)} · ${c.name}`;
+      return c.code.toUpperCase() + " – " + c.name;
+    },
     get selectedCourse() { return this.courses.find(c => c.id === this.selectedId); },
     get elapsedNow() {
       this.tick;
@@ -139,10 +158,10 @@ function chrono() {
     openStop() { this.stopNotes = ""; this.stopRating = null; document.getElementById("stopDlg").showModal(); this.$nextTick(() => this.$refs.stopNotes.focus()); },
     async stop(save) {
       try {
-        const r = await api("/api/timer/stop", { method: "POST", body: { save, notes: this.stopNotes, satisfaction: this.stopRating } });
+        const r = await api("/api/timer/stop", { method: "POST", body: { save, notes: this.stopNotes, satisfaction: this.isStudy(this.timer.course?.kind) ? this.stopRating : null } });
         document.getElementById("stopDlg").close();
         this.toast(save && r.saved_session_id ? `Saved ${this.dur(r.duration_sec)}` : "Session discarded");
-        await this.refreshTimer(); await this.loadSemester();
+        await this.refreshTimer(); await this.loadSemester(); if (this.act) this.loadActivities();
       } catch (e) { this.toast(e.message); }
     },
     hotkey(e) {
@@ -201,7 +220,7 @@ function chrono() {
       } else {
         const [st, en] = this.entrySpan();
         if (this.entryStudied() <= 0) { this.entryErr = "Breaks must be shorter than the session."; return; }
-        body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: this.entryStudied() * 60, notes: this.entry.notes, satisfaction: this.entryIsOther ? null : this.entry.satisfaction };
+        body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: this.entryStudied() * 60, notes: this.entry.notes, satisfaction: this.entryIsStudy ? this.entry.satisfaction : null };
       }
       try {
         if (this.entry.id) await api(`/api/sessions/${this.entry.id}`, { method: "PUT", body });
@@ -211,8 +230,16 @@ function chrono() {
         await this.loadSemester();
       } catch (e) { this.entryErr = e.message; }
     },
+    // In-app confirmation (the browser's confirm() opens an old-style system window in the app)
+    ask(message, okLabel = "Delete") {
+      this.askMsg = message; this.askOk = okLabel;
+      document.getElementById("askDlg").showModal();
+      return new Promise(resolve => { this._askResolve = resolve; });
+    },
+    askDone(answer) { document.getElementById("askDlg").close(); if (this._askResolve) this._askResolve(answer); this._askResolve = null; },
     async deleteSession(s) {
-      if (!confirm(`Delete ${this.dur(s.duration_sec)} of ${s.course_code.toUpperCase()} on ${this.dmy(s.start)}?`)) return;
+      const what = s.course_kind === "other" ? "this Other entry" : this.dur(s.duration_sec) + " of " + (this.isStudy(s.course_kind) ? s.course_code.toUpperCase() : s.course_name);
+      if (!(await this.ask(`Delete ${what} on ${this.dmy(s.start)}?`))) return;
       await api(`/api/sessions/${s.id}`, { method: "DELETE" });
       this.toast("Entry deleted"); await this.loadSemester();
     },
@@ -242,7 +269,7 @@ function chrono() {
         const d = s.start.slice(0, 10);
         let g = groups[groups.length - 1];
         if (!g || g.date !== d) { g = { date: d, items: [], total: 0 }; groups.push(g); }
-        g.items.push(s); if (s.course_kind !== "other") g.total += s.duration_sec / 3600;
+        g.items.push(s); if (this.isStudy(s.course_kind)) g.total += s.duration_sec / 3600;
       }
       return groups;
     },
@@ -266,7 +293,7 @@ function chrono() {
       } catch (e) { this.courseErr = e.message; }
     },
     async deleteCourse() {
-      if (!confirm(`Delete ${this.courseForm.name}?`)) return;
+      if (!(await this.ask(`Delete ${this.courseForm.name}?`))) return;
       try { await api(`/api/courses/${this.courseForm.id}`, { method: "DELETE" }); document.getElementById("courseDlg").close(); this.toast("Course deleted"); await this.loadSemester(); }
       catch (e) { this.courseErr = e.message; }
     },
@@ -323,12 +350,13 @@ function chrono() {
     /* today strip */
     todaySessions() {
       const today = isoDate(wallNow());
-      return this.recent.filter(s => s.course_kind !== "other" && (s.start.slice(0, 10) === today || s.end.slice(0, 10) === today));
+      // everything with a time span; whole-day Other notes have none
+      return this.recent.filter(s => !(s.course_kind === "other" && s.duration_sec === 0) && (s.start.slice(0, 10) === today || s.end.slice(0, 10) === today));
     },
     todayHours() {
       this.tick;
-      let sec = this.todaySessions().reduce((a, s) => a + s.duration_sec, 0);
-      if (this.timer.state !== "idle" && this.timer.session_start?.slice(0, 10) === isoDate(wallNow())) sec += this.elapsedNow;
+      let sec = this.todaySessions().filter(s => this.isStudy(s.course_kind)).reduce((a, s) => a + s.duration_sec, 0);
+      if (this.timer.state !== "idle" && this.isStudy(this.timer.course?.kind) && this.timer.session_start?.slice(0, 10) === isoDate(wallNow())) sec += this.elapsedNow;
       return sec / 3600;
     },
     dayStripRange() {
@@ -360,13 +388,16 @@ function chrono() {
       this.tick;
       const segs = this.todaySessions().map(s => {
         const a = this.pct(parseLocal(s.start)), b = this.pct(parseLocal(s.end));
-        return { key: "s" + s.id, live: false, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;${this.bg(s.category)}`, title: `${s.course_code.toUpperCase()} ${this.hm(s.start)}–${this.hm(s.end)}, ${this.dur(s.duration_sec)}` };
+        const study = this.isStudy(s.course_kind);
+        const name = study ? s.course_code.toUpperCase() : this.kindLabel(s.course_kind) + (s.course_kind === "other" ? "" : " · " + s.course_name);
+        return { key: "s" + s.id, live: false, act: !study, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;` + (study ? this.bg(s.category) : this.dots(s.course_kind)), title: `${name} ${this.hm(s.start)}–${this.hm(s.end)}, ${this.dur(s.duration_sec)}` };
       });
       if (this.timer.state !== "idle" && this.timer.session_start) {
         const a = this.pct(parseLocal(this.timer.session_start));
         const endT = this.timer.state === "running" ? wallNow() : parseLocal(this.timer.pause_start);
         const b = this.pct(endT);
-        segs.push({ key: "live", live: this.timer.state === "running", style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;${this.bg(this.timer.course?.category)}`, title: "Current session" });
+        const study = this.isStudy(this.timer.course?.kind);
+        segs.push({ key: "live", live: this.timer.state === "running", act: !study, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;` + (study ? this.bg(this.timer.course?.category) : this.dots(this.timer.course?.kind)), title: "Current session" });
       }
       return segs;
     },
@@ -507,6 +538,72 @@ function chrono() {
       }, true);
     },
 
+    /* ---------------- sport & code (never study time) */
+    async loadActivities() {
+      this.act = await api("/api/activities");
+      if (this.tab === "act") this.$nextTick(() => this.renderActCharts());
+    },
+    actColor(slot) {
+      const dark = cssVar("color-scheme") === "dark";
+      const light = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+      const dk = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+      return (dark ? dk : light)[slot % 8];
+    },
+    async addActType(kind) {
+      const name = this.actNew[kind].trim(); if (!name) return;
+      try {
+        await api("/api/activity-types", { method: "POST", body: { kind, name, repo_path: kind === "code" ? `~/git/${name}` : null } });
+        this.actNew[kind] = ""; this.actErr = "";
+        await this.loadSemester(); await this.loadActivities(); this.toast(`${name} added`);
+      } catch (e) { this.actErr = e.message; }
+    },
+    async saveActType(t, patch) {
+      try {
+        await api(`/api/activity-types/${t.id}`, { method: "PUT", body: { kind: t.kind, name: t.name, repo_path: t.repo_path, archived: t.archived, ...patch } });
+        await this.loadSemester(); await this.loadActivities();
+      } catch (e) { this.actErr = e.message; }
+    },
+    async deleteActType(t) {
+      if (!(await this.ask(`Delete ${t.name}?`))) return;
+      try { await api(`/api/activity-types/${t.id}`, { method: "DELETE" }); await this.loadSemester(); await this.loadActivities(); }
+      catch (e) { this.actErr = e.message; }
+    },
+    actMonthLabel(iso) { return parseLocal(iso).toLocaleDateString("en-GB", { month: "short" }) + (iso.slice(5, 7) === "01" ? " " + iso.slice(2, 4) : ""); },
+    renderActCharts() {
+      if (!this.act || this.tab !== "act" || !window.echarts) return;
+      const ink = cssVar("--ink"), ink2 = cssVar("--ink-2"), ink3 = cssVar("--ink-3"), rule = cssVar("--rule"), panel = cssVar("--panel");
+      const font = { fontFamily: "Hanken Grotesk, system-ui, sans-serif" };
+      const tip = { backgroundColor: panel, borderColor: rule, textStyle: { color: ink, ...font, fontSize: 13 }, extraCssText: "border-radius:10px;box-shadow:0 8px 24px -12px rgba(0,0,0,.35);" };
+      const axis = { axisLine: { lineStyle: { color: rule } }, axisTick: { show: false }, axisLabel: { color: ink3, ...font } };
+      const yAxis = unit => ({ type: "value", minInterval: unit === "h" ? 0.5 : 1, splitLine: { lineStyle: { color: rule, type: [3, 4] } }, axisLabel: { color: ink3, ...font, formatter: v => unit === "h" ? `${v} h` : v } });
+      const chart = (id, labels, series, unit, title) => {
+        const el = document.getElementById(id); if (!el) return;
+        const c = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: "svg" });
+        this.charts[id] = c;
+        c.setOption({
+          animation: false, textStyle: font, grid: { left: 40, right: 10, top: 14, bottom: 26 },
+          tooltip: { ...tip, trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(127,127,127,.08)" } },
+            formatter: ps => { const rows = ps.filter(p => p.value > 0).reverse().map(p => `<div style="display:flex;gap:14px;justify-content:space-between"><span>${p.marker}${p.seriesName}</span><b>${unit === "h" ? (+p.value).toFixed(1) + " h" : p.value}</b></div>`).join("");
+              const tot = ps.reduce((a, p) => a + (+p.value || 0), 0);
+              return `<div style="color:${ink2};margin-bottom:4px">${title(ps[0].dataIndex)}</div>${rows || `<span style="color:${ink2}">nothing</span>`}` + (ps.length > 1 && tot ? `<div style="display:flex;justify-content:space-between;border-top:1px solid ${rule};margin-top:4px;padding-top:4px"><span>Total</span><b>${unit === "h" ? tot.toFixed(1) + " h" : tot}</b></div>` : ""); } },
+          xAxis: { type: "category", data: labels, ...axis }, yAxis: yAxis(unit),
+          series: series.map((s, i) => ({ name: s.name, type: "bar", stack: "a", barMaxWidth: 26, data: s.data, itemStyle: { color: s.color, borderColor: panel, borderWidth: 1, borderRadius: i === series.length - 1 ? [4, 4, 0, 0] : 0 } })),
+        }, true);
+      };
+      for (const kind of ["sport", "code"]) {
+        const g = this.act[kind]; if (!g) continue;
+        const shown = g.types.map((t, n) => ({ t, n })).filter(({ t, n }) => !t.archived || g.weekly[n].some(v => v) || g.monthly[n].some(v => v));
+        const wLabels = g.weeks.map(w => this.dmy(w).slice(0, 5));
+        const mLabels = g.months.map(m => this.actMonthLabel(m));
+        chart(`${kind}Week`, wLabels, shown.map(({ t, n }) => ({ name: t.name, color: this.actColor(t.slot), data: g.weekly[n].map(v => +v.toFixed(2)) })), "h", i => `Week from ${this.dmy(g.weeks[i])}`);
+        chart(`${kind}Month`, mLabels, shown.map(({ t, n }) => ({ name: t.name, color: this.actColor(t.slot), data: g.monthly[n].map(v => +v.toFixed(2)) })), "h", i => parseLocal(g.months[i]).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
+        if (kind === "code") {
+          const withGit = g.types.filter(t => t.git && !t.git.error);
+          chart("codeCommits", wLabels, withGit.map(t => ({ name: t.name, color: this.actColor(t.slot), data: t.git.commits_week })), "n", i => `Commits, week from ${this.dmy(g.weeks[i])}`);
+        }
+      }
+    },
+
     /* ---------------- teach: live lesson plan (nothing here touches the study logs) */
     async teachFiles(fileList) {
       const files = await Promise.all([...fileList].map(async f => ({ name: f.name, text: await f.text() })));
@@ -634,11 +731,12 @@ function chrono() {
     },
     toggleTheme() {
       this.theme = { system: "light", light: "dark", dark: "system" }[this.theme];
-      store.set("chrono-theme", this.theme); this.applyTheme(); this.$nextTick(() => this.renderCharts());
+      store.set("chrono-theme", this.theme); this.applyTheme(); this.$nextTick(() => { this.renderCharts(); this.renderActCharts(); });
     },
 
     /* ---------------- formatting */
     sw(cat) { return `background:var(--c-${cat || "none"})`; },
+    dots(kind) { return `--dot:var(--c-${kind === "other" ? "none" : kind});`; },
     bg(cat) { return `background:var(--c-${cat || "none"});`; },
     catLabel(k) { return this.meta.categories.find(c => c.key === k)?.label || "No category"; },
     fx(n, d = 1) { return n == null ? "–" : Number(n).toFixed(d); },
