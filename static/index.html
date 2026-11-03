@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=9">
+<link rel="stylesheet" href="/static/style.css?v=10">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=1"></script>
-<script src="/static/app.js?v=9"></script>
+<script src="/static/app.js?v=10"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -227,11 +227,11 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Sessions</h2>
-        <span class="sub" x-text="filteredSessions().length + ' entries, ' + hoursFmt(filteredSessions().reduce((a,s)=>a+s.duration_sec,0)/3600)"></span>
+        <span class="sub" x-text="filteredSessions().length + ' entries, ' + hoursFmt(filteredSessions().reduce((a,s)=>a+(s.course_kind === 'other' ? 0 : s.duration_sec),0)/3600) + ' studied'"></span>
         <div class="right toolbar">
           <select class="field-inline" x-model.number="logCourse" aria-label="Filter by course">
             <option value="0">All courses</option>
-            <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="c.code.toUpperCase() + ' – ' + c.name"></option></template>
+            <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="courseLabel(c)"></option></template>
           </select>
           <button class="btn primary" @click="openEntry()">Add entry</button>
         </div>
@@ -250,15 +250,15 @@
         </template>
         <template x-for="g in groupedSessions()" :key="g.date">
           <div class="day-group">
-            <h3><span x-text="longDate(g.date)"></span><span class="muted" x-text="hoursFmt(g.total)"></span></h3>
+            <h3><span x-text="longDate(g.date)"></span><span class="muted" x-text="g.total ? hoursFmt(g.total) : 'no study time'"></span></h3>
             <template x-for="s in g.items" :key="s.id">
               <div class="log-row">
-                <div class="when"><span x-text="hm(s.start) + '–' + hm(s.end)"></span><div class="src" x-text="s.source === 'timer' ? '' : (s.source === 'manual' ? 'added by hand' : 'imported')"></div></div>
+                <div class="when"><span x-text="s.course_kind === 'other' && s.duration_sec === 0 ? 'whole day' : hm(s.start) + '–' + hm(s.end)"></span><div class="src" x-text="s.source === 'timer' ? '' : (s.source === 'manual' ? 'added by hand' : 'imported')"></div></div>
                 <div class="what">
-                  <div style="display:flex;gap:8px;align-items:center"><span class="swatch" :style="sw(s.category)"></span><b x-text="s.course_code.toUpperCase()"></b><span class="muted" x-text="s.course_name"></span></div>
+                  <div style="display:flex;gap:8px;align-items:center"><span class="swatch" :class="{ 'swatch-other': s.course_kind === 'other' }" :style="sw(s.category)"></span><b x-text="s.course_kind === 'other' ? 'Other' : s.course_code.toUpperCase()"></b><span class="muted" x-text="s.course_kind === 'other' ? 'not study time' : s.course_name"></span></div>
                   <div class="notes" x-show="s.notes" x-text="s.notes"></div>
                 </div>
-                <div class="dur"><span x-text="dur(s.duration_sec)"></span><div class="sat-badge" x-show="s.satisfaction != null" x-text="s.satisfaction + '/10'" :title="'Satisfaction ' + s.satisfaction + ' of 10'"></div></div>
+                <div class="dur" :class="{ 'muted': s.course_kind === 'other' }"><span x-text="s.course_kind === 'other' && s.duration_sec === 0 ? '' : dur(s.duration_sec)"></span><div class="sat-badge" x-show="s.satisfaction != null" x-text="s.satisfaction + '/10'" :title="'Satisfaction ' + s.satisfaction + ' of 10'"></div></div>
                 <div class="acts">
                   <button class="icon-btn" title="Edit" aria-label="Edit entry" @click="openEntry(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
                   <button class="icon-btn" title="Delete" aria-label="Delete entry" @click="deleteSession(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
@@ -408,7 +408,7 @@
       <div class="panel-head"><h2>Courses</h2><div class="right"><button class="btn primary" @click="openCourse()">Add course</button></div></div>
       <div class="panel-body">
         <template x-if="!courses.length"><div class="empty">No courses yet. Add the courses you take this semester.</div></template>
-        <template x-for="c in courses" :key="c.id">
+        <template x-for="c in studyCourses" :key="c.id">
           <div class="admin-row">
             <div class="cname"><span class="swatch" :style="sw(c.category)"></span><span class="code" x-text="c.code"></span><span x-text="c.name"></span><span class="span-tag" x-show="c.spans" :title="spanTitle(c)" x-text="c.home === false ? 'from ' + c.home_code : 'across semesters'"></span></div>
             <div class="opt" x-text="fx(c.ects, 0) + ' ECTS'"></div>
@@ -428,25 +428,26 @@
     <h2 x-text="entry.id ? 'Edit entry' : 'Add past entry'"></h2>
     <label class="f">Course
       <select x-model.number="entry.course_id" required>
-        <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="c.code.toUpperCase() + ' – ' + c.name"></option></template>
+        <template x-for="c in courses" :key="c.id"><option :value="c.id" x-text="courseLabel(c)"></option></template>
       </select>
     </label>
-    <div class="grid3">
+    <label class="check" x-show="entryIsOther"><input type="checkbox" x-model="entry.wholeDay"> Whole day, no times</label>
+    <div class="grid3" :style="entryIsOther && entry.wholeDay ? 'grid-template-columns: 1fr' : ''">
       <label class="f">Date<input type="date" x-model="entry.date" required></label>
-      <label class="f">From<input type="time" x-model="entry.from" required @input="syncLength()"></label>
-      <label class="f">To<input type="time" x-model="entry.to" required @input="syncLength()"></label>
+      <label class="f" x-show="!(entryIsOther && entry.wholeDay)">From<input type="time" x-model="entry.from" :required="!(entryIsOther && entry.wholeDay)" @input="syncLength()"></label>
+      <label class="f" x-show="!(entryIsOther && entry.wholeDay)">To<input type="time" x-model="entry.to" :required="!(entryIsOther && entry.wholeDay)" @input="syncLength()"></label>
     </div>
-    <div class="grid2">
+    <div class="grid2" x-show="!(entryIsOther && entry.wholeDay)">
       <label class="f">Duration (minutes)
-        <input type="number" min="1" max="1439" step="1" x-model.number="entry.length" required @input="syncFrom()">
+        <input type="number" min="1" max="1439" step="1" x-model.number="entry.length" :required="!(entryIsOther && entry.wholeDay)" @input="syncFrom()">
         <span class="hint">Keeps the end time and moves the start.</span>
       </label>
       <label class="f">Breaks in between (minutes)
         <input type="number" min="0" step="1" x-model.number="entry.breaks">
-        <span class="hint" x-text="entryStudied() > 0 ? 'Counted as studied: ' + dur(entryStudied() * 60) : 'Breaks must be shorter than the session'"></span>
+        <span class="hint" x-text="entryIsOther ? 'Not counted as study time' : (entryStudied() > 0 ? 'Counted as studied: ' + dur(entryStudied() * 60) : 'Breaks must be shorter than the session')"></span>
       </label>
     </div>
-    <fieldset class="rating">
+    <fieldset class="rating" x-show="!entryIsOther">
       <legend>How satisfied are you with what you got done?</legend>
       <span class="hint">Compared with what you hoped to get done in this time. Optional.</span>
       <div class="scale" role="radiogroup" aria-label="Satisfaction from 0 to 10">
@@ -456,7 +457,7 @@
       </div>
       <div class="scale-ends"><span>Not at all</span><span>Completely</span></div>
     </fieldset>
-    <label class="f">Notes<textarea x-model="entry.notes" placeholder="What did you work on?"></textarea></label>
+    <label class="f"><span x-text="entryIsOther ? 'What did you do instead?' : 'Notes'"></span><textarea x-model="entry.notes" :required="entryIsOther" :placeholder="entryIsOther ? 'e.g. sick, moving, family visit' : 'What did you work on?'"></textarea></label>
     <div class="error" x-show="entryErr" x-text="entryErr"></div>
     <div class="actions">
       <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Cancel</button>

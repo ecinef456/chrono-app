@@ -105,7 +105,10 @@ function chrono() {
 
     /* ---------------- derived */
     get currentSemester() { return this.semesters.find(s => s.id === this.semesterId); },
-    get openCourses() { return this.courses.filter(c => !c.finished); },
+    get studyCourses() { return this.courses.filter(c => c.kind !== "other"); },
+    get openCourses() { return this.studyCourses.filter(c => !c.finished); },
+    get entryIsOther() { return this.courses.find(c => c.id === this.entry.course_id)?.kind === "other"; },
+    courseLabel(c) { return c.kind === "other" ? "Other (not study time)" : c.code.toUpperCase() + " – " + c.name; },
     get selectedCourse() { return this.courses.find(c => c.id === this.selectedId); },
     get elapsedNow() {
       this.tick;
@@ -166,10 +169,10 @@ function chrono() {
       if (s) {
         const st = parseLocal(s.start), en = parseLocal(s.end);
         const length = Math.round((en - st) / 60000);
-        this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, length, breaks: Math.max(0, length - Math.round(s.duration_sec / 60)), notes: s.notes || "", satisfaction: s.satisfaction ?? null };
+        this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, length, breaks: Math.max(0, length - Math.round(s.duration_sec / 60)), notes: s.notes || "", satisfaction: s.satisfaction ?? null, wholeDay: s.course_kind === "other" && s.duration_sec === 0 };
       } else {
         const now = wallNow(), from = new Date(now - 3600e3);
-        this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, length: 60, breaks: 0, notes: "", satisfaction: null };
+        this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, length: 60, breaks: 0, notes: "", satisfaction: null, wholeDay: true };
       }
       document.getElementById("entryDlg").showModal();
     },
@@ -191,9 +194,15 @@ function chrono() {
     },
     entryStudied() { return Math.round(Number(this.entry.length) || 0) - Math.round(Number(this.entry.breaks) || 0); },
     async saveEntry() {
-      const [st, en] = this.entrySpan();
-      if (this.entryStudied() <= 0) { this.entryErr = "Breaks must be shorter than the session."; return; }
-      const body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: this.entryStudied() * 60, notes: this.entry.notes, satisfaction: this.entry.satisfaction };
+      let body;
+      if (this.entryIsOther && this.entry.wholeDay) {
+        // A note for the whole day: no times, no study time.
+        body = { course_id: this.entry.course_id, start: `${this.entry.date}T00:00:00`, end: `${this.entry.date}T23:59:00`, duration_sec: 0, notes: this.entry.notes, satisfaction: null };
+      } else {
+        const [st, en] = this.entrySpan();
+        if (this.entryStudied() <= 0) { this.entryErr = "Breaks must be shorter than the session."; return; }
+        body = { course_id: this.entry.course_id, start: isoLocal(st), end: isoLocal(en), duration_sec: this.entryStudied() * 60, notes: this.entry.notes, satisfaction: this.entryIsOther ? null : this.entry.satisfaction };
+      }
       try {
         if (this.entry.id) await api(`/api/sessions/${this.entry.id}`, { method: "PUT", body });
         else await api("/api/sessions", { method: "POST", body });
@@ -233,7 +242,7 @@ function chrono() {
         const d = s.start.slice(0, 10);
         let g = groups[groups.length - 1];
         if (!g || g.date !== d) { g = { date: d, items: [], total: 0 }; groups.push(g); }
-        g.items.push(s); g.total += s.duration_sec / 3600;
+        g.items.push(s); if (s.course_kind !== "other") g.total += s.duration_sec / 3600;
       }
       return groups;
     },
@@ -314,7 +323,7 @@ function chrono() {
     /* today strip */
     todaySessions() {
       const today = isoDate(wallNow());
-      return this.recent.filter(s => s.start.slice(0, 10) === today || s.end.slice(0, 10) === today);
+      return this.recent.filter(s => s.course_kind !== "other" && (s.start.slice(0, 10) === today || s.end.slice(0, 10) === today));
     },
     todayHours() {
       this.tick;

@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS courses (
     sort INTEGER DEFAULT 0,
     start_date TEXT,              -- YYYY-MM-DD; only used when spans = 1
     spans INTEGER NOT NULL DEFAULT 0, -- 1 = runs across semesters (e.g. a thesis); semester_id = where its ECTS count
+    kind TEXT NOT NULL DEFAULT 'course', -- 'course' or 'other' (the built-in "Other": notes on days off, never study time)
     UNIQUE (semester_id, code)
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -111,6 +112,19 @@ def init_db():
         if "spans" not in ccols:  # databases created before multi-semester courses existed
             con.execute("ALTER TABLE courses ADD COLUMN start_date TEXT")
             con.execute("ALTER TABLE courses ADD COLUMN spans INTEGER NOT NULL DEFAULT 0")
+        if "kind" not in [r["name"] for r in con.execute("PRAGMA table_info(courses)")]:
+            con.execute("ALTER TABLE courses ADD COLUMN kind TEXT NOT NULL DEFAULT 'course'")
+        ensure_other(con)
+
+
+def ensure_other(con):
+    """The built-in "Other" entry: one for all semesters. Its semester_id is only a technical anchor."""
+    if con.execute("SELECT 1 FROM courses WHERE kind='other'").fetchone():
+        return
+    first = con.execute("SELECT id FROM semesters ORDER BY sort, id LIMIT 1").fetchone()
+    if first:
+        con.execute("INSERT INTO courses (semester_id,code,name,ects,category,sort,kind)"
+                    " VALUES (?,'other','Other',0,NULL,9999,'other')", (first[0],))
 
 
 @contextmanager
@@ -233,6 +247,7 @@ def create_semester(body: SemesterIn):
                               (body.code.strip().upper(), body.start_date, body.end_date, sort))
         except sqlite3.IntegrityError:
             raise HTTPException(409, f"Semester {body.code} already exists.")
+        ensure_other(con)
         return {"id": cur.lastrowid}
 
 
@@ -275,12 +290,13 @@ def _in_window(window, d: date) -> bool:
 
 
 def _visible_courses(con, sem):
-    own = rows(con.execute("SELECT * FROM courses WHERE semester_id=? ORDER BY sort, id", (sem["id"],)))
+    own = rows(con.execute("SELECT * FROM courses WHERE semester_id=? AND kind != 'other' ORDER BY sort, id", (sem["id"],)))
     for c in own:
         c["home"] = True
+    other = con.execute("SELECT * FROM courses WHERE kind='other'").fetchone()
     window = _sem_window(con, sem)
     if window is None:
-        return own
+        return own + ([dict(other, home=False)] if other else [])
     others = rows(con.execute("SELECT c.*, s.code AS home_code FROM courses c JOIN semesters s ON s.id = c.semester_id"
                               " WHERE c.spans = 1 AND c.semester_id != ? ORDER BY c.sort, c.id", (sem["id"],)))
     for c in others:
@@ -289,12 +305,14 @@ def _visible_courses(con, sem):
         if (window[1] is None or c_start < window[1]) and (c_end is None or c_end >= window[0]):
             c["home"] = False
             own.append(c)
+    if other:
+        own.append(dict(other, home=False))
     return own
 
 
 def _counts_here(course, window, d: date) -> bool:
     """Does a session on day d count for this semester's weekly numbers?"""
-    return not course.get("spans") or _in_window(window, d)
+    return not (course.get("spans") or course.get("kind") == "other") or _in_window(window, d)
 
 
 def check_spans(body: CourseIn):
@@ -345,6 +363,8 @@ def update_course(cid: int, body: CourseIn):
 @app.delete("/api/courses/{cid}")
 def delete_course(cid: int):
     with db() as con:
+        if con.execute("SELECT 1 FROM courses WHERE id=? AND kind='other'", (cid,)).fetchone():
+            raise HTTPException(409, "Other is built in and can't be deleted.")
         n = con.execute("SELECT COUNT(*) FROM sessions WHERE course_id=?", (cid,)).fetchone()[0]
         if n:
             raise HTTPException(409, f"This course has {n} logged sessions. Delete them first, "
@@ -359,7 +379,7 @@ def delete_course(cid: int):
 
 @app.get("/api/sessions")
 def list_sessions(semester_id: Optional[int] = None, course_id: Optional[int] = None, limit: int = 2000):
-    q = ("SELECT s.*, c.code AS course_code, c.name AS course_name, c.category"
+    q = ("SELECT s.*, c.code AS course_code, c.name AS course_name, c.category, c.kind AS course_kind"
          " FROM sessions s JOIN courses c ON c.id = s.course_id WHERE 1=1")
     args = []
     if course_id:
@@ -392,6 +412,16 @@ def _session_values(body: SessionIn):
     if span <= 0:
         raise HTTPException(400, "End must be after start.")
     dur = span if body.duration_sec is None else int(body.duration_sec)
+    with db() as con:
+        kind = con.execute("SELECT kind FROM courses WHERE id=?", (body.course_id,)).fetchone()
+    if not kind:
+        raise HTTPException(404, "Course not found.")
+    if kind[0] == "other":
+        if dur < 0 or dur > span:
+            raise HTTPException(400, "The time must fit between start and end.")
+        if not body.notes.strip():
+            raise HTTPException(400, "Write what you did, that's the point of an Other entry.")
+        return start, end, dur
     if dur <= 0 or dur > span:
         raise HTTPException(400, "Studied time must be positive and fit between start and end.")
     return start, end, dur
@@ -599,7 +629,7 @@ def stats(semester_id: int):
         if not sem:
             raise HTTPException(404, "Semester not found.")
         sem = dict(sem)
-        courses = _visible_courses(con, sem)
+        courses = [c for c in _visible_courses(con, sem) if c.get("kind") != "other"]
         window = _sem_window(con, sem)
         ids = [c["id"] for c in courses]
         all_sess = rows(con.execute(
@@ -769,20 +799,26 @@ def session_blocks(sess, with_course=False, day_totals=False):
     lines, current_day = [], None
     day_sum = defaultdict(int)
     for s in sess:
-        day_sum[parse(s["start"]).date()] += s["duration_sec"]
+        if s.get("course_kind") != "other":
+            day_sum[parse(s["start"]).date()] += s["duration_sec"]
     for s in sess:
         st, en = parse(s["start"]), parse(s["end"])
         if st.date() != current_day:
             current_day = st.date()
             lines += ["", "=" * 50, current_day.strftime("%d.%m.%Y"), "=" * 50]
             if day_totals:
-                lines.append(f"Day total: {_hm(day_sum[current_day])}")
+                lines.append(f"Day total: {_hm(day_sum[current_day])}" if day_sum[current_day] else "Day total: no study time")
         prefix = f"[{s['course_code'].upper()}] " if with_course else ""
-        lines += ["", "--- SESSION START ---",
+        if s.get("course_kind") == "other" and s["duration_sec"] == 0:
+            lines += ["", "--- OTHER ---", prefix + "whole day"]
+            lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
+            lines += ["--- END ---"]
+            continue
+        lines += ["", "--- OTHER ---" if s.get("course_kind") == "other" else "--- SESSION START ---",
                   prefix + f"{timedelta(seconds=s['duration_sec'])} ({st:%H:%M:%S} - {en:%H:%M:%S})"
                   + ("" if s["satisfaction"] is None else f"  [satisfaction {s['satisfaction']}/10]")]
         lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
-        lines += ["--- SESSION END ---"]
+        lines += ["--- END ---" if s.get("course_kind") == "other" else "--- SESSION END ---"]
     return lines
 
 
@@ -795,7 +831,7 @@ def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0)
         raise HTTPException(400, "Dates must look like 2026-10-19.")
     if d1 < d0:
         raise HTTPException(400, "The end date is before the start date.")
-    q = ("SELECT s.*, c.code AS course_code, c.name AS course_name FROM sessions s"
+    q = ("SELECT s.*, c.code AS course_code, c.name AS course_name, c.kind AS course_kind FROM sessions s"
          " JOIN courses c ON c.id = s.course_id WHERE s.start >= ? AND s.start < ?")
     args = [d0.isoformat(), (d1 + timedelta(days=1)).isoformat()]
     with db() as con:
@@ -815,19 +851,25 @@ def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0)
         if course_id:
             sess = rows(con.execute(q + " ORDER BY s.start", args))
 
-    total = sum(s["duration_sec"] for s in sess)
-    lines = [title, f"Period: {d0:%d.%m.%Y} - {d1:%d.%m.%Y}",
-             f"Total: {_hm(total)} in {len(sess)} session{'s' if len(sess) != 1 else ''}"]
-    rated = [s for s in sess if s["satisfaction"] is not None]
+    study = [s for s in sess if s["course_kind"] != "other"]
+    n_other = len(sess) - len(study)
+    total = sum(s["duration_sec"] for s in study)
+    lines = [title, f"Period: {d0:%d.%m.%Y} - {d1:%d.%m.%Y}"]
+    if study or not n_other:
+        lines.append(f"Total: {_hm(total)} in {len(study)} session{'s' if len(study) != 1 else ''}")
+    if n_other:
+        lines.append(f"Other: {n_other} entr{'ies' if n_other != 1 else 'y'} (not counted as study time)")
+    rated = [s for s in study if s["satisfaction"] is not None]
     if rated:
         w = sum(s["duration_sec"] for s in rated)
         lines.append(f"Satisfaction: {sum(s['satisfaction'] * s['duration_sec'] for s in rated) / w:.1f}/10"
                      f" ({len(rated)} rated)")
     if not course_id and sess:
         per = defaultdict(int)
-        for s in sess:
+        for s in study:
             per[s["course_code"].upper()] += s["duration_sec"]
-        lines.append("By course: " + ", ".join(f"{k} {_hm(v)}" for k, v in sorted(per.items(), key=lambda kv: -kv[1])))
+        if per:
+            lines.append("By course: " + ", ".join(f"{k} {_hm(v)}" for k, v in sorted(per.items(), key=lambda kv: -kv[1])))
     lines.append("=" * 50)
     lines += session_blocks(sess, with_course=not course_id, day_totals=True) if sess else ["", "No sessions in this period."]
     filename = f"{slug}_{d0.isoformat()}_to_{d1.isoformat()}.txt"
@@ -838,9 +880,18 @@ def export_range(start: str, end: str, course_id: int = 0, semester_id: int = 0)
 def export_logs():
     today = date.today()
     with db() as con:
+        other = con.execute("SELECT * FROM courses WHERE kind='other'").fetchone()
+        if other:
+            sess = rows(con.execute("SELECT s.*, 'other' AS course_kind, 'other' AS course_code FROM sessions s"
+                                    " WHERE course_id=? ORDER BY start", (other["id"],)))
+            LOGS_DIR.mkdir(parents=True, exist_ok=True)
+            text = "\n".join(["Other (not study time)", "=" * 50] + session_blocks(sess)) + "\n"
+            tmp = LOGS_DIR / "other_log.tmp"
+            tmp.write_text(text, encoding="utf-8")
+            tmp.replace(LOGS_DIR / "other_log.txt")
         sems = rows(con.execute("SELECT * FROM semesters"))
         for sem in sems:
-            courses = rows(con.execute("SELECT * FROM courses WHERE semester_id=?", (sem["id"],)))
+            courses = rows(con.execute("SELECT * FROM courses WHERE semester_id=? AND kind != 'other'", (sem["id"],)))
             if not courses:
                 continue
             folder = LOGS_DIR / sem["code"]
