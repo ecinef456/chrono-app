@@ -163,5 +163,5 @@ It sets up a small background service that starts Chrono every time you log in. 
 
 - **Categories and colours:** `CATEGORIES` in `app.py`. The CSS colour variables are `--c-<key>` in `static/style.css`. All colours come from Okabe & Ito's colour-blind-safe palette (categories, Teach strip, charts) and ColorBrewer ramps (heat map, satisfaction); where colour carries meaning, a symbol (✓, ▲) says it too.
 - **Break types:** `BREAK_TYPES` in `app.py`.
-- **Buy me a coffee:** set `SUPPORT_URL` in `app.py` to your page; the button appears in the header and in the welcome dialog. Leave it empty to hide it.
+- **Buy me a coffee:** set `KOFI_USER` and/or `GITHUB_SPONSORS_USER` in `app.py`. The header button opens the page directly when only one is set, or a short choice (Ko-fi for a quick card tip without an account, GitHub Sponsors for people with a GitHub account, fee-free) when both are. Both empty: no button. For the "Sponsor" button on the GitHub page, fill in `.github/FUNDING.yml`.
 - **Hours per ECTS:** `ECTS_HOURS` in `app.py`.

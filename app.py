@@ -68,8 +68,15 @@ CATEGORIES = [
 ]
 CATEGORY_KEYS = [c["key"] for c in CATEGORIES]
 
-# Your Buy Me a Coffee page, e.g. "https://buymeacoffee.com/yourname". Empty: no button.
-SUPPORT_URL = ""
+# Tips. Fill in your usernames; whatever stays empty is not shown. Both empty: no button.
+KOFI_USER = "ecinef456"             # the end of your Ko-fi page address: ko-fi.com/<this>
+GITHUB_SPONSORS_USER = "ecinef456"  # your GitHub username, once GitHub Sponsors has approved you
+SUPPORT = [
+    {"key": "kofi", "label": "Ko-fi", "url": f"https://ko-fi.com/{KOFI_USER}" if KOFI_USER else "",
+     "when": "A one-off tip with a card, Apple Pay or Google Pay. No account needed."},
+    {"key": "github", "label": "GitHub Sponsors", "url": f"https://github.com/sponsors/{GITHUB_SPONSORS_USER}" if GITHUB_SPONSORS_USER else "",
+     "when": "If you have a GitHub account: one-off or monthly, and all of it reaches me (no fees)."},
+]
 
 # Break types offered when you resume after a pause. Add more here if you like.
 BREAK_TYPES = ["Necessary", "Not necessary"]
@@ -318,7 +325,7 @@ def check_category(cat):
 @app.get("/api/meta")
 def meta():
     return {"categories": CATEGORIES, "break_types": BREAK_TYPES, "ects_hours": ECTS_HOURS,
-            "today": date.today().isoformat(), "support_url": SUPPORT_URL}
+            "today": date.today().isoformat(), "support": [x for x in SUPPORT if x["url"]]}
 
 
 # ---------------------------------------------------------------- semesters

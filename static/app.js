@@ -610,6 +610,13 @@ function chrono() {
       }
     },
 
+    /* ---------------- tips: one option opens directly, several open a short choice */
+    openSupport() {
+      const opts = this.meta.support || [];
+      if (opts.length === 1) window.open(opts[0].url, "_blank", "noopener");
+      else document.getElementById("supportDlg").showModal();
+    },
+
     /* ---------------- features (first launch) */
     async loadFeatures() {
       try { this.features = await api("/api/features"); } catch { return; }
