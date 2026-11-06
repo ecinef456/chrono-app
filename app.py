@@ -68,6 +68,9 @@ CATEGORIES = [
 ]
 CATEGORY_KEYS = [c["key"] for c in CATEGORIES]
 
+# Your Buy Me a Coffee page, e.g. "https://buymeacoffee.com/yourname". Empty: no button.
+SUPPORT_URL = ""
+
 # Break types offered when you resume after a pause. Add more here if you like.
 BREAK_TYPES = ["Necessary", "Not necessary"]
 
@@ -315,7 +318,7 @@ def check_category(cat):
 @app.get("/api/meta")
 def meta():
     return {"categories": CATEGORIES, "break_types": BREAK_TYPES, "ects_hours": ECTS_HOURS,
-            "today": date.today().isoformat()}
+            "today": date.today().isoformat(), "support_url": SUPPORT_URL}
 
 
 # ---------------------------------------------------------------- semesters

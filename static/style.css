@@ -570,3 +570,12 @@ label.f textarea { min-height: 84px; resize: vertical; }
   .sleep-tl-scale, .sleep-tl-row { grid-template-columns: 70px 1fr 60px; }
   .sleep-row { grid-template-columns: 1fr auto; }
 }
+
+/* ---------- support link */
+.coffee-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--rule);
+  color: var(--ink-2); text-decoration: none; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.coffee-btn svg { width: 18px; height: 18px; }
+.coffee-btn:hover { color: var(--ink); border-color: var(--ink-3); background: var(--sunk); }
+.coffee-note { font-size: 13.5px; margin-top: 14px; }
+.coffee-note a { color: var(--ink); }
+@media (max-width: 980px) { .coffee-btn span { display: none; } .coffee-btn { padding: 7px; } }

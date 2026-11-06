@@ -163,4 +163,5 @@ It sets up a small background service that starts Chrono every time you log in. 
 
 - **Categories and colours:** `CATEGORIES` in `app.py`. The CSS colour variables are `--c-<key>` in `static/style.css`. All colours come from Okabe & Ito's colour-blind-safe palette (categories, Teach strip, charts) and ColorBrewer ramps (heat map, satisfaction); where colour carries meaning, a symbol (✓, ▲) says it too.
 - **Break types:** `BREAK_TYPES` in `app.py`.
+- **Buy me a coffee:** set `SUPPORT_URL` in `app.py` to your page; the button appears in the header and in the welcome dialog. Leave it empty to hide it.
 - **Hours per ECTS:** `ECTS_HOURS` in `app.py`.
