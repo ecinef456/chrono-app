@@ -3,3 +3,7 @@ data/
 logs/
 __pycache__/
 chrono.local.json
+build/
+dist/
+*.spec
+AppDir/

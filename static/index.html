@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=12">
+<link rel="stylesheet" href="/static/style.css?v=13">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=2"></script>
-<script src="/static/app.js?v=12"></script>
+<script src="/static/app.js?v=13"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -30,16 +30,20 @@
       <button role="tab" :aria-selected="tab==='dash'" @click="tab='dash'">Dashboard</button>
       <button role="tab" :aria-selected="tab==='log'" @click="tab='log'">Log</button>
       <button role="tab" :aria-selected="tab==='courses'" @click="tab='courses'">Courses</button>
-      <button role="tab" :aria-selected="tab==='act'" @click="tab='act'">Sport &amp; Code</button>
-      <button role="tab" :aria-selected="tab==='teach'" @click="tab='teach'">Teach</button>
+      <button role="tab" :aria-selected="tab==='act'" @click="tab='act'" x-show="feat('sport_code')">Sport &amp; Code</button>
+      <button role="tab" :aria-selected="tab==='teach'" @click="tab='teach'" x-show="feat('teach')">Teach</button>
+      <button role="tab" :aria-selected="tab==='sleep'" @click="tab='sleep'" x-show="feat('sleep')">Sleep</button>
     </nav>
+    <button class="icon-btn" @click="openFeatures()" title="Features" aria-label="Choose features">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+    </button>
     <button class="icon-btn" @click="toggleTheme()" :title="'Theme: ' + theme" aria-label="Switch theme">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
     </button>
   </header>
 
   <!-- ===================== TIMER (always visible) ===================== -->
-  <section class="panel hero" aria-label="Timer" x-show="tab!=='teach'">
+  <section class="panel hero" aria-label="Timer" x-show="tab!=='teach' && tab!=='sleep'">
     <div class="hero-grid">
       <div>
         <div class="hero-course">
@@ -147,7 +151,7 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Time per course</h2>
-        <span class="sub">Needed is the weekly pace to reach the ECTS by the deadline (30 h per ECTS): green when your semester average covers it, red when it doesn’t</span>
+        <span class="sub">Needed is the weekly pace to reach the ECTS by the deadline (30 h per ECTS): ✓ when your semester average covers it, ▲ when it doesn’t</span>
       </div>
       <div class="panel-body">
         <template x-if="!stats || !stats.courses.length">
@@ -647,6 +651,164 @@
     </template>
   </main>
 
+  <!-- ===================== SLEEP (diary, schedule, statistics, advice) ===================== -->
+  <main x-show="tab==='sleep'" class="stack sleep" x-cloak>
+    <div class="sleep-top">
+      <!-- log a night or a nap -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2 x-text="sleepForm?.id ? 'Edit ' + (sleepForm.kind === 'nap' ? 'nap' : 'night') : (sleepForm?.kind === 'nap' ? 'Log a nap' : 'Log last night')"></h2>
+          <span class="sub" x-show="sleepForm && !sleepForm.id">
+            <button class="btn small ghost" x-show="sleepForm?.kind === 'night'" @click="sleepNew('nap')">a nap instead</button>
+            <button class="btn small ghost" x-show="sleepForm?.kind === 'nap'" @click="sleepNew('night')">a night instead</button>
+          </span>
+        </div>
+        <div class="panel-body sleep-form" x-show="sleepForm">
+          <template x-if="sleepForm">
+            <div class="stack-sm">
+              <div class="grid3">
+                <label class="f"><span x-text="sleepForm.kind === 'nap' ? 'Day' : 'Night of (evening)'"></span><input type="date" x-model="sleepForm.night"
+                       @change="sleepForm.kind === 'night' && !sleepForm.id && (sleepForm.free = sleepIsFreeMorning(sleepForm.night), sleepForm.alarm = !sleepForm.free)"></label>
+                <label class="f"><span x-text="sleepForm.kind === 'nap' ? 'From' : 'In bed, lights out'"></span><input type="time" x-model="sleepForm.bedT"></label>
+                <label class="f"><span x-text="sleepForm.kind === 'nap' ? 'To' : 'Woke up (final)'"></span><input type="time" x-model="sleepForm.wakeT"></label>
+              </div>
+              <div class="grid3" x-show="sleepForm.kind === 'night'">
+                <label class="f">Fell asleep after (min)<input type="number" min="0" max="600" x-model="sleepForm.latency" placeholder="optional"></label>
+                <label class="f">Awake during the night (min)<input type="number" min="0" max="900" x-model="sleepForm.awake" placeholder="optional"></label>
+                <div class="f">How rested do you feel?
+                  <div class="seg-btns">
+                    <template x-for="q in 5" :key="q"><button type="button" class="btn small" :class="{primary: sleepForm.quality === q}" @click="sleepForm.quality = sleepForm.quality === q ? null : q" x-text="q"></button></template>
+                  </div>
+                </div>
+              </div>
+              <div class="sleep-checks" x-show="sleepForm.kind === 'night'">
+                <label class="check"><input type="checkbox" x-model="sleepForm.free"> Free day after (no obligations in the morning)</label>
+                <label class="check"><input type="checkbox" x-model="sleepForm.alarm"> Woke with an alarm</label>
+              </div>
+              <label class="f">Notes<input type="text" x-model="sleepForm.notes" placeholder="optional: caffeine late, exam, ill, ..."></label>
+              <div class="error" x-show="sleepErr" x-text="sleepErr"></div>
+              <div class="actions">
+                <span class="muted" x-text="sleepFormHours()"></span>
+                <span class="grow"></span>
+                <button class="btn ghost" x-show="sleepForm.id" @click="sleepNew()">Cancel</button>
+                <button class="btn primary" @click="sleepSave()" x-text="sleepForm.id ? 'Save changes' : 'Save'"></button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- tonight + schedule -->
+      <section class="panel">
+        <div class="panel-head"><h2>Tonight</h2><button class="btn small ghost" @click="sleepSchedOpen = !sleepSchedOpen; sleepSched = JSON.parse(JSON.stringify(sleepSt.schedule))" x-text="sleepSchedOpen ? 'Close' : 'Edit schedule'"></button></div>
+        <div class="panel-body">
+          <template x-if="sleepTonight() && !sleepSchedOpen">
+            <div class="tonight">
+              <div class="tonight-big"><span x-text="sleepTonight().bed"></span><small> → </small><span x-text="sleepTonight().wake"></span></div>
+              <div class="muted" x-text="(sleepTonight().free ? 'Free day tomorrow' : 'Work day tomorrow') + (sleepTonight().label ? ' · bedtime ' + sleepTonight().label : '')"></div>
+              <div class="tonight-hint" x-show="sleepSt?.stats.nights >= 3" x-text="'For ' + sleepSt.schedule.need_h + ' h of sleep with your usual time to fall asleep: in bed by ' + sleepSt.stats.suggested_bed + ' on work nights.'"></div>
+            </div>
+          </template>
+          <template x-if="sleepSchedOpen && sleepSched">
+            <div class="stack-sm">
+              <label class="f">Sleep I aim for (hours)<input type="number" min="4" max="12" step="0.25" x-model="sleepSched.need_h"></label>
+              <div class="f">Free days (the mornings without obligations)
+                <div class="seg-btns">
+                  <template x-for="(d, i) in ['Mo','Tu','We','Th','Fr','Sa','Su']" :key="i">
+                    <button type="button" class="btn small" :class="{primary: sleepSched.free_days.includes(i)}" @click="sleepToggleFree(i)" x-text="d"></button>
+                  </template>
+                </div>
+              </div>
+              <div class="grid2">
+                <label class="f">Work nights: bed<input type="time" x-model="sleepSched.work.bed"></label>
+                <label class="f">Work days: wake<input type="time" x-model="sleepSched.work.wake"></label>
+                <label class="f">Free nights: bed<input type="time" x-model="sleepSched.free.bed"></label>
+                <label class="f">Free days: wake<input type="time" x-model="sleepSched.free.wake"></label>
+              </div>
+              <p class="hint">Keep the two wake-up times within about an hour of each other: that is what keeps your rhythm regular.</p>
+              <div class="actions"><button class="btn primary" @click="sleepSaveSched()">Save schedule</button></div>
+            </div>
+          </template>
+        </div>
+      </section>
+    </div>
+
+    <!-- statistics -->
+    <section class="panel" x-show="sleepSt">
+      <div class="panel-head">
+        <h2>Your sleep</h2>
+        <span class="sub">
+          <template x-for="d in [14, 28, 90]" :key="d"><button class="btn small" :class="{primary: sleepDays === d}" @click="sleepSetDays(d)" x-text="d + ' days'"></button></template>
+        </span>
+      </div>
+      <div class="figures sleep-figs" x-show="sleepSt?.stats.nights">
+        <div class="figure"><div class="k">Average sleep</div><div class="v"><span x-text="sleepFmt(sleepSt?.stats.asleep_avg)"></span><small x-text="sleepSt?.stats.asleep_sd ? ' ± ' + Math.round(sleepSt.stats.asleep_sd) + ' min' : ''"></small></div></div>
+        <div class="figure"><div class="k">Nights with 7 h or more</div><div class="v"><span x-text="(sleepSt?.stats.nights || 0) - (sleepSt?.stats.short_nights || 0)"></span><small x-text="' of ' + (sleepSt?.stats.nights || 0)"></small></div></div>
+        <div class="figure"><div class="k">Regularity (SRI, 0–100)</div><div class="v"><span x-text="sleepSt?.stats.sri == null ? '–' : Math.round(sleepSt.stats.sri)"></span><small x-text="sleepSt?.stats.sri == null ? ' needs 4+ nights in a row' : ''"></small></div></div>
+        <div class="figure"><div class="k">Bedtime / wake-up</div><div class="v"><span x-text="(sleepSt?.stats.bed_avg || '–') + ' / ' + (sleepSt?.stats.wake_avg || '–')"></span></div><div class="k" x-text="sleepSt?.stats.wake_sd ? 'wake-up varies ± ' + Math.round(sleepSt.stats.wake_sd) + ' min' : ''"></div></div>
+        <div class="figure"><div class="k">Social jet lag</div><div class="v"><span x-text="sleepSt?.stats.social_jetlag == null ? '–' : sleepFmt(sleepSt.stats.social_jetlag)"></span></div><div class="k" x-text="sleepSt?.stats.work_mid ? 'mid-sleep ' + sleepSt.stats.work_mid + ' work · ' + (sleepSt.stats.free_mid || '–') + ' free' : ''"></div></div>
+        <div class="figure"><div class="k">Last 7 nights below your goal</div><div class="v"><span x-text="sleepFmt(sleepSt?.stats.debt_7)"></span></div><div class="k" x-text="sleepSt?.stats.efficiency ? 'asleep ' + Math.round(sleepSt.stats.efficiency * 100) + ' % of the time in bed' : ''"></div></div>
+      </div>
+      <div class="panel-body">
+        <div class="empty" x-show="!sleepSt?.stats.nights">No nights in this period yet. Log your first one above: it takes ten seconds each morning.</div>
+        <!-- timeline: one row per night -->
+        <div class="sleep-tl" x-show="sleepSt?.stats.nights">
+          <div class="sleep-tl-scale"><span></span><div><template x-for="t in sleepTicks()" :key="t[0]"><span :style="'left:' + t[1] + '%'" x-text="t[0]"></span></template></div><span></span></div>
+          <template x-for="r in sleepRows()" :key="r.key">
+            <div class="sleep-tl-row" :class="{free: r.free}">
+              <span class="d" x-text="sleepDayLabel(r.night)"></span>
+              <div class="track">
+                <i class="plan" :style="r.plan" title="Your schedule"></i>
+                <i class="bed" :style="r.bed"></i>
+                <i class="asleep" :class="{short: r.short}" :style="r.sleep"></i>
+              </div>
+              <span class="h" :class="{short: r.short}" x-text="(r.short ? '▲ ' : '') + sleepFmt(r.asleep)"></span>
+            </div>
+          </template>
+          <div class="sleep-legend">
+            <span><i class="asleep"></i> asleep</span><span><i class="asleep short"></i> under 7 h (▲)</span><span><i class="bed"></i> in bed, awake</span><span><i class="plan"></i> your schedule</span><span><b>F</b>&nbsp;free day after</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- advice -->
+    <section class="panel" x-show="sleepSt?.advice.length">
+      <div class="panel-head"><h2>What your data says</h2><span class="sub">Each point is tied to a published study or guideline</span></div>
+      <div class="panel-body advice">
+        <template x-for="(a, i) in sleepSt?.advice || []" :key="i">
+          <div class="advice-item" :class="a.level">
+            <div class="advice-mark" x-text="{good: '✓', warn: '!', tip: '→', info: 'i'}[a.level]"></div>
+            <div>
+              <div class="advice-title" x-text="a.title"></div>
+              <p x-text="a.text"></p>
+              <div class="advice-src"><template x-for="s in a.sources" :key="s.url"><a :href="s.url" target="_blank" rel="noopener" x-text="s.label"></a></template></div>
+            </div>
+          </div>
+        </template>
+        <p class="hint">Chrono is not a doctor. See one if you snore loudly or stop breathing in your sleep, or if you are often sleepy during the day despite enough time in bed.</p>
+      </div>
+    </section>
+
+    <!-- history -->
+    <section class="panel" x-show="sleepList.length">
+      <div class="panel-head"><h2>Diary</h2><span class="sub" x-text="sleepList.length + ' entries'"></span></div>
+      <div class="panel-body sleep-list">
+        <template x-for="e in sleepList.slice(0, 60)" :key="e.id">
+          <div class="sleep-row">
+            <span class="d" x-text="sleepDayLabel(e.night) + (e.kind === 'nap' ? ' · nap' : '')"></span>
+            <span class="t" x-text="e.bed.slice(11, 16) + '–' + e.wake.slice(11, 16)"></span>
+            <span class="m muted" x-text="[e.latency_min != null ? e.latency_min + ' min to fall asleep' : '', e.awake_min ? e.awake_min + ' min awake' : '', e.quality ? 'rested ' + e.quality + '/5' : '', e.free && e.kind === 'night' ? 'free day' : '', e.notes].filter(Boolean).join(' · ')"></span>
+            <span class="actions">
+              <button class="btn small ghost" @click="sleepEdit(e)">Edit</button>
+              <button class="btn small ghost danger" @click="sleepDelete(e)">Delete</button>
+            </span>
+          </div>
+        </template>
+      </div>
+    </section>
+  </main>
+
   <main x-show="tab==='courses'" class="stack" x-cloak>
     <section class="panel" x-show="currentSemester">
       <div class="panel-head"><h2 x-text="'Semester ' + (currentSemester?.code || '')"></h2><span class="sub">Weekly averages count from the start date</span>
@@ -718,6 +880,20 @@
     <div class="actions">
       <button type="button" class="btn ghost" @click="$el.closest('dialog').close()">Cancel</button>
       <button type="submit" class="btn primary" x-text="entry.id ? 'Save changes' : 'Add entry'"></button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="featDlg" class="feat-dlg" @cancel.prevent="features?.chosen && $el.close()">
+  <form method="dialog" @submit.prevent="saveFeatures()">
+    <h2 x-text="features?.chosen ? 'Features' : 'Welcome to Chrono'"></h2>
+    <p class="muted">The study timer (Dashboard, Log, Courses) is always there. Pick what else you want; you can change this any time with the ⚙ button. Switching something off only hides it, nothing is deleted.</p>
+    <template x-for="(desc, k) in features?.available || {}" :key="k">
+      <label class="feat-row"><input type="checkbox" x-model="featPick[k]"><span><b x-text="desc.split(':')[0]"></b><span class="muted" x-text="':' + desc.split(':').slice(1).join(':')"></span></span></label>
+    </template>
+    <div class="actions">
+      <button type="button" class="btn ghost" x-show="features?.chosen" @click="$el.closest('dialog').close()">Cancel</button>
+      <button type="submit" class="btn primary">Done</button>
     </div>
   </form>
 </dialog>

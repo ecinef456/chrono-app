@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
@@ -69,10 +69,12 @@ function chrono() {
       // Dropping a .typ file anywhere opens it in Teach.
       window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
       window.addEventListener("drop", e => { if (e.dataTransfer?.files?.length && this.tab !== "teach") { e.preventDefault(); this.tab = "teach"; this.teachFiles(e.dataTransfer.files); } });
-      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "act") this.loadActivities(); if (v === "teach") this.teachInit(); });
+      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "act") this.loadActivities(); if (v === "teach") this.teachInit(); if (v === "sleep") this.sleepInit(); });
       if (this.tab === "act") this.loadActivities();
       if (this.teachView === "run" && !this.teach || this.teachView === "edit") this.teachView = "cal";
       if (this.tab === "teach") this.teachInit();
+      if (this.tab === "sleep") this.sleepInit();
+      this.loadFeatures();
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
       setInterval(() => { if (this.timer.state === "running") this.loadStats(); }, 60000);
@@ -109,7 +111,7 @@ function chrono() {
     /* ---------------- derived */
     get currentSemester() { return this.semesters.find(s => s.id === this.semesterId); },
     get studyCourses() { return this.courses.filter(c => (c.kind || "course") === "course"); },
-    get activityChips() { return this.courses.filter(c => (c.kind === "sport" || c.kind === "code") && !c.finished); },
+    get activityChips() { return this.features?.chosen && !this.feat("sport_code") ? [] : this.courses.filter(c => (c.kind === "sport" || c.kind === "code") && !c.finished); },
     courseGroups() {
       // Course list for the entry form and the Log filter, grouped
       const g = [{ label: "Courses", items: this.studyCourses }];
@@ -327,9 +329,11 @@ function chrono() {
     neededOf(c) {
       // Green when the semester average already covers the weekly pace still needed.
       if (c.finished) return { cls: "good", text: "✓ " + (c.grade || "done") };
-      if (c.hours >= c.target_hours) return { cls: "good", text: "done" };
-      if (c.needed_week == null) return { cls: "bad", text: "past deadline" };
-      return { cls: c.avg_week >= c.needed_week ? "good" : "bad", text: this.fx(c.needed_week, 1) + " h" };
+      if (c.hours >= c.target_hours) return { cls: "good", text: "✓ done" };
+      if (c.needed_week == null) return { cls: "bad", text: "▲ past deadline" };
+      // a shape as well as a colour, so it reads without colour vision
+      const ok = c.avg_week >= c.needed_week;
+      return { cls: ok ? "good" : "bad", text: (ok ? "✓ " : "▲ ") + this.fx(c.needed_week, 1) + " h" };
     },
     ectsSegments() {
       if (!this.stats) return [];
@@ -447,7 +451,7 @@ function chrono() {
         cal.setOption({
           animation: false, textStyle: font,
           tooltip: { ...tooltipBase, formatter: p => `${this.longDate(p.value[0])}<br><b>${this.hoursFmt(p.value[1])}</b>` },
-          visualMap: { show: false, min: 0, max, inRange: { color: dark ? ["#184f95", "#3987e5", "#9ec5f4"] : ["#cde2fb", "#3987e5", "#0d366b"] } },
+          visualMap: { show: false, min: 0, max, inRange: { color: dark ? ["#08306b", "#2171b5", "#9ecae1"] : ["#deebf7", "#4292c6", "#08306b"] } },
           calendar: {
             top: "middle", left: 34, right: 8, orient: "horizontal", range: [r.start, r.end], cellSize: [cell, cell],
             splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3, borderRadius: cell < 16 ? 2 : 3 },
@@ -547,8 +551,8 @@ function chrono() {
     },
     actColor(slot) {
       const dark = cssVar("color-scheme") === "dark";
-      const light = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
-      const dk = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+      const light = ["#0072b2", "#e69f00", "#009e73", "#d55e00", "#cc79a7", "#56b4e9", "#8a7d00", "#5b6b82"];   // Okabe & Ito
+      const dk = ["#4aa3df", "#f0b030", "#2fc79a", "#ee7a33", "#e09ac4", "#7fc8f0", "#e6d84a", "#a7b1c0"];
       return (dark ? dk : light)[slot % 8];
     },
     async addActType(kind) {
@@ -606,6 +610,127 @@ function chrono() {
       }
     },
 
+    /* ---------------- features (first launch) */
+    async loadFeatures() {
+      try { this.features = await api("/api/features"); } catch { return; }
+      if (!this.features.chosen) {
+        this.featPick = { ...this.features.suggested };
+        this.$nextTick(() => document.getElementById("featDlg")?.showModal());
+      }
+      this.fixTab();
+    },
+    feat(k) { return !!this.features?.chosen?.[k]; },
+    openFeatures() { this.featPick = { ...(this.features?.chosen || this.features?.suggested || {}) }; document.getElementById("featDlg").showModal(); },
+    async saveFeatures() {
+      this.features = await api("/api/features", { method: "PUT", body: { chosen: this.featPick } });
+      document.getElementById("featDlg").close();
+      this.fixTab();
+    },
+    fixTab() {
+      const need = { act: "sport_code", teach: "teach", sleep: "sleep" }[this.tab];
+      if (need && this.features?.chosen && !this.feat(need)) this.tab = "dash";
+    },
+
+    /* ---------------- sleep */
+    async sleepInit() {
+      try {
+        const [list, st] = await Promise.all([
+          api("/api/sleep"),
+          api(`/api/sleep/stats?days=${this.sleepDays}`),
+        ]);
+        this.sleepList = list; this.sleepSt = st;
+        if (!this.sleepForm) this.sleepNew();
+        if (!this.sleepSched) this.sleepSched = JSON.parse(JSON.stringify(st.schedule));
+      } catch (e) { this.toast(e.message); }
+    },
+    async sleepSetDays(d) { this.sleepDays = d; store.set("chrono-sleep-days", d); await this.sleepInit(); },
+    sleepIsFreeMorning(nightIso) {
+      const d = new Date(nightIso + "T12:00"); d.setDate(d.getDate() + 1);
+      const wd = (d.getDay() + 6) % 7;   // 0 = Monday
+      return (this.sleepSt?.schedule.free_days || [5, 6]).includes(wd);
+    },
+    sleepNew(kind = "night") {
+      const now = wallNow();
+      const night = new Date(now); if (now.getHours() < 15) night.setDate(night.getDate() - 1);
+      const iso = isoDate(kind === "nap" ? now : night);
+      const sch = this.sleepSt?.schedule || { work: { bed: "23:00", wake: "07:00" }, free: { bed: "23:30", wake: "08:00" } };
+      const part = this.sleepIsFreeMorning(iso) ? sch.free : sch.work;
+      this.sleepForm = kind === "nap"
+        ? { id: null, kind, night: iso, bedT: "14:00", wakeT: "14:20", latency: null, awake: null, quality: null, free: null, alarm: false, notes: "" }
+        : { id: null, kind, night: iso, bedT: part.bed, wakeT: part.wake, latency: null, awake: null, quality: null, free: this.sleepIsFreeMorning(iso), alarm: !this.sleepIsFreeMorning(iso), notes: "" };
+      this.sleepErr = "";
+    },
+    sleepEdit(e) {
+      const t = s => s.slice(11, 16);
+      this.sleepForm = { id: e.id, kind: e.kind, night: e.night, bedT: t(e.bed), wakeT: t(e.wake), latency: e.latency_min, awake: e.awake_min,
+                         quality: e.quality, free: !!e.free, alarm: !!e.alarm, notes: e.notes || "" };
+      this.sleepErr = ""; window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    /** bed and wake as full timestamps: a night's bedtime before noon is after midnight; its wake-up is the next day. */
+    sleepTimes(f) {
+      const day = (iso, plus) => { const d = new Date(iso + "T12:00"); d.setDate(d.getDate() + plus); return isoDate(d); };
+      if (f.kind === "nap") return { bed: `${f.night}T${f.bedT}`, wake: `${f.night}T${f.wakeT}` };
+      const bedNext = f.bedT < "12:00";
+      return { bed: `${day(f.night, bedNext ? 1 : 0)}T${f.bedT}`, wake: `${day(f.night, 1)}T${f.wakeT}` };
+    },
+    sleepFormHours() {
+      const f = this.sleepForm; if (!f || !f.bedT || !f.wakeT) return "";
+      const { bed, wake } = this.sleepTimes(f);
+      const m = (new Date(wake) - new Date(bed)) / 60000 - (+f.latency || 0) - (+f.awake || 0);
+      return m > 0 ? `${Math.floor(m / 60)} h ${pad(Math.round(m % 60))} min asleep` : "";
+    },
+    async sleepSave() {
+      const f = this.sleepForm;
+      const body = { night: f.night, kind: f.kind, ...this.sleepTimes(f),
+                     latency_min: f.latency === "" || f.latency == null ? null : +f.latency,
+                     awake_min: f.awake === "" || f.awake == null ? null : +f.awake,
+                     quality: f.quality, free: f.kind === "nap" ? null : f.free, alarm: !!f.alarm, notes: f.notes || "" };
+      try {
+        await api(f.id ? `/api/sleep/${f.id}` : "/api/sleep", { method: f.id ? "PUT" : "POST", body });
+        this.toast(f.id ? "Saved" : (f.kind === "nap" ? "Nap logged" : "Night logged"));
+        this.sleepForm = null; await this.sleepInit();
+      } catch (e) { this.sleepErr = e.message; }
+    },
+    async sleepDelete(e) {
+      if (!(await this.ask(`Delete the ${e.kind} of ${this.longDate(e.night)}?`))) return;
+      await api(`/api/sleep/${e.id}`, { method: "DELETE" }); await this.sleepInit();
+    },
+    async sleepSaveSched() {
+      try {
+        const s = this.sleepSched;
+        await api("/api/sleep/schedule", { method: "PUT", body: { need_h: +s.need_h, free_days: s.free_days, work: s.work, free: s.free } });
+        this.sleepSchedOpen = false; this.sleepSched = null; this.toast("Schedule saved"); await this.sleepInit();
+      } catch (e) { this.toast(e.message); }
+    },
+    sleepToggleFree(d) { const a = this.sleepSched.free_days; const i = a.indexOf(d); i < 0 ? a.push(d) : a.splice(i, 1); a.sort(); },
+    sleepTonight() {
+      // tonight's plan, and how long until bedtime
+      this.tick;
+      const st = this.sleepSt; if (!st) return null;
+      const now = wallNow();
+      const night = new Date(now); if (now.getHours() < 12) night.setDate(night.getDate() - 1);
+      const iso = isoDate(night), free = this.sleepIsFreeMorning(iso);
+      const part = free ? st.schedule.free : st.schedule.work;
+      const [h, m] = part.bed.split(":").map(Number);
+      const bed = new Date(iso + "T00:00"); bed.setHours(h, m, 0, 0); if (h < 12) bed.setDate(bed.getDate() + 1);
+      const left = Math.round((bed - now) / 60000);
+      return { free, bed: part.bed, wake: part.wake, left, label: left > 0 ? `in ${Math.floor(left / 60)} h ${pad(left % 60)} min` : (left > -180 ? "now" : "") };
+    },
+    sleepFmt(min) { if (min == null) return "–"; const m = Math.round(min); return `${Math.floor(m / 60)} h ${pad(m % 60)}`; },
+    sleepRows() {
+      // one row per night, newest first; x from 18:00 (360 min after noon) to 14:00 (1560)
+      const st = this.sleepSt; if (!st) return [];
+      const x0 = 360, x1 = 1560, pc = v => Math.max(0, Math.min(100, ((v - x0) / (x1 - x0)) * 100));
+      const tgt = (free, k) => { const [h, m] = (free ? st.schedule.free : st.schedule.work)[k].split(":").map(Number); let t = h * 60 + m - 720; if (t < 0) t += 1440; return t; };
+      return [...st.nights].reverse().map(n => ({
+        key: n.id, night: n.night, free: n.free, asleep: n.asleep, short: n.asleep < 420, quality: n.quality,
+        bed: `left:${pc(n.bed)}%;width:${pc(n.wake) - pc(n.bed)}%`,
+        sleep: `left:${pc(n.onset)}%;width:${pc(n.wake) - pc(n.onset)}%`,
+        plan: `left:${pc(tgt(n.free, "bed"))}%;width:${pc(tgt(n.free, "wake")) - pc(tgt(n.free, "bed"))}%`,
+      }));
+    },
+    sleepTicks() { return [["18:00", 0], ["21:00", 15], ["00:00", 30], ["03:00", 45], ["06:00", 60], ["09:00", 75], ["12:00", 90]]; },   // 18:00-14:00 = 20 h
+    sleepDayLabel(iso) { const d = new Date(iso + "T12:00"); return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); },
     /* ---------------- teach: lesson calendar + live lesson plan (nothing here touches the study logs) */
     // views: "cal" (school year), "day" (timetables of one day), "run" (live), "edit" (editor)
     acadYear(iso) { const [y, m] = iso.split("-").map(Number); return m >= 8 ? y : y - 1; },
@@ -822,7 +947,8 @@ function chrono() {
     },
 
     // ---- buffer mode: the whole lesson as one wide strip, a window of +-10 % of an hour around now
-    tPalette: ["#2a78d6", "#eb6834", "#7c5cd6", "#d9a400", "#d6457a", "#1c94b8", "#9a6a3a", "#5b6b82"],
+    // Okabe & Ito (colour-blind safe), with a readable label colour each; green stays for breaks
+    tPalette: [["#0072b2", "#fff"], ["#e69f00", "#13223a"], ["#cc79a7", "#13223a"], ["#56b4e9", "#13223a"], ["#d55e00", "#fff"], ["#f0e442", "#13223a"], ["#5b6b82", "#fff"]],
     tWin() {
       const sch = this.tSchedule();
       if (!sch.length) return null;
@@ -834,11 +960,11 @@ function chrono() {
       sch.forEach((h, hi) => {
         h.activities.forEach(x => {
           const brk = isBreak(x.title);
-          const color = brk ? "var(--good)" : this.tPalette[ci++ % this.tPalette.length];
-          segs.push({ key: x.key, item: x, label: this.typst(x.title), cls: this.tRowClass(x) + (brk ? " brk" : ""), style: `left:${pc(x.start)}%;width:${pc(x.end) - pc(x.start)}%;--seg:${color}` });
+          const [color, fg] = brk ? ["var(--live)", "#fff"] : this.tPalette[ci++ % this.tPalette.length];
+          segs.push({ key: x.key, item: x, label: this.typst(x.title), cls: this.tRowClass(x) + (brk ? " brk" : ""), style: `left:${pc(x.start)}%;width:${pc(x.end) - pc(x.start)}%;--seg:${color};--seg-fg:${fg}` });
           x.details.forEach((d, di) => { if (di > 0 && d.start < x.end) details.push({ key: d.key, style: `left:${pc(d.start)}%` }); });
         });
-        if (h.breakAfter) segs.push({ key: "b" + hi, item: h.breakAfter, label: "Break", cls: "brk " + this.tRowClass(h.breakAfter), style: `left:${pc(h.breakAfter.start)}%;width:${pc(h.breakAfter.end) - pc(h.breakAfter.start)}%;--seg:var(--good)` });
+        if (h.breakAfter) segs.push({ key: "b" + hi, item: h.breakAfter, label: "Break", cls: "brk " + this.tRowClass(h.breakAfter), style: `left:${pc(h.breakAfter.start)}%;width:${pc(h.breakAfter.end) - pc(h.breakAfter.start)}%;--seg:var(--live);--seg-fg:#fff` });
         ticks.push({ key: "s" + hi, left: pc(h.start), label: this.clockOf(h.start) });
         if (h.breakAfter) ticks.push({ key: "e" + hi, left: pc(h.end), label: this.clockOf(h.end) });
       });

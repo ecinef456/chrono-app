@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Chrono
+GenericName=Study tracker
+Comment=Track study time, sport, code, lessons and sleep
+Exec=Chrono
+Icon=chrono
+Terminal=false
+Categories=Education;Utility;
+StartupWMClass=Chrono

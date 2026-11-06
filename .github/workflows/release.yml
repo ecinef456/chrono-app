@@ -1,0 +1,90 @@
+# Builds Chrono as a desktop app for Linux (AppImage), Windows (Chrono.exe) and macOS (Chrono.app).
+#
+# Make a release:   git tag v1.0.0 && git push origin v1.0.0
+# The three files then appear under Releases on GitHub (takes ~10 minutes).
+# Or run it by hand: Actions -> Build desktop apps -> Run workflow (files under the run's Artifacts).
+name: Build desktop apps
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04        # older glibc: the AppImage runs on more distributions
+            name: linux
+          - os: windows-latest
+            name: windows
+          - os: macos-latest        # Apple silicon
+            name: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller pillow
+          if [ "${{ matrix.name }}" = linux ]; then pip install "pywebview[qt]>=5"; else pip install "pywebview>=5"; fi
+
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          SEP=":"; [ "${{ matrix.name }}" = windows ] && SEP=";"
+          MODE="--onedir"; [ "${{ matrix.name }}" = windows ] && MODE="--onefile"
+          pyinstaller --noconfirm --clean --windowed $MODE --name Chrono \
+            --icon static/icon-512.png \
+            --add-data "static${SEP}static" \
+            --hidden-import app \
+            --collect-submodules uvicorn \
+            --collect-submodules webview \
+            desktop.py
+
+      - name: Package (Linux AppImage)
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y libfuse2
+          mkdir -p AppDir/usr/bin
+          cp -r dist/Chrono AppDir/usr/bin/Chrono
+          cp packaging/AppRun AppDir/AppRun && chmod +x AppDir/AppRun
+          cp packaging/chrono.desktop AppDir/chrono.desktop
+          cp static/icon-512.png AppDir/chrono.png
+          curl -sSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run AppDir Chrono-x86_64.AppImage
+          mkdir -p out && mv Chrono-x86_64.AppImage out/
+
+      - name: Package (Windows)
+        if: matrix.name == 'windows'
+        shell: bash
+        run: mkdir -p out && mv dist/Chrono.exe out/Chrono-windows.exe
+
+      - name: Package (macOS)
+        if: matrix.name == 'macos'
+        run: |
+          mkdir -p out
+          ditto -c -k --sequesterRsrc --keepParent dist/Chrono.app out/Chrono-macos.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chrono-${{ matrix.name }}
+          path: out/*
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/*

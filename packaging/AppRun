@@ -1,0 +1,7 @@
+#!/bin/sh
+# Entry point of the AppImage. Your data stays in ~/.local/share/chrono, outside the AppImage.
+HERE="$(dirname "$(readlink -f "$0")")"
+# Chromium's sandbox (inside Qt WebEngine) cannot start from an AppImage's read-only mount.
+# Chrono's window only ever shows Chrono's own local pages.
+export QTWEBENGINE_DISABLE_SANDBOX=1
+exec "$HERE/usr/bin/Chrono/Chrono" "$@"

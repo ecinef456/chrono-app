@@ -11,6 +11,26 @@ cd chrono-app
 
 The first run creates `.venv` and installs FastAPI and Uvicorn. After that, Chrono opens at http://127.0.0.1:8765. Leave the terminal running, or see "Run in the background" below.
 
+## Download the app (Linux, Windows, macOS)
+
+You don't need Python or a terminal for this: on the GitHub page, open **Releases** and download the file for your system.
+
+| System | File | First start |
+|---|---|---|
+| Linux | `Chrono-x86_64.AppImage` | Make it executable (right-click → Properties → "Allow executing", or `chmod +x Chrono-x86_64.AppImage`), then double-click it. |
+| Windows | `Chrono-windows.exe` | Double-click. Windows SmartScreen warns about an unknown publisher: *More info* → *Run anyway*. |
+| macOS | `Chrono-macos.zip` | Unzip, drag `Chrono.app` into Applications. The first time, right-click → *Open* → *Open* (the app is not signed by Apple). |
+
+The app keeps its data in your user folder, outside the app file, so a new version keeps everything: `~/.local/share/chrono` (Linux), `%APPDATA%\Chrono` (Windows), `~/Library/Application Support/Chrono` (macOS). Run from this git folder instead, Chrono keeps using `data/` and `logs/` here, as before. `CHRONO_HOME=/some/folder` overrides both.
+
+On first launch Chrono asks which parts you want (see *Features* below).
+
+**Making a release** (for the maintainer): `git tag v1.0.0 && git push origin v1.0.0`. GitHub Actions (`.github/workflows/release.yml`) builds the three files on Linux, Windows and macOS machines and attaches them to the release in about ten minutes. *Actions → Build desktop apps → Run workflow* builds them without a release (download under the run's *Artifacts*).
+
+## Features
+
+The study timer (Dashboard, Log, Courses) is always there. Sport & Code, Teach and Sleep are optional: Chrono asks on first launch, and the ⚙ button in the header changes the choice any time. Switching a feature off only hides it; its data stays in the database. An existing installation that already uses a feature finds it pre-ticked.
+
 ## Import your old logs (once)
 
 Point the importer at your old `study_logs` folder, the one containing `config.json`:
@@ -86,6 +106,17 @@ The timetable format (the same block works in your Typst notes with `unified-pre
 #timetable(lesson)
 ```
 
+## Sleep
+
+A sleep diary with a schedule, statistics and advice drawn from sleep research.
+
+- **Log last night** each morning: when you went to bed (lights out) and woke up for good; optionally how long you took to fall asleep, how long you were awake in the night, how rested you feel (1–5), whether a free day followed and whether an alarm woke you. *a nap instead* logs a nap. Times after midnight are handled for you.
+- **Tonight**: your planned bed and wake-up time for tonight (work day or free day), the time left until bedtime, and the bedtime that would give you your sleep goal with your usual time to fall asleep. *Edit schedule* sets the goal, your free days and the times.
+- **Your sleep** (14, 28 or 90 days): average sleep, nights with 7 h or more, the Sleep Regularity Index, average bed and wake-up time and how much the wake-up varies, social jet lag (how far the middle of your sleep moves between work and free days), and the sleep you missed in the last 7 nights. Below, a timeline: one row per night, asleep in blue, nights under 7 h in orange with ▲, awake in bed in light blue, your schedule dashed, **F** for a free day after.
+- **What your data says**: rules applied to your numbers, each linked to its source: the AASM/SRS consensus on sleep duration (Watson et al. 2015), sleep regularity and mortality (Windred et al. 2024) and academic performance (Phillips et al. 2017), social jet lag (Roenneberg et al. 2012), weekend catch-up sleep (Depner et al. 2019), chronotype from the Munich ChronoType Questionnaire (Roenneberg et al. 2004), and the AASM guideline on insomnia treatment (Edinger et al. 2021). It is not a diagnosis; the page says when to see a doctor.
+
+How the numbers are computed (`/api/sleep/stats` in `app.py`): sleep = wake-up − (bedtime + time to fall asleep) − time awake. The regularity index compares 5-minute steps 24 h apart over consecutive logged nights (100 = the same times every day, 0 = random); a diary misses short awakenings, so it reads somewhat higher than the accelerometer values in the studies. Social jet lag = |mid-sleep on free days − mid-sleep on work days|; chronotype = mid-sleep on free days without alarm, corrected for catch-up sleep (MSFsc).
+
 ## What the numbers mean
 
 | Column | Meaning |
@@ -101,9 +132,9 @@ All satisfaction averages are weighted by time studied, so a 3 h session counts 
 
 For the semester's ECTS total, finished courses count in full, the same as in the old script.
 
-## Make it an app
+## Make it an app (from this folder, Linux)
 
-Run this once to get Chrono as its own desktop app, with no browser involved:
+The downloads above are the easy way. From the git folder, run this once to get Chrono as its own desktop app:
 
 ```bash
 ./install-desktop.sh
@@ -130,6 +161,6 @@ It sets up a small background service that starts Chrono every time you log in. 
 
 ## Customise
 
-- **Categories and colours:** `CATEGORIES` in `app.py`. The CSS colour variables are `--c-<key>` in `static/style.css`.
+- **Categories and colours:** `CATEGORIES` in `app.py`. The CSS colour variables are `--c-<key>` in `static/style.css`. All colours come from Okabe & Ito's colour-blind-safe palette (categories, Teach strip, charts) and ColorBrewer ramps (heat map, satisfaction); where colour carries meaning, a symbol (✓, ▲) says it too.
 - **Break types:** `BREAK_TYPES` in `app.py`.
 - **Hours per ECTS:** `ECTS_HOURS` in `app.py`.

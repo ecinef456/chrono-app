@@ -1,54 +1,88 @@
 #!/usr/bin/env python3
-"""Chrono as its own desktop app: a native Qt window, no browser needed.
+"""Chrono as its own desktop app: a native window, no browser needed.
 
-If the Chrono background service is already running (./install.sh), the window
-connects to it. Otherwise this starts the server itself and stops it again when
+Linux (Qt), Windows (Edge WebView2) and macOS (WebKit). This is also the entry point of
+the packaged apps (AppImage, Chrono.exe, Chrono.app) that GitHub builds on every release.
+
+If a Chrono server is already running (e.g. the background service from ./install.sh),
+the window connects to it. Otherwise this starts the server itself and stops it again when
 you close the window.
 """
+import json
 import os
 import socket
 import sys
 import threading
 import time
+import urllib.request
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+RES_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 PORT = 8765
-URL = f"http://127.0.0.1:{PORT}"
-ICON = str(BASE_DIR / "static" / "icon-512.png")
-STORAGE = Path.home() / ".local" / "share" / "chrono" / "window"
+ICON = str(RES_DIR / "static" / "icon-512.png")
+LINUX = sys.platform.startswith("linux")
 
 
-def server_running() -> bool:
+def storage_dir() -> Path:
+    """Small per-window settings (theme, last tab) between launches."""
+    if sys.platform == "win32":
+        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Chrono" / "window"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Chrono" / "window"
+    return Path.home() / ".local" / "share" / "chrono" / "window"
+
+
+def port_open(port) -> bool:
     try:
-        with socket.create_connection(("127.0.0.1", PORT), timeout=0.3):
+        with socket.create_connection(("127.0.0.1", port), timeout=0.3):
             return True
     except OSError:
         return False
 
 
-def start_server():
+def is_chrono(port) -> bool:
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=1) as r:
+            return "categories" in json.load(r)
+    except Exception:
+        return False
+
+
+def free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def start_server(port):
     import uvicorn
-    sys.path.insert(0, str(BASE_DIR))
-    from app import app
-    config = uvicorn.Config(app, host="127.0.0.1", port=PORT, log_level="warning")
+    import app  # noqa: imported here so the window appears fast when a server already runs
+    config = uvicorn.Config(app.app, host="127.0.0.1", port=port, log_level="warning")
     threading.Thread(target=uvicorn.Server(config).run, daemon=True).start()
-    for _ in range(100):
-        if server_running():
+    for _ in range(200):
+        if port_open(port):
             return
         time.sleep(0.05)
-    sys.exit("Chrono's server did not start. Is port 8765 used by something else?")
+    sys.exit("Chrono's server did not start.")
 
 
-def enable_downloads(webview):
-    """Let the window save files (e.g. Log > Export .txt) through a normal save dialog.
-
-    pywebview's own handler targets Qt5 and proposes the URL path as file name, so we use the
-    name the server suggests and default to ~/Downloads instead.
-    """
-    from qtpy.QtWidgets import QFileDialog
+def qt_setup(webview):
+    """Linux: KDE/GNOME integration (taskbar icon, native save dialog for exports)."""
+    # The Qt bundled with pywebview can't load KDE's own theme plugin; the desktop portal
+    # hands file dialogs to the desktop itself (native look, your bookmarks and folders).
+    os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
+    import webview.platforms.qt  # noqa: F401  (loads Qt WebEngine before QApplication exists)
+    from qtpy.QtGui import QIcon
+    from qtpy.QtWidgets import QApplication, QFileDialog
     from webview.platforms import qt as webview_qt
 
+    # Create the Qt app ourselves so the desktop matches the window to chrono.desktop.
+    qt_app = QApplication.instance() or QApplication(sys.argv)
+    qt_app.setApplicationName("Chrono")
+    qt_app.setDesktopFileName("chrono")
+    qt_app.setWindowIcon(QIcon(ICON))
+
+    # pywebview's own download handler targets Qt5 and proposes the URL path as file name.
     def on_download_requested(view, download):
         name = download.downloadFileName() or "chrono-export.txt"
         downloads = Path.home() / "Downloads"
@@ -63,36 +97,29 @@ def enable_downloads(webview):
         download.accept()
 
     webview_qt.BrowserView.on_download_requested = on_download_requested
-    webview.settings["ALLOW_DOWNLOADS"] = True
 
 
 def main():
-    # The Qt bundled with pywebview can't load KDE's own theme plugin, so its dialogs looked dated.
-    # The desktop portal hands file dialogs to KDE itself (native look, your bookmarks and folders).
-    os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
     import webview
-    import webview.platforms.qt  # noqa: F401  (loads Qt WebEngine, which must happen before QApplication exists)
-    from qtpy.QtGui import QIcon
-    from qtpy.QtWidgets import QApplication
 
-    # Create the Qt app ourselves so KDE matches the window to chrono.desktop
-    # (taskbar icon and name, on both Wayland and X11).
-    qt_app = QApplication.instance() or QApplication(sys.argv)
-    qt_app.setApplicationName("Chrono")
-    qt_app.setDesktopFileName("chrono")
-    qt_app.setWindowIcon(QIcon(ICON))
+    if LINUX:
+        qt_setup(webview)
+    webview.settings["ALLOW_DOWNLOADS"] = True
 
-    if not server_running():
-        start_server()
+    port = PORT
+    if not is_chrono(port):
+        if port_open(port):          # something else uses 8765: take any free port
+            port = free_port()
+        start_server(port)
 
-    enable_downloads(webview)
-
-    STORAGE.mkdir(parents=True, exist_ok=True)
-    # The ?launch= value is new on every start, so the window can never reuse an old cached page.
-    webview.create_window("Chrono", f"{URL}/?launch={int(time.time())}", width=1280, height=900, min_size=(380, 500),
+    storage = storage_dir()
+    storage.mkdir(parents=True, exist_ok=True)
+    # The ?launch= value is new on every start, so the window never reuses an old cached page.
+    webview.create_window("Chrono", f"http://127.0.0.1:{port}/?launch={int(time.time())}",
+                          width=1280, height=900, min_size=(380, 500),
                           background_color="#e8ecf0", text_select=True)
-    # private_mode=False keeps the small per-window settings (theme, last course) between launches.
-    webview.start(gui="qt", private_mode=False, storage_path=str(STORAGE), icon=ICON)
+    # private_mode=False keeps the small per-window settings between launches.
+    webview.start(gui="qt" if LINUX else None, private_mode=False, storage_path=str(storage), icon=ICON)
 
 
 if __name__ == "__main__":
