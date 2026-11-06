@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
@@ -69,8 +69,10 @@ function chrono() {
       // Dropping a .typ file anywhere opens it in Teach.
       window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
       window.addEventListener("drop", e => { if (e.dataTransfer?.files?.length && this.tab !== "teach") { e.preventDefault(); this.tab = "teach"; this.teachFiles(e.dataTransfer.files); } });
-      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "act") this.loadActivities(); });
+      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "act") this.loadActivities(); if (v === "teach") this.teachInit(); });
       if (this.tab === "act") this.loadActivities();
+      if (this.teachView === "run" && !this.teach || this.teachView === "edit") this.teachView = "cal";
+      if (this.tab === "teach") this.teachInit();
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
       setInterval(() => { if (this.timer.state === "running") this.loadStats(); }, 60000);
@@ -173,7 +175,7 @@ function chrono() {
       if (this.timer.state === "idle") this.start(); else if (this.timer.state === "running") this.pause();
     },
     updateTitle() {
-      if (this.tab === "teach" && this.teach && this.timer.state === "idle") {
+      if (this.tab === "teach" && this.teachView === "run" && this.teach && this.timer.state === "idle") {
         const left = this.tLeft(1);
         document.title = (left === null ? "" : this.mmss(left) + " ") + this.tHeader().replace(/<[^>]+>/g, "");
         return;
@@ -604,25 +606,130 @@ function chrono() {
       }
     },
 
-    /* ---------------- teach: live lesson plan (nothing here touches the study logs) */
+    /* ---------------- teach: lesson calendar + live lesson plan (nothing here touches the study logs) */
+    // views: "cal" (school year), "day" (timetables of one day), "run" (live), "edit" (editor)
+    acadYear(iso) { const [y, m] = iso.split("-").map(Number); return m >= 8 ? y : y - 1; },
+    async teachInit() {
+      if (this.teachYear === null) this.teachYear = this.acadYear(this.today());
+      if (!this.teachDay) this.teachDay = this.today();
+      await this.loadLessons();
+    },
+    async loadLessons() {
+      const y = this.teachYear;
+      try { this.lessons = await api(`/api/lessons?start=${y}-08-01&end=${y + 1}-07-31`); }
+      catch (e) { this.toast(e.message); }
+    },
+    teachGo(view) { this.teachView = view; store.set("chrono-teach-view", view); window.scrollTo(0, 0); },
+    teachYears() { const y = this.acadYear(this.today()); return [y, y + 1]; },
+    async pickYear(y) { this.teachYear = y; await this.loadLessons(); },
+    calMonths() {
+      this.tick;
+      const y = this.teachYear, today = this.today(), out = [];
+      const count = {};
+      for (const l of this.lessons) count[l.date] = (count[l.date] || 0) + 1;
+      for (let i = 0; i < 12; i++) {
+        const m0 = (7 + i) % 12, yy = y + (7 + i >= 12 ? 1 : 0);
+        const first = new Date(yy, m0, 1), days = new Date(yy, m0 + 1, 0).getDate();
+        const cells = [];
+        for (let k = 0; k < (first.getDay() + 6) % 7; k++) cells.push({ key: "b" + k });
+        for (let d = 1; d <= days; d++) {
+          const iso = `${yy}-${pad(m0 + 1)}-${pad(d)}`;
+          const wd = new Date(yy, m0, d).getDay();
+          cells.push({ key: iso, iso, d, n: count[iso] || 0, today: iso === today, weekend: wd === 0 || wd === 6, sel: iso === this.teachDay });
+        }
+        out.push({ key: `${yy}-${m0}`, label: first.toLocaleDateString("en-GB", { month: "long" }), year: yy, cells });
+      }
+      return out;
+    },
+    openDay(iso) { this.teachDay = iso; this.teachErr = ""; this.teachGo("day"); },
+    lessonsOn(iso) { return this.lessons.filter(l => l.date === iso).sort((a, b) => a.start_min - b.start_min); },
+    hmOf(min) { return `${pad(Math.floor(min / 60) % 24)}:${pad(min % 60)}`; },
+    nowLesson() {
+      // today's lesson that runs now or comes next
+      this.tick;
+      const now = this.tNowSec() / 60;
+      return this.lessonsOn(this.today()).find(l => l.end_min > now) || null;
+    },
+
+    // ---- adding timetables (files, drop, paste)
     async teachFiles(fileList) {
       const files = await Promise.all([...fileList].map(async f => ({ name: f.name, text: await f.text() })));
-      this.teachLoad(files);
+      await this.teachAdd(files);
     },
     teachDrop(e) { this.teachDrag = false; if (e.dataTransfer?.files?.length) this.teachFiles(e.dataTransfer.files); },
-    teachLoad(files) {
-      try {
-        const r = ChronoTeach.parseFiles(files);
-        const settings = { start1: "08:00", start2: null, hourLength: 45, breakLength: 5, ...r.settings };
-        this.teach = { hours: r.hours, settings, title: r.title.week || r.title.course || r.fileName || "Lesson", date: r.date, shiftSec: 0, shiftDay: null };
-        this.teachErr = ""; this.teachPaste = "";
-        this.teachSave();
-        this.toast("Timetable loaded");
-      } catch (e) { this.teachErr = e.message; this.tab = "teach"; if (this.teach) this.toast(e.message); }
+    /** Each file with a timetable becomes one entry; files without one (a preamble) only lend their defaults. */
+    async teachAdd(files) {
+      const has = f => /\bhour1\s*:/.test(f.text);
+      const tables = files.filter(has), extra = files.filter(f => !has(f));
+      if (!tables.length) { this.teachErr = "No timetable found. Paste the  #let lesson = ( … )  block (with hour1, hour2) or drop the notes file."; return; }
+      const errs = [];
+      let saved = 0, lastDate = null;
+      for (const f of tables) {
+        try {
+          const r = ChronoTeach.parseFiles([f, ...extra]);
+          await this.saveLesson(r, f.text, null);
+          saved++; lastDate = r.date || this.teachDay || this.today();
+        } catch (e) { errs.push(`${f.name}: ${e.message}`); }
+      }
+      this.teachErr = errs.join("\n");
+      if (saved) {
+        this.teachPaste = "";
+        this.toast(saved === 1 ? "Timetable saved" : `${saved} timetables saved`);
+        if (lastDate) { this.teachYear = this.acadYear(lastDate); await this.loadLessons(); this.openDay(lastDate); this.teachErr = errs.join("\n"); }
+      }
+    },
+    teachPasteSave() { return this.teachAdd([{ name: "pasted timetable", text: this.teachPaste }]); },
+    /** Saves a parsed timetable. Its own date wins; without one it goes to the open day. */
+    async saveLesson(r, source, id) {
+      const date = r.date || this.teachDay || this.today();
+      const settings = { start1: "08:00", start2: null, hourLength: 45, breakLength: 5, buffer: 0, ...r.settings };
+      const span = ChronoTeach.spanOf(r.hours, settings);
+      const body = {
+        date, start_min: span.start, end_min: span.end, title: r.name || "Lesson", source: source || "",
+        plan: { hours: r.hours, settings, fields: r.fields || {}, date, name: r.name },
+      };
+      return id ? api(`/api/lessons/${id}`, { method: "PUT", body }) : api("/api/lessons", { method: "POST", body });
+    },
+    async deleteLesson(l) {
+      if (!(await this.ask(`Delete “${l.title}”?`))) return;
+      await api(`/api/lessons/${l.id}`, { method: "DELETE" });
+      if (this.teach && this.teach.id === l.id) { this.teach = null; this.teachSave(); }
+      await this.loadLessons();
+    },
+    downloadText(name, text) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+      a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    },
+    lessonTypst(l) { return l.source && /hour1\s*:/.test(l.source) ? l.source : ChronoTeach.toTypst(ChronoTeach.toModel(l.plan)); },
+    fileNameOf(title) { return (title || "timetable").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s*·\s*/g, " ") + ".typ"; },
+
+    // ---- running a lesson
+    runLesson(l) {
+      const p = l.plan;
+      const old = this.teach && this.teach.id === l.id ? this.teach : null;
+      this.teach = { id: l.id, hours: p.hours, settings: { ...p.settings }, title: l.title, date: l.date, shiftSec: old ? old.shiftSec : 0, shiftDay: old ? old.shiftDay : null };
+      this.teachSave(); this.teachGo("run");
+    },
+    runParsed(r, title) {
+      const settings = { start1: "08:00", start2: null, hourLength: 45, breakLength: 5, buffer: 0, ...r.settings };
+      this.teach = { id: null, hours: r.hours, settings, title: title || r.name, date: r.date, shiftSec: 0, shiftDay: null };
+      this.teachSave(); this.teachGo("run");
     },
     teachSave() { store.set("chrono-teach", this.teach); },
-    teachReset() { this.teach = null; this.teachSave(); },
-    tSet(k, v) { this.teach.settings[k] = v; this.teachSave(); },
+    tSet(k, v) {
+      this.teach.settings[k] = v; this.teachSave();
+      if (this.teach.id) {
+        clearTimeout(this._tSetT);
+        this._tSetT = setTimeout(async () => {
+          const l = this.lessons.find(x => x.id === this.teach.id);
+          if (!l) return;
+          const r = { hours: this.teach.hours, settings: this.teach.settings, fields: l.plan.fields, date: l.date, name: l.title };
+          try { await this.saveLesson(r, l.source, l.id); await this.loadLessons(); }
+          catch (e) { this.toast(e.message); }
+        }, 600);
+      }
+    },
     tShiftSec() { return this.teach && this.teach.shiftDay === this.today() ? this.teach.shiftSec : 0; },
     tShift(delta) {
       this.teach.shiftSec = delta === null ? 0 : this.tShiftSec() + delta;
@@ -637,9 +744,12 @@ function chrono() {
       return `${a >= 60 ? Math.floor(a / 60) + " h " + (a % 60) + " min" : a + " min"} ${m > 0 ? "later" : "earlier"} than planned`;
     },
     today() { return isoDate(wallNow()); },
+    tBuffered() { return !!(this.teach && this.teach.settings.buffer > 0); },
     tSchedule() {
       if (!this.teach) return [];
-      return ChronoTeach.buildSchedule(this.teach.hours, { ...this.teach.settings, shiftSec: this.tShiftSec() });
+      const s = this.teach.settings;
+      const hours = s.buffer > 0 ? ChronoTeach.stretchHours(this.teach.hours, s.hourLength) : this.teach.hours;
+      return ChronoTeach.buildSchedule(hours, { ...s, shiftSec: this.tShiftSec() });
     },
     tState() { return this.teach ? ChronoTeach.locate(this.tSchedule(), this.tNowSec()) : { phase: "empty" }; },
     tClock() { this.tick; const d = wallNow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; },
@@ -685,12 +795,6 @@ function chrono() {
       if (level === 2 && s.phase === "activity" && s.detail) return p(s.detail.start, Math.min(s.detail.end, s.act.end));
       return null;
     },
-    tSpan(level) {
-      const s = this.tState();
-      if (s.phase === "activity") return `${this.clockOf(s.act.start)}–${this.clockOf(s.act.end)}`;
-      if (s.phase === "break") return `${this.clockOf(s.hour.breakAfter.start)}–${this.clockOf(s.hour.breakAfter.end)}`;
-      return "";
-    },
     tNext() {
       const n = this.tState().next;
       if (!n || this.tState().phase === "before") return "";
@@ -716,6 +820,108 @@ function chrono() {
       const now = this.tNowSec();
       return { segs, ticks, now: now >= a && now <= b ? pc(now) : null };
     },
+
+    // ---- buffer mode: the whole lesson as one wide strip, a window of +-10 % of an hour around now
+    tPalette: ["#2a78d6", "#eb6834", "#7c5cd6", "#d9a400", "#d6457a", "#1c94b8", "#9a6a3a", "#5b6b82"],
+    tWin() {
+      const sch = this.tSchedule();
+      if (!sch.length) return null;
+      const a = sch[0].start, b = Math.max(...sch.map(h => Math.max(h.end, h.activitiesEnd)));
+      const pc = t => ((t - a) / (b - a)) * 100;
+      const isBreak = t => /^\s*(break|pause|znüni|zvieri)\b/i.test(t.replace(/[*_]/g, ""));
+      const segs = [], ticks = [], details = [];
+      let ci = 0;
+      sch.forEach((h, hi) => {
+        h.activities.forEach(x => {
+          const brk = isBreak(x.title);
+          const color = brk ? "var(--good)" : this.tPalette[ci++ % this.tPalette.length];
+          segs.push({ key: x.key, item: x, label: this.typst(x.title), cls: this.tRowClass(x) + (brk ? " brk" : ""), style: `left:${pc(x.start)}%;width:${pc(x.end) - pc(x.start)}%;--seg:${color}` });
+          x.details.forEach((d, di) => { if (di > 0 && d.start < x.end) details.push({ key: d.key, style: `left:${pc(d.start)}%` }); });
+        });
+        if (h.breakAfter) segs.push({ key: "b" + hi, item: h.breakAfter, label: "Break", cls: "brk " + this.tRowClass(h.breakAfter), style: `left:${pc(h.breakAfter.start)}%;width:${pc(h.breakAfter.end) - pc(h.breakAfter.start)}%;--seg:var(--good)` });
+        ticks.push({ key: "s" + hi, left: pc(h.start), label: this.clockOf(h.start) });
+        if (h.breakAfter) ticks.push({ key: "e" + hi, left: pc(h.end), label: this.clockOf(h.end) });
+      });
+      ticks.push({ key: "end", left: 100, label: this.clockOf(b) });
+      const now = this.tNowSec();
+      const half = 0.1 * this.teach.settings.hourLength * 60;
+      let lo = now - half, hi = now + half;
+      if (lo < a) { lo = a; hi = a + 2 * half; }
+      if (hi > b) { hi = b; lo = b - 2 * half; }
+      lo = Math.max(a, lo);
+      const inside = now >= a && now <= b;
+      // what lies inside the window: the parts you may be at right now
+      const items = [];
+      if (now <= b) sch.forEach(h => {
+        h.activities.forEach(x => {
+          if (x.end <= lo || x.start >= hi) return;
+          const ds = x.details.filter(d => d.end > lo && d.start < hi && d.start < x.end);
+          items.push({ key: x.key, title: this.typst(x.title), span: `${this.clockOf(x.start)}–${this.clockOf(x.end)}`, cur: now >= x.start && now < x.end,
+                       details: ds.map(d => ({ key: d.key, title: this.typst(d.title), cur: now >= d.start && now < d.end })) });
+        });
+        if (h.breakAfter && h.breakAfter.end > lo && h.breakAfter.start < hi) items.push({ key: "b" + h.name, title: "Break", span: `${this.clockOf(h.breakAfter.start)}–${this.clockOf(h.breakAfter.end)}`, cur: now >= h.breakAfter.start && now < h.breakAfter.end, details: [], brk: true });
+      });
+      return {
+        segs, ticks, details, items,
+        now: inside ? pc(now) : null,
+        win: now <= b ? { left: pc(lo), width: pc(hi) - pc(lo) } : null,
+        endsIn: inside ? b - now : null,
+      };
+    },
+
+    // ---- editor
+    edNew(date) {
+      this.ed = { date: date || this.teachDay || this.today(), institution: "", class: "", topic: "", start: "08:00", start2: "", hourLength: 45, breakLength: 5, buffer: 20,
+                  hours: [{ activities: [{ minutes: 10, title: "", details: [] }] }] };
+      this.edId = null; this.edErr = ""; this.teachGo("edit");
+    },
+    edOpen(l) { this.ed = ChronoTeach.toModel(l.plan); this.ed.date = l.date; this.edId = l.id; this.edErr = ""; this.teachGo("edit"); },
+    async edExample(name, live) {
+      try {
+        const text = await (await fetch(`/static/examples/${name}`)).text();
+        const r = ChronoTeach.parseFiles([{ name, text }]);
+        if (live) { this.runParsed(r, "Example: " + r.name); return; }
+        this.ed = ChronoTeach.toModel(r); this.ed.date = this.teachDay || this.today(); this.edId = null; this.edErr = ""; this.teachGo("edit");
+      } catch (e) { this.toast(e.message); }
+    },
+    edTarget() { return this.ed.hourLength - Math.round(this.ed.hourLength * (+this.ed.buffer || 0) / 100); },
+    edBufferMin() { return Math.round(this.ed.hourLength * (+this.ed.buffer || 0) / 100); },
+    edActMin(a) { return a.details.length ? a.details.reduce((s, d) => s + (+d.minutes || 0), 0) : (+a.minutes || 0); },
+    edHourSum(h) { return h.activities.reduce((s, a) => s + this.edActMin(a), 0); },
+    edTitle() { return ChronoTeach.titleOf({ date: this.ed.date, institution: this.ed.institution, class: this.ed.class, topic: this.ed.topic }, "Untitled"); },
+    edMove(list, i, d) { const j = i + d; if (j < 0 || j >= list.length) return; const [x] = list.splice(i, 1); list.splice(j, 0, x); },
+    edStep(obj, key, d) { obj[key] = Math.max(0, (+obj[key] || 0) + d); },
+    edAddHour() { this.ed.hours.push({ activities: [{ minutes: 10, title: "", details: [] }] }); },
+    edAddAct(h) { h.activities.push({ minutes: 5, title: "", details: [] }); },
+    edAddDetail(a) { if (!a.details.length) a.details.push({ minutes: +a.minutes || 5, title: a.title || "" }); else a.details.push({ minutes: 2, title: "" }); },
+    edFill(h) {
+      // put the minutes still missing into the last activity (or its last detail)
+      const miss = this.edTarget() - this.edHourSum(h);
+      const a = h.activities[h.activities.length - 1];
+      if (!a || !miss) return;
+      if (a.details.length) { const d = a.details[a.details.length - 1]; d.minutes = Math.max(0, (+d.minutes || 0) + miss); }
+      else a.minutes = Math.max(0, (+a.minutes || 0) + miss);
+    },
+    edTypst() { return this.ed ? ChronoTeach.toTypst(this.ed) : ""; },
+    edParsed() {
+      const r = ChronoTeach.parseFiles([{ name: "editor", text: this.edTypst() }]);
+      if (!r.hours.every(h => h.activities.length)) throw new Error("Every hour needs at least one activity.");
+      return r;
+    },
+    async edSave() {
+      try {
+        if (!this.ed.date) throw new Error("Pick a date first.");
+        const r = this.edParsed();
+        r.date = this.ed.date;
+        const l = await this.saveLesson(r, this.edTypst(), this.edId);
+        this.edId = l.id; this.edErr = "";
+        this.teachYear = this.acadYear(l.date); await this.loadLessons();
+        this.toast("Saved"); this.openDay(l.date);
+      } catch (e) { this.edErr = e.message; }
+    },
+    edRun() { try { this.runParsed(this.edParsed(), this.edTitle()); } catch (e) { this.edErr = e.message; } },
+    async edCopy() { try { await navigator.clipboard.writeText(this.edTypst()); this.toast("Typst copied"); } catch { this.toast("Copy failed: select the text below"); } },
+
     typst(t) { return ChronoTeach.typstHtml(t); },
     clockOf(sec) { sec = ((Math.round(sec) % 86400) + 86400) % 86400; return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec % 3600 / 60))}`; },
     mmss(sec) {

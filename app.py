@@ -127,6 +127,17 @@ def init_db():
         if "repo_path" not in [r["name"] for r in con.execute("PRAGMA table_info(courses)")]:
             con.execute("ALTER TABLE courses ADD COLUMN repo_path TEXT")
         con.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
+        con.execute("""CREATE TABLE IF NOT EXISTS lessons (
+            id INTEGER PRIMARY KEY,
+            date TEXT NOT NULL,          -- YYYY-MM-DD
+            start_min INTEGER NOT NULL,  -- minutes after midnight
+            end_min INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            source TEXT NOT NULL DEFAULT '',  -- the Typst text it came from
+            plan TEXT NOT NULL,               -- parsed timetable (JSON, read by teach.js)
+            created TEXT NOT NULL
+        )""")
+        con.execute("CREATE INDEX IF NOT EXISTS lessons_date ON lessons(date)")
         ensure_other(con)
         seed_activities(con)
 
@@ -1017,6 +1028,85 @@ def activities(weeks: int = 16, months: int = 12):
 
 
 # ---------------------------------------------------------------- static
+
+# ---------------------------------------------------------------- teach: lesson calendar
+# Timetables parsed in the browser (teach.js) and kept per day. Two timetables of the
+# same day may not overlap in time.
+
+class LessonIn(BaseModel):
+    date: str
+    start_min: int = Field(ge=0, le=48 * 60)
+    end_min: int = Field(ge=0, le=48 * 60)
+    title: str = Field(min_length=1, max_length=300)
+    source: str = ""
+    plan: dict
+
+
+def _lesson_out(r):
+    d = dict(r)
+    d["plan"] = json.loads(d["plan"])
+    return d
+
+
+def _check_lesson(con, body: LessonIn, own_id=None):
+    try:
+        date.fromisoformat(body.date)
+    except ValueError:
+        raise HTTPException(400, "The date must look like 2026-11-09.")
+    if body.end_min <= body.start_min:
+        raise HTTPException(400, "The timetable ends before it starts.")
+    for o in con.execute("SELECT id, title, start_min, end_min FROM lessons WHERE date = ?", (body.date,)):
+        if o["id"] != own_id and body.start_min < o["end_min"] and o["start_min"] < body.end_min:
+            hm = lambda m: f"{m // 60:02d}:{m % 60:02d}"
+            raise HTTPException(409, f"It collides with \u201c{o['title']}\u201d ({hm(o['start_min'])}\u2013{hm(o['end_min'])}) on the same day. "
+                                     "Change the start time or delete the other one first.")
+
+
+@app.get("/api/lessons")
+def list_lessons(start: Optional[str] = None, end: Optional[str] = None):
+    q, args = "SELECT * FROM lessons", []
+    if start and end:
+        q += " WHERE date BETWEEN ? AND ?"
+        args = [start, end]
+    with db() as con:
+        return [_lesson_out(r) for r in con.execute(q + " ORDER BY date, start_min", args)]
+
+
+@app.get("/api/lessons/{lid}")
+def get_lesson(lid: int):
+    with db() as con:
+        r = con.execute("SELECT * FROM lessons WHERE id = ?", (lid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "No such timetable.")
+        return _lesson_out(r)
+
+
+@app.post("/api/lessons")
+def create_lesson(body: LessonIn):
+    with db() as con:
+        _check_lesson(con, body)
+        cur = con.execute("INSERT INTO lessons (date, start_min, end_min, title, source, plan, created) VALUES (?,?,?,?,?,?,?)",
+                          (body.date, body.start_min, body.end_min, body.title, body.source, json.dumps(body.plan), fmt(now())))
+        return _lesson_out(con.execute("SELECT * FROM lessons WHERE id = ?", (cur.lastrowid,)).fetchone())
+
+
+@app.put("/api/lessons/{lid}")
+def update_lesson(lid: int, body: LessonIn):
+    with db() as con:
+        if not con.execute("SELECT 1 FROM lessons WHERE id = ?", (lid,)).fetchone():
+            raise HTTPException(404, "No such timetable.")
+        _check_lesson(con, body, own_id=lid)
+        con.execute("UPDATE lessons SET date=?, start_min=?, end_min=?, title=?, source=?, plan=? WHERE id=?",
+                    (body.date, body.start_min, body.end_min, body.title, body.source, json.dumps(body.plan), lid))
+        return _lesson_out(con.execute("SELECT * FROM lessons WHERE id = ?", (lid,)).fetchone())
+
+
+@app.delete("/api/lessons/{lid}")
+def delete_lesson(lid: int):
+    with db() as con:
+        con.execute("DELETE FROM lessons WHERE id = ?", (lid,))
+    return {"ok": True}
+
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

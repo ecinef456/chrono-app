@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=11">
+<link rel="stylesheet" href="/static/style.css?v=12">
 <script src="/static/vendor/echarts.min.js"></script>
-<script src="/static/teach.js?v=1"></script>
-<script src="/static/app.js?v=11"></script>
+<script src="/static/teach.js?v=2"></script>
+<script src="/static/app.js?v=12"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -343,77 +343,263 @@
     </template>
   </main>
 
-  <!-- ===================== TEACH (live lesson plan; stores nothing in the logs) ===================== -->
+  <!-- ===================== TEACH (lesson calendar + live lesson plan; stores nothing in the study logs) ===================== -->
   <main x-show="tab==='teach'" class="stack teach" x-cloak @dragover.prevent="teachDrag = true" @dragleave.self="teachDrag = false" @drop.prevent="teachDrop($event)">
 
-    <section class="panel" x-show="!teach" :class="{dragging: teachDrag}">
-      <div class="panel-head"><h2>Load a lesson</h2><span class="sub">Nothing from here is saved in your study logs</span></div>
-      <div class="panel-body teach-load">
-        <p>Paste the timetable from your notes (the <code>#let lesson = ( … )</code> block), or drop the <code>.typ</code> file anywhere on this page.</p>
-        <textarea x-model="teachPaste" placeholder="#let lesson = (&#10;  title: &quot;Week 8&quot;,&#10;  start: &quot;08:00&quot;,&#10;  hour-length: 45,&#10;  break-length: 5,&#10;  hour1: ( … ),&#10;  hour2: ( … ),&#10;)" spellcheck="false"></textarea>
-        <div class="error" x-show="teachErr" x-text="teachErr"></div>
-        <div class="actions">
-          <label class="btn ghost">Choose file<input type="file" accept=".typ,.txt" multiple hidden @change="teachFiles($event.target.files); $event.target.value = ''"></label>
-          <button class="btn primary" @click="teachLoad([{ name: 'pasted timetable', text: teachPaste }])" :disabled="!teachPaste.trim()">Load timetable</button>
-        </div>
-      </div>
-    </section>
-
-    <template x-if="teach">
+    <!-- ===== calendar: the school year ===== -->
+    <template x-if="teachView==='cal'">
       <div class="stack">
-        <div class="teach-bar-top">
-          <div class="teach-title" x-text="teach.title"></div>
-          <button class="btn teach-load-btn" @click="teachReset()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-            Load another lesson
-          </button>
-        </div>
-
-        <section class="panel teach-hero" :class="'phase-' + tState().phase">
-          <div class="teach-top">
-            <div class="teach-status" x-text="tStatus()"></div>
-            <div class="teach-clock" x-text="tClock()"></div>
-          </div>
-
-          <div class="teach-main">
-            <h1 class="teach-h" x-html="tHeader()"></h1>
-            <div class="teach-left" x-show="tLeft(1) !== null">
-              <span class="v" x-text="tLeft(1) === null ? '' : mmss(tLeft(1))"></span><span class="k" x-text="tLeftLabel(1)"></span>
-            </div>
-          </div>
-          <div class="teach-bar" x-show="tProgress(1) !== null"><i :style="'width:' + (tProgress(1) * 100) + '%'"></i></div>
-
-          <div class="teach-sub" x-show="tSubHeader()">
-            <div class="teach-main">
-              <h2 class="teach-h2" x-html="tSubHeader()"></h2>
-              <div class="teach-left small" x-show="tLeft(2) !== null">
-                <span class="v" x-text="tLeft(2) === null ? '' : mmss(tLeft(2))"></span><span class="k" x-text="tLeftLabel(2)"></span>
+        <section class="panel" :class="{dragging: teachDrag}">
+          <div class="panel-head"><h2>Lessons</h2><span class="sub">Click a day to add or open its timetables. Drop .typ files anywhere: they go to their own date.</span></div>
+          <div class="panel-body">
+            <div class="year-row">
+              <template x-for="y in teachYears()" :key="y">
+                <button class="btn year-btn" :class="{primary: y === teachYear}" @click="pickYear(y)" x-text="y + ' – ' + (y + 1)"></button>
+              </template>
+              <div class="cal-actions">
+                <template x-if="nowLesson()">
+                  <button class="btn primary" @click="runLesson(nowLesson())" x-text="'▶ ' + hmOf(nowLesson().start_min) + ' ' + nowLesson().title"></button>
+                </template>
+                <button class="btn ghost" @click="openDay(today())">Today</button>
               </div>
             </div>
-            <div class="teach-bar thin" x-show="tProgress(2) !== null"><i :style="'width:' + (tProgress(2) * 100) + '%'"></i></div>
-          </div>
-
-          <div class="teach-next" x-show="tNext()"><span class="k">Next:</span> <span x-html="tNext()"></span></div>
-
-          <div class="lesson-strip" aria-hidden="true">
-            <div class="lesson-track">
-              <template x-for="seg in tStrip().segs" :key="seg.key">
-                <div class="lesson-seg" :class="seg.cls" :style="seg.style" :title="seg.title"></div>
+            <div class="cal-grid">
+              <template x-for="m in calMonths()" :key="m.key">
+                <div class="cal-month">
+                  <div class="cal-title"><b x-text="m.label"></b> <span class="muted" x-text="m.year"></span></div>
+                  <div class="cal-days">
+                    <template x-for="w in ['Mo','Tu','We','Th','Fr','Sa','Su']" :key="w"><span class="cal-wd" x-text="w"></span></template>
+                    <template x-for="c in m.cells" :key="c.key">
+                      <button class="cal-day" :style="c.iso ? '' : 'visibility:hidden'" :disabled="!c.iso" :class="{has: c.n, today: c.today, we: c.weekend}" @click="openDay(c.iso)"
+                              :title="c.n ? c.n + (c.n === 1 ? ' timetable' : ' timetables') : 'Add a timetable'"><span x-text="c.d"></span></button>
+                    </template>
+                  </div>
+                </div>
               </template>
-              <div class="lesson-now" x-show="tStrip().now !== null" :style="'left:' + tStrip().now + '%'"></div>
             </div>
-            <div class="lesson-scale"><template x-for="t in tStrip().ticks" :key="t.key"><span :style="'left:' + t.left + '%'" x-text="t.label"></span></template></div>
           </div>
         </section>
+      </div>
+    </template>
+
+    <!-- ===== one day: its timetables, add more ===== -->
+    <template x-if="teachView==='day'">
+      <div class="stack">
+        <div class="teach-bar-top">
+          <div class="teach-title" x-text="longDate(teachDay)"></div>
+          <button class="btn teach-load-btn" @click="teachGo('cal')">← Calendar</button>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Timetables</h2><span class="sub" x-text="lessonsOn(teachDay).length ? 'Click ▶ to run one live' : 'None yet for this day'"></span></div>
+          <div class="panel-body day-list">
+            <template x-for="l in lessonsOn(teachDay)" :key="l.id">
+              <div class="day-row">
+                <button class="btn primary" @click="runLesson(l)" title="Show live">▶</button>
+                <span class="t" x-text="hmOf(l.start_min) + '–' + hmOf(l.end_min)"></span>
+                <span class="n" x-text="l.title"></span>
+                <span class="chip" x-show="l.plan.settings.buffer > 0" x-text="l.plan.settings.buffer + ' % buffer'"></span>
+                <span class="actions">
+                  <button class="btn small ghost" @click="edOpen(l)">Edit</button>
+                  <button class="btn small ghost" @click="downloadText(fileNameOf(l.title), lessonTypst(l))" title="Download the Typst timetable">.typ</button>
+                  <button class="btn small ghost danger" @click="deleteLesson(l)">Delete</button>
+                </span>
+              </div>
+            </template>
+          </div>
+        </section>
+
+        <section class="panel" :class="{dragging: teachDrag}">
+          <div class="panel-head"><h2>Add a timetable</h2><span class="sub">As many as you like, as long as their times do not overlap</span></div>
+          <div class="panel-body teach-load">
+            <p>Drop one or more <code>.typ</code> files here (notes or timetables), choose them, or paste the <code>#let lesson = ( … )</code> block. A timetable with its own <code>date</code> goes to that day.</p>
+            <textarea x-model="teachPaste" placeholder="#let lesson = (&#10;  date: &quot;2026.11.09&quot;,&#10;  institution: &quot;ETH&quot;,&#10;  class: &quot;Physics&quot;,&#10;  topic: &quot;Electric motor&quot;,&#10;  start: &quot;08:00&quot;,&#10;  hour-length: 45,&#10;  break-length: 5,&#10;  buffer: 20,&#10;  hour1: ( … ),&#10;  hour2: ( … ),&#10;)" spellcheck="false"></textarea>
+            <div class="error pre" x-show="teachErr" x-text="teachErr"></div>
+            <div class="actions">
+              <label class="btn ghost">Choose files<input type="file" accept=".typ,.txt" multiple hidden @change="teachFiles($event.target.files); $event.target.value = ''"></label>
+              <button class="btn primary" @click="teachPasteSave()" :disabled="!teachPaste.trim()">Save pasted timetable</button>
+              <span class="grow"></span>
+              <button class="btn" @click="edNew(teachDay)">New in the editor</button>
+            </div>
+            <div class="examples">
+              <span class="muted">Examples:</span>
+              <span class="ex">1 hour <button class="btn small ghost" @click="edExample('example-1h.typ', true)">▶ live</button><button class="btn small ghost" @click="edExample('example-1h.typ', false)">edit</button><a class="btn small ghost" href="/static/examples/example-1h.typ" download>.typ</a></span>
+              <span class="ex">2 hours <button class="btn small ghost" @click="edExample('example-2h.typ', true)">▶ live</button><button class="btn small ghost" @click="edExample('example-2h.typ', false)">edit</button><a class="btn small ghost" href="/static/examples/example-2h.typ" download>.typ</a></span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </template>
+
+    <!-- ===== editor ===== -->
+    <template x-if="teachView==='edit' && ed">
+      <div class="stack">
+        <div class="teach-bar-top">
+          <div class="teach-title ed-title" x-text="edTitle()"></div>
+          <button class="btn teach-load-btn" @click="teachGo(edId || ed.date ? 'day' : 'cal')">← Back</button>
+        </div>
+        <section class="panel">
+          <div class="panel-body ed">
+            <div class="ed-grid">
+              <label class="f">Date<input type="date" x-model="ed.date"></label>
+              <label class="f">Institution<input type="text" x-model="ed.institution" placeholder="ETH, a school"></label>
+              <label class="f">Class<input type="text" x-model="ed.class" placeholder="Physics, Physik SF"></label>
+              <label class="f">Topic<input type="text" x-model="ed.topic" placeholder="Elektromotor"></label>
+            </div>
+            <div class="ed-grid">
+              <label class="f">Start<input type="time" x-model="ed.start"></label>
+              <label class="f">Hour (min)<input type="number" min="5" max="180" x-model.number="ed.hourLength"></label>
+              <label class="f" x-show="ed.hours.length > 1">Break (min)<input type="number" min="0" max="120" x-model.number="ed.breakLength"></label>
+              <div class="f">Buffer at the start of each hour
+                <div class="seg-btns">
+                  <button class="btn small" :class="{primary: !+ed.buffer}" @click="ed.buffer = 0">none</button>
+                  <button class="btn small" :class="{primary: +ed.buffer === 20}" @click="ed.buffer = 20">20 %</button>
+                  <input type="number" min="0" max="60" x-model.number="ed.buffer" class="pct"> %
+                </div>
+              </div>
+            </div>
+            <p class="muted ed-note" x-show="+ed.buffer > 0" x-text="'Each hour: ' + edBufferMin() + ' min buffer, plan ' + edTarget() + ' min. Live, Chrono stretches the plan over the whole hour.'"></p>
+
+            <template x-for="(h, hi) in ed.hours" :key="hi">
+              <div class="ed-hour">
+                <div class="ed-hour-head">
+                  <b x-text="'Hour ' + (hi + 1)"></b>
+                  <span :class="edHourSum(h) === edTarget() ? 'ok-text' : 'warn-text'" x-text="edHourSum(h) + ' / ' + edTarget() + ' min'"></span>
+                  <button class="btn small ghost" x-show="edHourSum(h) !== edTarget()" @click="edFill(h)" title="Give the missing or extra minutes to the last activity">fit</button>
+                  <span class="grow"></span>
+                  <button class="btn small ghost danger" x-show="ed.hours.length > 1" @click="ed.hours.splice(hi, 1)">Remove hour</button>
+                </div>
+                <template x-for="(a, ai) in h.activities" :key="ai">
+                  <div class="ed-act">
+                    <div class="ed-row">
+                      <span class="mv"><button class="icon-sm" @click="edMove(h.activities, ai, -1)" title="Up">▲</button><button class="icon-sm" @click="edMove(h.activities, ai, 1)" title="Down">▼</button></span>
+                      <input type="text" class="ttl" x-model="a.title" placeholder="Activity">
+                      <span class="mins" x-show="!a.details.length"><button class="icon-sm" @click="edStep(a, 'minutes', -1)">−</button><input type="number" min="0" x-model.number="a.minutes"><button class="icon-sm" @click="edStep(a, 'minutes', 1)">+</button></span>
+                      <span class="mins sum" x-show="a.details.length" x-text="edActMin(a) + ' min'" title="Sum of the steps"></span>
+                      <button class="btn small ghost" @click="edAddDetail(a)">+ step</button>
+                      <button class="icon-sm danger" @click="h.activities.splice(ai, 1)" title="Remove">✕</button>
+                    </div>
+                    <template x-for="(d, di) in a.details" :key="di">
+                      <div class="ed-row detail">
+                        <span class="mv"><button class="icon-sm" @click="edMove(a.details, di, -1)">▲</button><button class="icon-sm" @click="edMove(a.details, di, 1)">▼</button></span>
+                        <input type="text" class="ttl" x-model="d.title" placeholder="Step">
+                        <span class="mins"><button class="icon-sm" @click="edStep(d, 'minutes', -1)">−</button><input type="number" min="0" x-model.number="d.minutes"><button class="icon-sm" @click="edStep(d, 'minutes', 1)">+</button></span>
+                        <span></span>
+                        <button class="icon-sm danger" @click="a.details.splice(di, 1)" title="Remove">✕</button>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <button class="btn small" @click="edAddAct(h)">+ Activity</button>
+              </div>
+            </template>
+            <div class="actions">
+              <button class="btn" @click="edAddHour()">+ Hour</button>
+              <span class="grow"></span>
+              <button class="btn ghost" @click="edRun()">▶ Run now</button>
+              <button class="btn ghost" @click="edCopy()">Copy Typst</button>
+              <button class="btn ghost" @click="downloadText(fileNameOf(edTitle()), edTypst())">Download .typ</button>
+              <button class="btn primary" @click="edSave()" x-text="edId ? 'Save changes' : 'Save to calendar'"></button>
+            </div>
+            <div class="error pre" x-show="edErr" x-text="edErr"></div>
+            <details class="ed-code"><summary>Typst for the notes</summary><pre x-text="edTypst()"></pre></details>
+          </div>
+        </section>
+      </div>
+    </template>
+
+    <!-- ===== live ===== -->
+    <template x-if="teachView==='run' && teach">
+      <div class="stack">
+        <div class="run-top">
+          <div class="run-clock" x-text="tClock()"></div>
+          <div class="run-side">
+            <div class="run-title" x-text="teach.title"></div>
+            <div class="run-btns">
+              <button class="btn" @click="teachGo('day')" x-show="teach.id">Day</button>
+              <button class="btn" @click="teachGo('cal')">Calendar</button>
+              <button class="btn" x-show="teach.id" @click="edOpen(lessons.find(l => l.id === teach.id))" :disabled="!lessons.find(l => l.id === teach.id)">Edit</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- with a buffer: one wide strip, a window of allowed zones around now -->
+        <template x-if="tBuffered()">
+          <section class="panel teach-hero win-hero" :class="'phase-' + tState().phase">
+            <div class="win-status">
+              <span x-text="tStatus()"></span>
+              <span class="muted" x-show="tWin()?.endsIn" x-text="'lesson ends in ' + mmss(tWin()?.endsIn || 0)"></span>
+            </div>
+            <div class="win-strip">
+              <template x-for="s in tWin().segs" :key="s.key">
+                <div class="win-seg" :class="s.cls" :style="s.style"><span x-html="s.label"></span></div>
+              </template>
+              <template x-for="d in tWin().details" :key="d.key"><div class="win-detail" :style="d.style"></div></template>
+              <template x-if="tWin().win">
+                <div>
+                  <div class="win-dim left" :style="'width:' + tWin().win.left + '%'"></div>
+                  <div class="win-dim right" :style="'left:' + (tWin().win.left + tWin().win.width) + '%'"></div>
+                  <div class="win-frame" :style="'left:' + tWin().win.left + '%;width:' + tWin().win.width + '%'"></div>
+                </div>
+              </template>
+              <div class="win-now" x-show="tWin().now !== null" :style="'left:' + tWin().now + '%'"></div>
+            </div>
+            <div class="lesson-scale win-scale"><template x-for="t in tWin().ticks" :key="t.key"><span :style="'left:' + t.left + '%'" x-text="t.label"></span></template></div>
+            <div class="win-items">
+              <template x-for="it in tWin().items" :key="it.key">
+                <div class="win-item" :class="{cur: it.cur, brk: it.brk}">
+                  <span class="t" x-text="it.span"></span>
+                  <span class="n"><span x-html="it.title"></span><template x-for="d in it.details" :key="d.key"><span class="d" :class="{cur: d.cur}" x-html="d.title"></span></template></span>
+                </div>
+              </template>
+            </div>
+          </section>
+        </template>
+
+        <!-- without a buffer: the classic view -->
+        <template x-if="!tBuffered()">
+          <section class="panel teach-hero" :class="'phase-' + tState().phase">
+            <div class="teach-top">
+              <div class="teach-status" x-text="tStatus()"></div>
+            </div>
+            <div class="teach-main">
+              <h1 class="teach-h" x-html="tHeader()"></h1>
+              <div class="teach-left" x-show="tLeft(1) !== null">
+                <span class="v" x-text="tLeft(1) === null ? '' : mmss(tLeft(1))"></span><span class="k" x-text="tLeftLabel(1)"></span>
+              </div>
+            </div>
+            <div class="teach-bar" x-show="tProgress(1) !== null"><i :style="'width:' + (tProgress(1) * 100) + '%'"></i></div>
+            <div class="teach-sub" x-show="tSubHeader()">
+              <div class="teach-main">
+                <h2 class="teach-h2" x-html="tSubHeader()"></h2>
+                <div class="teach-left small" x-show="tLeft(2) !== null">
+                  <span class="v" x-text="tLeft(2) === null ? '' : mmss(tLeft(2))"></span><span class="k" x-text="tLeftLabel(2)"></span>
+                </div>
+              </div>
+              <div class="teach-bar thin" x-show="tProgress(2) !== null"><i :style="'width:' + (tProgress(2) * 100) + '%'"></i></div>
+            </div>
+            <div class="teach-next" x-show="tNext()"><span class="k">Next:</span> <span x-html="tNext()"></span></div>
+            <div class="lesson-strip" aria-hidden="true">
+              <div class="lesson-track">
+                <template x-for="seg in tStrip().segs" :key="seg.key">
+                  <div class="lesson-seg" :class="seg.cls" :style="seg.style" :title="seg.title"></div>
+                </template>
+                <div class="lesson-now" x-show="tStrip().now !== null" :style="'left:' + tStrip().now + '%'"></div>
+              </div>
+              <div class="lesson-scale"><template x-for="t in tStrip().ticks" :key="t.key"><span :style="'left:' + t.left + '%'" x-text="t.label"></span></template></div>
+            </div>
+          </section>
+        </template>
 
         <div class="teach-note" x-show="teach.date && teach.date !== today()" x-text="'This timetable is dated ' + longDate(teach.date || today()) + '. Times are shown for today.'"></div>
 
         <section class="panel">
           <div class="teach-controls">
             <label class="f">Start<input type="time" :value="teach.settings.start1" @change="tSet('start1', $event.target.value)"></label>
-            <label class="f">Hour 2<input type="time" :value="teach.settings.start2 || ''" @change="tSet('start2', $event.target.value || null)" title="Empty: right after the break"></label>
+            <label class="f" x-show="teach.hours.length > 1">Hour 2<input type="time" :value="teach.settings.start2 || ''" @change="tSet('start2', $event.target.value || null)" title="Empty: right after the break"></label>
             <label class="f">Hour (min)<input type="number" min="5" max="180" :value="teach.settings.hourLength" @change="tSet('hourLength', +$event.target.value || 45)"></label>
-            <label class="f">Break (min)<input type="number" min="0" max="120" :value="teach.settings.breakLength" @change="tSet('breakLength', +$event.target.value || 0)"></label>
+            <label class="f" x-show="teach.hours.length > 1">Break (min)<input type="number" min="0" max="120" :value="teach.settings.breakLength" @change="tSet('breakLength', +$event.target.value || 0)"></label>
+            <label class="f">Buffer (%)<input type="number" min="0" max="60" :value="teach.settings.buffer || 0" @change="tSet('buffer', +$event.target.value || 0)"></label>
             <div class="shift">
               <button class="btn primary" @click="tStartNow()">Start now</button>
               <button class="btn small ghost" @click="tShift(-60)" title="Everything one minute earlier">−1 min</button>
@@ -425,8 +611,7 @@
         </section>
 
         <section class="panel">
-          <div class="panel-head"><h2>Plan</h2><span class="sub">Click a row to start it now</span>
-          </div>
+          <div class="panel-head"><h2>Plan</h2><span class="sub" x-text="tBuffered() ? 'Stretched over the whole hour (planned minutes in brackets). Click a row to start it now' : 'Click a row to start it now'"></span></div>
           <div class="panel-body plan">
             <template x-for="(h, hi) in tSchedule()" :key="h.name">
               <div>
@@ -439,7 +624,7 @@
                     <button class="plan-row" @click="tJump(a)" :title="'Start ' + a.title.replace(/[$*]/g, '') + ' now'">
                       <span class="t" x-text="clockOf(a.start) + '–' + clockOf(a.end)"></span>
                       <span class="n" x-html="typst(a.title)"></span>
-                      <span class="m" x-text="a.minutes + ' min'"></span>
+                      <span class="m" x-text="a.minutes + ' min' + (tBuffered() ? ' (' + a.planned + ')' : '')"></span>
                     </button>
                     <span class="warn-text small" x-show="a.details.length && a.detailSum !== a.minutes" x-text="'details add up to ' + a.detailSum + ' min'"></span>
                     <template x-for="d in a.details" :key="d.key">

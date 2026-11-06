@@ -57,14 +57,34 @@ Sport and coding are tracked like courses, in every semester, but **never count 
 
 Your starting types and GitHub user live in `chrono.local.json`, which is gitignored (see `chrono.local.example.json`). It is read once, the first time the server starts with it; after that, change types in the app.
 
-## Teach (live lesson plan)
+## Teach (lesson calendar and live lesson plan)
 
-The *Teach* tab shows where you should be in a lesson right now: the current part in large type, the current step under it, time left for both, what comes next, and the whole plan with the current row highlighted. It is completely separate from the study timer and saves nothing in your logs.
+The *Teach* tab keeps your lesson timetables in a calendar and shows, live, where you should be in a lesson. It is completely separate from the study timer and saves nothing in your study logs.
 
-- **Load a lesson:** paste the timetable block from your notes (`#let lesson = ( ... )`), or drop the `.typ` file anywhere on the window (you can drop the notes and the preamble together).
-- **Settings come from the timetable** (`start`, `hour-length`, `break-length`, optional `hour-2-start`, `title`, `date`). Missing ones fall back to the preamble's values, then to 08:00 / 45 / 5. You can also change them in the tab.
-- **Start now** moves the whole plan so it starts this minute; *−1 / +1 min* nudge it; clicking a row in the plan makes that step start now (handy when you are running late). *Back to plan* undoes the shift.
+- **Calendar.** Two school years to pick from (this one and the next, e.g. *2026 – 2027* and *2027 – 2028*; the list moves on by itself each August). Below, the twelve months from August to July, one square per day. Days with a timetable are coloured; today is outlined.
+- **A day.** Click a square: you see that day's timetables and can add as many as you like, as long as their times do not overlap (otherwise you get a message naming the one it collides with). Add them by dropping `.typ` files (notes or timetables, several at once), choosing files, pasting the `#let lesson = ( … )` block, or with the editor. A timetable that carries its own `date` goes to that date; one without goes to the day you opened. Dropping a file anywhere in Chrono works too.
+- **Titles.** A timetable is named after four fields: `date` (yyyy.mm.dd), `institution` (ETH, a school), `class` (Physics, Physik SF) and `topic` (Elektromotor), joined as *2026.11.09 · ETH · Physics · Elektromotor*.
+- **Editor** (*New in the editor*, or *Edit* on a timetable). Date, the four fields, start, hour length, break, buffer, then hours → activities → steps, with buttons to add, move and remove them and steppers for the minutes. Each hour shows *planned / target* minutes; *fit* puts the missing minutes into the last activity. *Save to calendar*, *▶ Run now* (without saving), *Copy Typst* / *Download .typ* for your notes.
+- **Examples.** A 1-hour and a 2-hour timetable on every day page: *▶ live* shows them at once, *edit* opens them in the editor, *.typ* downloads them (they also sit in `static/examples/`).
+- **Live, with a buffer** (`buffer: 20` in the timetable: 20 % of every hour kept free at its start, for questions and interruptions). The activities of an hour then fill 80 % of it. Chrono stretches them evenly (whole minutes) over the full hour and draws the whole lesson as one wide strip: each activity in its own colour, breaks always green, the steps as dotted lines. A red bar marks the exact time, and a framed *window* of ±10 % of an hour around it shows the allowed zone; the rest of the strip is dimmed. At the very start the window runs from the bar 20 % ahead, at the very end 20 % back. Under the strip: what lies in the window, the current part in bold. The clock sits alone on the top line, the *Day*, *Calendar* and *Edit* buttons on the right.
+- **Live, without a buffer** (`buffer: 0` or none): the classic view with the current part in large type, the current step, time left and what comes next.
+- **Settings come from the timetable** (`start`, `hour-length`, `break-length`, `buffer`, optional `hour-2-start`). You can change them while it runs; for a saved timetable the change is saved too. *Start now* moves the whole plan so it starts this minute; *−1 / +1 min* nudge it; clicking a row in the plan makes that step start now. *Back to plan* undoes the shift.
 - Space does nothing in this tab, so it can't start the study timer by accident.
+
+The timetable format (the same block works in your Typst notes with `unified-preamble.typ`):
+
+```typst
+#let lesson = (
+  date: "2026.11.09", institution: "ETH", class: "Physics", topic: "Elektromotor",
+  start: "10:20", hour-length: 40, break-length: 5, buffer: 20,
+  hour1: (
+    (4, [Einstieg], ((1, [Begrüssung]), (3, [Aktivatoren A1, A2]))),
+    ...                                   // activities of an hour: 32 min (= 40 - 20 %)
+  ),
+  hour2: ( ... ),                         // or only hour1; hour3 ... work too
+)
+#timetable(lesson)
+```
 
 ## What the numbers mean
 

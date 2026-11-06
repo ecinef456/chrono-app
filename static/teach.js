@@ -1,8 +1,10 @@
 /* Chrono "Teach" mode: reads the lesson plan from Typst notes and turns it into a live schedule.
  *
  * Reads, from one or more dropped .typ files:
- *   #let lesson = ( hour1: ((12, [Intro], ((1, [..]), ...)), ...), hour2: (...) )
- *   #SUB-TABLE(lesson, hour-1-time-start: "10:15", ...)        (optional named args)
+ *   #let lesson = ( date: "2026.11.09", institution: "ETH", class: "Physics", topic: "Motor",
+ *                   start: "10:15", hour-length: 45, break-length: 5, buffer: 20,
+ *                   hour1: ((12, [Intro], ((1, [..]), ...)), ...), hour2: (...) )
+ *   #timetable(lesson) / #SUB-TABLE(lesson, hour-1-time-start: "10:15", ...)   (optional named args)
  *   #let hour-1-time-start = "08:00"  /  hour-2-time-start / hour-length / break-length   (preamble)
  *   #show: notes.with(course: "...", week: "...")              (for the title)
  * Nothing here is stored in the study logs.
@@ -95,15 +97,28 @@
   // Names used in the preamble / SUB-TABLE arguments, and (shorter) inside the timetable itself.
   const SETTINGS = {
     "hour-1-time-start": "start1", "hour-2-time-start": "start2", "hour-length": "hourLength", "break-length": "breakLength",
-    "start": "start1", "hour-2-start": "start2",
+    "start": "start1", "hour-2-start": "start2", "buffer": "buffer",
   };
+  const FIELDS = ["date", "institution", "class", "topic"];
+
+  /** "2026.11.09" or "2026-11-09" -> "2026-11-09" (else null) */
+  function isoOf(d) {
+    const m = /^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})\.?$/.exec(String(d || "").trim());
+    return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : null;
+  }
+  /** title = date · institution · class · topic (date as yyyy.mm.dd) */
+  function titleOf(fields, fallback) {
+    const parts = FIELDS.map(k => k === "date" && fields.date ? (isoOf(fields.date) || fields.date).replace(/-/g, ".") : fields[k]).filter(Boolean);
+    return parts.length ? parts.join(" · ") : (fallback || "Lesson");
+  }
 
   function toSettings(obj) {
     const out = {};
     for (const [k, v] of Object.entries(obj || {})) {
       const key = SETTINGS[k];
       if (!key) continue;
-      if (key === "start2") out.start2 = v && v.auto ? null : (typeof v === "string" ? v : undefined);
+      if (key === "buffer") { const n = typeof v === "number" ? v : v && v.raw ? parseFloat(v.raw) : typeof v === "string" ? parseFloat(v) : NaN; if (!isNaN(n)) out.buffer = n; }
+      else if (key === "start2") out.start2 = v && v.auto ? null : (typeof v === "string" ? v : undefined);
       else if (key === "start1") { if (typeof v === "string") out.start1 = v; }
       else if (typeof v === "number") out[key] = v;
     }
@@ -149,12 +164,13 @@
 
   /** files: [{ name, text }] (a dropped file or pasted text). Returns { hours, settings, title, date, fileName }. */
   function parseFiles(files) {
-    let hours = null, settings = {}, callSettings = {}, ownSettings = {}, title = {}, date = null, from = null;
+    let hours = null, settings = {}, callSettings = {}, ownSettings = {}, title = {}, date = null, from = null, fields = {};
     const useDict = (dict, name) => {
       hours = hoursFrom(dict); from = name;
       ownSettings = toSettings(dict);
       if (typeof dict.title === "string") title.week = dict.title;
-      if (typeof dict.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dict.date)) date = dict.date;
+      for (const k of FIELDS) if (typeof dict[k] === "string" && dict[k].trim()) fields[k] = dict[k].trim();
+      if (fields.date) date = isoOf(fields.date);
     };
     for (const f of files) {
       const src = f.text;
@@ -166,7 +182,7 @@
       }
       // which variable holds the plan: the first argument of SUB-TABLE / TIME-TABLE, else "lesson"
       let varName = "lesson";
-      const call = /#(SUB-TABLE|TIME-TABLE)\s*\(/.exec(src);
+      const call = /#(SUB-TABLE|TIME-TABLE|timetable)\s*\(/.exec(src);
       if (call) {
         const [args] = readCollection(src, call.index + call[0].length - 1);
         const first = args.pos[0];
@@ -192,16 +208,92 @@
       // pasted without the outer parentheses: "start: ..., hour1: (...), hour2: (...)"
       try {
         const v = readValue("(" + files[0].text + "\n)", 0)[0];
-        if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).some(k => /^hour\d+$/.test(k))) {
-          hours = hoursFrom(v); from = files[0].name; ownSettings = toSettings(v);
-          if (typeof v.title === "string") title.week = v.title;
-          if (typeof v.date === "string") date = v.date;
-        }
+        if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).some(k => /^hour\d+$/.test(k))) useDict(v, files[0].name);
       } catch (e) { /* fall through to the message below */ }
     }
     if (!hours) throw new Error("No timetable found. Paste the  #let lesson = ( ... )  block (with hour1, hour2) or drop the notes file.");
     // the timetable's own settings win over SUB-TABLE arguments, which win over the preamble
-    return { hours, settings: { ...settings, ...callSettings, ...ownSettings }, title, date, fileName: from };
+    const all = { ...settings, ...callSettings, ...ownSettings };
+    return { hours, settings: all, title, date, fields, fileName: from, name: titleOf(fields, title.week || title.course || from) };
+  }
+
+  // ------------------------------------------------------------ buffer: stretch an hour to its full length
+
+  /** Integers proportional to `parts` that add up to `total` (largest remainder). */
+  function apportion(parts, total) {
+    const sum = parts.reduce((a, b) => a + b, 0);
+    if (!parts.length) return [];
+    if (sum <= 0) return parts.map((_, i) => (i === 0 ? total : 0));
+    const exact = parts.map(p => (p * total) / sum);
+    const out = exact.map(Math.floor);
+    let left = total - out.reduce((a, b) => a + b, 0);
+    exact.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { out[i]++; left--; } });
+    return out;
+  }
+
+  /** With a buffer the activities fill (100 - buffer) % of an hour. Chrono stretches them
+   *  evenly (whole minutes) so that they fill the whole hour; the details follow. */
+  function stretchHours(hours, hourLength) {
+    return hours.map(h => {
+      const mins = apportion(h.activities.map(a => a.minutes), hourLength);
+      return {
+        ...h,
+        activities: h.activities.map((a, i) => {
+          const dm = a.details.length ? apportion(a.details.map(d => d.minutes), mins[i]) : [];
+          return { ...a, planned: a.minutes, minutes: mins[i], details: a.details.map((d, j) => ({ ...d, planned: d.minutes, minutes: dm[j] })) };
+        }),
+      };
+    });
+  }
+
+  /** First start and last end (minutes after midnight) of a timetable, unshifted. */
+  function spanOf(hours, settings) {
+    const cfg = { start1: "08:00", hourLength: 45, breakLength: 5, ...settings, shiftSec: 0 };
+    const sch = buildSchedule(hours, cfg);
+    const end = Math.max(...sch.map(h => Math.max(h.end, h.activitiesEnd)));
+    return { start: Math.round(sch[0].start / 60), end: Math.round(end / 60) };
+  }
+
+  // ------------------------------------------------------------ editor model <-> Typst
+
+  const tq = s => '"' + String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+  const tc = s => "[" + String(s) + "]";   // titles are Typst markup, kept as written
+
+  /** Typst text of a timetable. m: { date, institution, class, topic, start, hourLength, breakLength, buffer, start2, hours: [{ activities: [{ minutes, title, details: [{ minutes, title }] }] }] } */
+  function toTypst(m) {
+    const L = [];
+    L.push('#import "unified-preamble.typ": *', "");
+    L.push("#let lesson = (");
+    if (m.date) L.push(`  date: ${tq(String(m.date).replace(/-/g, "."))},`);
+    for (const k of ["institution", "class", "topic"]) if (m[k]) L.push(`  ${k}: ${tq(m[k])},`);
+    L.push(`  start: ${tq(m.start || "08:00")},`);
+    L.push(`  hour-length: ${m.hourLength},`);
+    if (m.hours.length > 1) L.push(`  break-length: ${m.breakLength},`);
+    L.push(`  buffer: ${m.buffer || 0},`);
+    if (m.start2) L.push(`  hour-2-start: ${tq(m.start2)},`);
+    m.hours.forEach((h, i) => {
+      L.push("", `  hour${i + 1}: (`);
+      for (const a of h.activities) {
+        const mins = a.details.length ? a.details.reduce((s, d) => s + (+d.minutes || 0), 0) : +a.minutes || 0;
+        L.push(`    (${mins}, ${tc(a.title)}, (`);
+        for (const d of a.details) L.push(`      (${+d.minutes || 0}, ${tc(d.title)}),`);
+        L.push("    )),");
+      }
+      L.push("  ),");
+    });
+    L.push(")", "", "#timetable(lesson)");
+    return L.join("\n") + "\n";
+  }
+
+  /** Editor model from a parsed timetable. */
+  function toModel(r) {
+    const s = { start1: "08:00", hourLength: 45, breakLength: 5, buffer: 0, ...r.settings };
+    return {
+      date: r.date || (r.fields && isoOf(r.fields.date)) || "",
+      institution: r.fields?.institution || "", class: r.fields?.class || "", topic: r.fields?.topic || "",
+      start: s.start1, start2: s.start2 || "", hourLength: s.hourLength, breakLength: s.breakLength, buffer: s.buffer || 0,
+      hours: r.hours.map(h => ({ activities: h.activities.map(a => ({ minutes: a.minutes, title: a.title, details: a.details.map(d => ({ minutes: d.minutes, title: d.title })) })) })),
+    };
   }
 
   // ------------------------------------------------------------ schedule
@@ -221,7 +313,7 @@
       const hour = { name: h.name, start, end: start + L, planned: 0, activities: [] };
       let t = start;
       h.activities.forEach((a, ai) => {
-        const act = { key: `${hi}.${ai}`, title: a.title, minutes: a.minutes, start: t, end: t + a.minutes * 60, details: [], detailSum: 0 };
+        const act = { key: `${hi}.${ai}`, title: a.title, minutes: a.minutes, planned: a.planned ?? a.minutes, start: t, end: t + a.minutes * 60, details: [], detailSum: 0 };
         let u = t;
         a.details.forEach((d, di) => {
           act.details.push({ key: `${hi}.${ai}.${di}`, title: d.title, minutes: d.minutes, start: u, end: u + d.minutes * 60 });
@@ -327,5 +419,5 @@
     }).join("").replace(/[ \t\r\n]+/g, " ").trim();  // keeps the thin spaces inside math
   }
 
-  window.ChronoTeach = { parseFiles, buildSchedule, locate, typstHtml, hmToSec };
+  window.ChronoTeach = { parseFiles, buildSchedule, locate, typstHtml, hmToSec, stretchHours, apportion, spanOf, isoOf, titleOf, toTypst, toModel };
 })();
