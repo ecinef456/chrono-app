@@ -646,3 +646,47 @@ body.frameless .top { position: sticky; top: 0; z-index: 30; background: var(--b
 .win-edges .e-top-left, .win-edges .e-top-right, .win-edges .e-bottom-left, .win-edges .e-bottom-right { width: 10px; height: 10px; }
 .win-edges .e-top-left { top: 0; left: 0; cursor: nwse-resize; } .win-edges .e-bottom-right { bottom: 0; right: 0; cursor: nwse-resize; }
 .win-edges .e-top-right { top: 0; right: 0; cursor: nesw-resize; } .win-edges .e-bottom-left { bottom: 0; left: 0; cursor: nesw-resize; }
+
+/* ---------------- workouts (weights per exercise) and sport satisfaction */
+.chip[aria-selected="true"] { background: var(--panel); color: var(--ink); border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.wl { border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; margin: 0 0 12px; }
+.wl legend { font-weight: 600; padding: 0 4px; }
+.wl .hint { display: block; margin: 2px 0 8px; }
+.wl-days, .wo-days { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
+.wl-row { display: grid; grid-template-columns: minmax(120px, 1fr) auto auto; gap: 4px 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--rule); }
+.wl-row.done .wl-name { font-weight: 600; }
+.wl-tick { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.wl-tick input { width: 18px; height: 18px; accent-color: var(--ink); }
+.wl-kg { display: flex; align-items: center; gap: 2px; }
+.wl-kg input { width: 70px; text-align: right; }
+.wl-sr { display: flex; align-items: center; gap: 3px; }
+.wl-sr input { width: 46px; text-align: right; }
+.wl-why { grid-column: 1 / -1; font-size: 12px; padding-left: 26px; }
+.wl input[type=number] { padding: 4px 6px; }
+.sat-strip { margin-top: 18px; }
+.sat-cols { display: flex; gap: 10px 28px; flex-wrap: wrap; }
+.sat-col { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sat-col .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wo-type { margin-top: 22px; }
+.wo-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wo-head .chart-title { display: flex; align-items: center; gap: 8px; margin: 0; }
+.wo-days .chip.planned { border-color: var(--ink-3); color: var(--ink); }
+.wo-day-sum { margin: 2px 0 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.wo-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.wo-table th { text-align: left; font-weight: 600; font-size: 12px; color: var(--ink-3); padding: 4px 8px; border-bottom: 1px solid var(--rule); }
+.wo-table td { padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+.wo-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.spark { display: block; color: var(--ink-2); overflow: visible; }
+.spark circle.ok { fill: currentColor; }
+.spark circle.miss { fill: var(--panel); stroke: currentColor; stroke-width: 1.2; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.tag.good { color: var(--good); }
+.tag.warn { color: var(--bad, #d55e00); }
+.wo-edit .mini { display: flex; flex-direction: column; font-size: 11px; color: var(--ink-3); }
+.wo-edit .mini input { width: 64px; padding: 4px 6px; }
+.wo-copy { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.small { font-size: 12px; }
+@media (max-width: 700px) { .wo-table th:nth-child(5), .wo-table td:nth-child(5), .wo-table th:nth-child(6), .wo-table td:nth-child(6) { display: none; } }
+.wl-sr input { width: 52px; }
+.wl input[type=number]::-webkit-inner-spin-button, .wo-edit input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.wl input[type=number], .wo-edit input[type=number] { -moz-appearance: textfield; appearance: textfield; }

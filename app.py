@@ -183,6 +183,26 @@ def init_db():
             notes TEXT NOT NULL DEFAULT ''
         )""")
         con.execute("CREATE INDEX IF NOT EXISTS sleep_night ON sleep(night)")
+        con.execute("""CREATE TABLE IF NOT EXISTS workout_exercises (
+            id INTEGER PRIMARY KEY,
+            course_id INTEGER NOT NULL,        -- the sport type (kind 'sport')
+            weekday INTEGER NOT NULL,          -- 0 = Monday ... 6 = Sunday: the training day it belongs to
+            name TEXT NOT NULL,
+            sets INTEGER, reps INTEGER,        -- the plan
+            bar_kg REAL NOT NULL DEFAULT 0,    -- weight of the bar, for the 1RM estimate
+            step_kg REAL NOT NULL DEFAULT 2.5, -- smallest increase
+            sort INTEGER NOT NULL DEFAULT 0,
+            archived INTEGER NOT NULL DEFAULT 0
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS workout_logs (
+            id INTEGER PRIMARY KEY,
+            session_id INTEGER NOT NULL,
+            exercise_id INTEGER NOT NULL,
+            weight REAL,                       -- kg on the bar, both sides together, bar not included
+            sets INTEGER, reps INTEGER,
+            done INTEGER NOT NULL DEFAULT 0,   -- ticked: done as planned
+            UNIQUE (session_id, exercise_id)
+        )""")
         ensure_other(con)
         seed_activities(con)
 
@@ -553,6 +573,7 @@ def update_session(sid: int, body: SessionIn):
 def delete_session(sid: int):
     with db() as con:
         con.execute("DELETE FROM sessions WHERE id=?", (sid,))
+        con.execute("DELETE FROM workout_logs WHERE session_id=?", (sid,))
     return {"ok": True}
 
 
@@ -1012,11 +1033,13 @@ def activities(weeks: int = 16, months: int = 12):
     with db() as con:
         types = rows(con.execute("SELECT id, kind, name, code, repo_path, finished AS archived, sort FROM courses"
                                  " WHERE kind IN ('sport','code') ORDER BY kind, sort, id"))
-        sess = rows(con.execute("SELECT s.course_id, s.start, s.duration_sec FROM sessions s JOIN courses c ON c.id = s.course_id"
+        sess = rows(con.execute("SELECT s.course_id, s.start, s.duration_sec, s.satisfaction FROM sessions s JOIN courses c ON c.id = s.course_id"
                                 " WHERE c.kind IN ('sport','code') AND s.start >= ?", (since.isoformat(),)))
+        has_plan = {r[0] for r in con.execute("SELECT DISTINCT course_id FROM workout_exercises WHERE archived=0")}
         timer = _timer(con)
     if timer["state"] != "idle" and timer.get("course") and any(t["id"] == timer["course"]["id"] for t in types):
-        sess.append({"course_id": timer["course"]["id"], "start": timer["session_start"], "duration_sec": timer["elapsed_sec"]})
+        sess.append({"course_id": timer["course"]["id"], "start": timer["session_start"], "duration_sec": timer["elapsed_sec"],
+                     "satisfaction": None})
 
     by_id = {t["id"]: t for t in types}
     out = {}
@@ -1025,6 +1048,15 @@ def activities(weeks: int = 16, months: int = 12):
         for n, t in enumerate(ktypes):
             t["slot"] = n  # fixed colour slot, in creation order
             t["archived"] = bool(t["archived"])
+            t["has_plan"] = t["id"] in has_plan
+            # satisfaction: mean of the last 30 days and of the 30 before, per type (one vote per session)
+            r1 = [x["satisfaction"] for x in sess if x["course_id"] == t["id"] and x["satisfaction"] is not None
+                  and parse(x["start"]).date() > today - timedelta(days=30)]
+            r0 = [x["satisfaction"] for x in sess if x["course_id"] == t["id"] and x["satisfaction"] is not None
+                  and today - timedelta(days=60) < parse(x["start"]).date() <= today - timedelta(days=30)]
+            t["sat_30"] = round(sum(r1) / len(r1), 1) if r1 else None
+            t["sat_prev_30"] = round(sum(r0) / len(r0), 1) if r0 else None
+            t["sat_n"] = len(r1)
         wk = [[0.0] * weeks for _ in ktypes]
         mo = [[0.0] * months for _ in ktypes]
         idx = {t["id"]: n for n, t in enumerate(ktypes)}
@@ -1073,6 +1105,219 @@ def activities(weeks: int = 16, months: int = 12):
 
 
 # ---------------------------------------------------------------- static
+
+# ---------------------------------------------------------------- workouts: weights per exercise
+# A sport type (e.g. Muscle pump) can have a plan per weekday: its exercises. Each exercise
+# belongs to ONE weekday, so "Lunges" on Wednesday and on Sunday are two exercises with their
+# own history (they are different sets). A session logs, per exercise, the weight on the bar
+# (both sides together, without the bar), sets, reps and a tick when it was done as planned.
+
+WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+class ExerciseIn(BaseModel):
+    course_id: int
+    weekday: int = Field(ge=0, le=6)
+    name: str = Field(min_length=1, max_length=80)
+    sets: Optional[int] = Field(default=None, ge=1, le=20)
+    reps: Optional[int] = Field(default=None, ge=1, le=100)
+    bar_kg: float = Field(default=0, ge=0, le=100)     # the bar itself, for the 1RM estimate only
+    step_kg: float = Field(default=2.5, gt=0, le=50)   # your smallest increase
+    archived: bool = False
+
+
+class WorkoutLogIn(BaseModel):
+    exercise_id: int
+    weight: Optional[float] = Field(default=None, ge=0, le=1000)
+    sets: Optional[int] = Field(default=None, ge=0, le=20)
+    reps: Optional[int] = Field(default=None, ge=0, le=100)
+    done: bool = False
+
+
+class WorkoutIn(BaseModel):
+    logs: list[WorkoutLogIn]
+
+
+def _e1rm(weight, bar, reps):
+    """Estimated one-rep max (Epley), on the whole load (plates + bar). Only for 1-12 reps."""
+    if weight is None or not reps or reps > 12:
+        return None
+    load = weight + (bar or 0)
+    return load if reps == 1 else load * (1 + reps / 30)
+
+
+def _exercise_history(con, ex_ids):
+    hist = {i: [] for i in ex_ids}
+    if not ex_ids:
+        return hist
+    q = ("SELECT w.exercise_id, w.weight, w.sets, w.reps, w.done, s.start, s.id AS session_id, s.satisfaction"
+         " FROM workout_logs w JOIN sessions s ON s.id = w.session_id"
+         f" WHERE w.exercise_id IN ({','.join('?' * len(ex_ids))}) ORDER BY s.start")
+    for r in con.execute(q, ex_ids):
+        hist[r["exercise_id"]].append(dict(r))
+    return hist
+
+
+def _suggest(h, step):
+    """Progressive overload, simply: done as planned twice in a row at the same weight -> add one step."""
+    logged = [x for x in h if x["weight"] is not None]
+    if not logged:
+        return None, ""
+    last = logged[-1]
+    if not last["done"]:
+        return last["weight"], "last time not finished: same weight"
+    same = [x for x in reversed(logged) if x["weight"] == last["weight"]]
+    streak = 0
+    for x in same:
+        if not x["done"]:
+            break
+        streak += 1
+    if streak >= 2:
+        return round(last["weight"] + step, 2), f"done {streak}× at {last['weight']:g} kg: try +{step:g}"
+    return last["weight"], "done once: same weight again"
+
+
+@app.get("/api/workouts/plan")
+def workout_plan(course_id: int):
+    with db() as con:
+        ex = rows(con.execute("SELECT * FROM workout_exercises WHERE course_id=? ORDER BY weekday, sort, id", (course_id,)))
+        hist = _exercise_history(con, [e["id"] for e in ex])
+    for e in ex:
+        h = hist[e["id"]]
+        e["archived"] = bool(e["archived"])
+        e["n_logged"] = len(h)
+        last = next((x for x in reversed(h) if x["weight"] is not None), None)
+        e["last"] = {"weight": last["weight"], "sets": last["sets"], "reps": last["reps"], "done": bool(last["done"]),
+                     "date": last["start"][:10]} if last else None
+        e["suggest"], e["why"] = _suggest(h, e["step_kg"])
+    return ex
+
+
+@app.post("/api/workouts/exercises")
+def create_exercise(body: ExerciseIn):
+    with db() as con:
+        if not con.execute("SELECT 1 FROM courses WHERE id=? AND kind='sport'", (body.course_id,)).fetchone():
+            raise HTTPException(404, "No such sport.")
+        sort = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM workout_exercises WHERE course_id=? AND weekday=?",
+                           (body.course_id, body.weekday)).fetchone()[0]
+        cur = con.execute("INSERT INTO workout_exercises (course_id,weekday,name,sets,reps,bar_kg,step_kg,sort,archived)"
+                          " VALUES (?,?,?,?,?,?,?,?,0)",
+                          (body.course_id, body.weekday, body.name.strip(), body.sets, body.reps, body.bar_kg, body.step_kg, sort))
+        return {"id": cur.lastrowid}
+
+
+@app.put("/api/workouts/exercises/{eid}")
+def update_exercise(eid: int, body: ExerciseIn):
+    with db() as con:
+        con.execute("UPDATE workout_exercises SET name=?, sets=?, reps=?, bar_kg=?, step_kg=?, archived=? WHERE id=?",
+                    (body.name.strip(), body.sets, body.reps, body.bar_kg, body.step_kg, int(body.archived), eid))
+    return {"ok": True}
+
+
+@app.post("/api/workouts/exercises/{eid}/move")
+def move_exercise(eid: int, delta: int):
+    with db() as con:
+        e = con.execute("SELECT course_id, weekday FROM workout_exercises WHERE id=?", (eid,)).fetchone()
+        if not e:
+            raise HTTPException(404, "Not found.")
+        ids = [r[0] for r in con.execute("SELECT id FROM workout_exercises WHERE course_id=? AND weekday=? ORDER BY sort, id", (e[0], e[1]))]
+        i = ids.index(eid)
+        j = max(0, min(len(ids) - 1, i + delta))
+        ids.insert(j, ids.pop(i))
+        for k, x in enumerate(ids):
+            con.execute("UPDATE workout_exercises SET sort=? WHERE id=?", (k, x))
+    return {"ok": True}
+
+
+@app.delete("/api/workouts/exercises/{eid}")
+def delete_exercise(eid: int):
+    with db() as con:
+        n = con.execute("SELECT COUNT(*) FROM workout_logs WHERE exercise_id=?", (eid,)).fetchone()[0]
+        if n:
+            raise HTTPException(409, f"It has {n} logged sessions. Hide it instead, so its history stays.")
+        con.execute("DELETE FROM workout_exercises WHERE id=?", (eid,))
+    return {"ok": True}
+
+
+@app.get("/api/workouts/session/{sid}")
+def get_workout(sid: int):
+    with db() as con:
+        return rows(con.execute("SELECT exercise_id, weight, sets, reps, done FROM workout_logs WHERE session_id=?", (sid,)))
+
+
+@app.put("/api/workouts/session/{sid}")
+def put_workout(sid: int, body: WorkoutIn):
+    with db() as con:
+        if not con.execute("SELECT 1 FROM sessions WHERE id=?", (sid,)).fetchone():
+            raise HTTPException(404, "No such session.")
+        con.execute("DELETE FROM workout_logs WHERE session_id=?", (sid,))
+        for l in body.logs:
+            if l.weight is None and not l.done:
+                continue                      # skipped exercise
+            con.execute("INSERT INTO workout_logs (session_id,exercise_id,weight,sets,reps,done) VALUES (?,?,?,?,?,?)",
+                        (sid, l.exercise_id, l.weight, l.sets, l.reps, int(l.done)))
+    return {"ok": True}
+
+
+def _slope_per_week(points):
+    """Least-squares slope in kg per week; points = [(date, value)]."""
+    if len(points) < 3:
+        return None
+    t0 = points[0][0]
+    xs = [(d - t0).days / 7 for d, _ in points]
+    ys = [v for _, v in points]
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    sxx = sum((x - mx) ** 2 for x in xs)
+    if sxx == 0:
+        return None
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
+
+
+@app.get("/api/workouts/stats")
+def workout_stats(course_id: int):
+    today = date.today()
+    with db() as con:
+        ex = rows(con.execute("SELECT * FROM workout_exercises WHERE course_id=? ORDER BY weekday, sort, id", (course_id,)))
+        hist = _exercise_history(con, [e["id"] for e in ex])
+    out = []
+    for e in ex:
+        h = [x for x in hist[e["id"]] if x["weight"] is not None]
+        pts = [(parse(x["start"]).date(), x["weight"]) for x in h]
+        series = [{"date": x["start"][:10], "weight": x["weight"], "sets": x["sets"], "reps": x["reps"], "done": bool(x["done"]),
+                   "e1rm": (round(v, 1) if (v := _e1rm(x["weight"], e["bar_kg"], x["reps"])) else None)} for x in h]
+        def at_or_before(days):
+            ref = today - timedelta(days=days)
+            prev = [w for d, w in pts if d <= ref]
+            return prev[-1] if prev else None
+        cur = pts[-1][1] if pts else None
+        w4 = at_or_before(28)
+        recent = [p for p in pts if p[0] >= today - timedelta(days=56)]
+        last4 = [x for x in h[-4:]]
+        stalled = len(last4) == 4 and len({x["weight"] for x in last4}) == 1
+        out.append({
+            "id": e["id"], "weekday": e["weekday"], "name": e["name"], "archived": bool(e["archived"]),
+            "sets": e["sets"], "reps": e["reps"], "bar_kg": e["bar_kg"], "step_kg": e["step_kg"],
+            "series": series, "n": len(h),
+            "current": cur, "first": pts[0][1] if pts else None, "best": max((w for _, w in pts), default=None),
+            "change_4w": (cur - w4) if (cur is not None and w4 is not None) else None,
+            "trend_kg_week": _slope_per_week(recent),
+            "done_rate": (sum(1 for x in h if x["done"]) / len(h)) if h else None,
+            "stalled": stalled and not all(x["done"] for x in last4),      # stuck and not finishing
+            "ready": stalled and all(x["done"] for x in last4),            # finishing every time: time to add weight
+        })
+    # sessions per training day: volume (sets x reps x load) and satisfaction
+    days = {}
+    for e in ex:
+        for x in hist[e["id"]]:
+            if x["weight"] is None:
+                continue
+            d = days.setdefault((e["weekday"], x["session_id"]), {"weekday": e["weekday"], "date": x["start"][:10],
+                                                                  "volume": 0.0, "satisfaction": x["satisfaction"]})
+            if x["sets"] and x["reps"]:
+                d["volume"] += x["sets"] * x["reps"] * (x["weight"] + (e["bar_kg"] or 0))
+    sessions = sorted(days.values(), key=lambda d: d["date"])
+    return {"exercises": out, "sessions": sessions, "weekdays": WEEKDAYS}
+
 
 # ---------------------------------------------------------------- features (chosen on first launch)
 # The study timer (Dashboard, Log, Courses) is always on. The rest can be switched on or off;
