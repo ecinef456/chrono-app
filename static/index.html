@@ -7,9 +7,9 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=21">
+<link rel="stylesheet" href="/static/style.css?v=22">
 <script defer src="/static/teach.js?v=2"></script>
-<script defer src="/static/app.js?v=20"></script>
+<script defer src="/static/app.js?v=21"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -368,90 +368,6 @@
               </div>
             </div>
           </template>
-          <template x-if="kind === 'sport'">
-            <div class="wo">
-              <template x-for="t in (act?.sport?.types || []).filter(t => !t.archived && wo[t.id])" :key="t.id">
-                <div class="wo-type">
-                  <div class="wo-head">
-                    <h3 class="chart-title"><span class="swatch" :style="'background:' + actColor(t.slot)"></span><span x-text="'Weights · ' + t.name"></span></h3>
-                    <button class="btn small ghost" x-show="!t.has_plan && !wo[t.id].open" @click="wo[t.id].open = true; wo[t.id].edit = true">Track weights for this sport</button>
-                    <button class="btn small ghost" x-show="wo[t.id].open" @click="wo[t.id].edit = !wo[t.id].edit" x-text="wo[t.id].edit ? 'Done editing' : 'Edit plan'"></button>
-                  </div>
-                  <div x-show="wo[t.id].open">
-                    <div class="wo-days" role="tablist" aria-label="Training day">
-                      <template x-for="(d, i) in weekdays" :key="i">
-                        <button class="chip" role="tab" :aria-selected="wo[t.id].day === i" :class="{ planned: woDays(t.id).has(i) }" x-show="wo[t.id].edit || woDays(t.id).has(i)" @click="wo[t.id].day = i" x-text="d"></button>
-                      </template>
-                    </div>
-                    <p class="muted small" x-show="!wo[t.id].edit">Each training day has its own exercises and history, so Lunges on Wednesday and on Sunday are tracked apart. Weights are the plates on the bar, both sides together.</p>
-                    <div class="wo-day-sum muted small" x-show="!wo[t.id].edit && woDaySessions(t.id).length">
-                      <span x-text="woDaySessions(t.id).length + ' sessions on ' + weekdays[wo[t.id].day] + (woDaySessions(t.id).length ? ', last ' + dmy(woDaySessions(t.id).at(-1)?.date) : '')"></span>
-                      <span x-show="woDaySat(t.id) != null" x-text="'· satisfaction ' + fx(woDaySat(t.id), 1) + '/10'"></span>
-                      <span x-show="woDaySessions(t.id).at(-1)?.volume" x-text="'· volume last time ' + Math.round(woDaySessions(t.id).at(-1)?.volume || 0).toLocaleString('en-GB') + ' kg (sets × reps × load incl. bar)'"></span>
-                    </div>
-                    <!-- statistics -->
-                    <table class="wo-table" x-show="!wo[t.id].edit && woEx(t.id).length">
-                      <thead><tr><th>Exercise</th><th title="Plan">Plan</th><th class="num" title="Weight last time">Now</th><th class="num">Best</th><th class="num" title="Change compared with 4 weeks ago">4 weeks</th><th class="num" title="Trend over the last 8 weeks (least squares)">kg / week</th><th class="num" title="Share of sessions done as planned">Done</th><th>History</th><th></th></tr></thead>
-                      <tbody>
-                        <template x-for="e in woEx(t.id)" :key="e.id">
-                          <tr>
-                            <td x-text="e.name"></td>
-                            <td class="muted" x-text="e.sets && e.reps ? e.sets + '×' + e.reps : '–'"></td>
-                            <td class="num"><b x-text="kg(e.current)"></b></td>
-                            <td class="num" x-text="kg(e.best)"></td>
-                            <td class="num" x-text="signed(e.change_4w)"></td>
-                            <td class="num" x-text="signed(e.trend_kg_week, 2)"></td>
-                            <td class="num" x-text="e.done_rate == null ? '–' : Math.round(e.done_rate * 100) + '%'"></td>
-                            <td>
-                              <svg class="spark" viewBox="0 0 120 28" width="120" height="28" x-show="e.n > 1" role="img" :aria-label="e.name + ' weight history'">
-                                <polyline :points="spark(e.series).line" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                                <g x-html="spark(e.series).dots.map(d => `<circle cx='${d.x.toFixed(1)}' cy='${d.y.toFixed(1)}' r='2.4' class='${d.done ? 'ok' : 'miss'}'><title>${d.tip}</title></circle>`).join('')"></g>
-                              </svg>
-                              <span class="muted small" x-show="e.n <= 1" x-text="e.n ? '1 session' : 'not logged yet'"></span>
-                            </td>
-                            <td>
-                              <span class="tag good" x-show="e.ready" title="Done as planned 4 times at the same weight">add weight</span>
-                              <span class="tag warn" x-show="e.stalled" title="Same weight 4 times and not always finished: rest more, deload about 10 %, or change reps">stalled</span>
-                            </td>
-                          </tr>
-                        </template>
-                      </tbody>
-                    </table>
-                    <div class="muted small" x-show="!wo[t.id].edit && !woEx(t.id).length">No exercises on this day yet. Click “Edit plan”.</div>
-                    <!-- plan editor -->
-                    <div x-show="wo[t.id].edit">
-                      <template x-for="e in woEx(t.id)" :key="e.id">
-                        <div class="type-row wo-edit" :class="{ archived: e.archived }">
-                          <input class="field-inline" :value="e.name" @change="woSave(e, { name: $event.target.value })" aria-label="Exercise">
-                          <label class="mini">sets<input type="number" min="1" max="20" :value="e.sets" @change="woSave(e, { sets: +$event.target.value || null })"></label>
-                          <label class="mini">reps<input type="number" min="1" max="100" :value="e.reps" @change="woSave(e, { reps: +$event.target.value || null })"></label>
-                          <label class="mini" title="The bar itself, only used for the 1RM and volume">bar kg<input type="number" min="0" step="0.5" :value="e.bar_kg" @change="woSave(e, { bar_kg: +$event.target.value || 0 })"></label>
-                          <label class="mini" title="Your smallest increase (the lightest pair of plates)">step<input type="number" min="0.25" step="0.25" :value="e.step_kg" @change="woSave(e, { step_kg: +$event.target.value || 2.5 })"></label>
-                          <button class="icon-btn" title="Up" aria-label="Move up" @click="woMove(e, -1)">↑</button>
-                          <button class="icon-btn" title="Down" aria-label="Move down" @click="woMove(e, 1)">↓</button>
-                          <button class="btn small ghost" @click="woSave(e, { archived: !e.archived })" x-text="e.archived ? 'Show again' : 'Hide'"></button>
-                          <button class="btn small ghost danger" x-show="!e.n" @click="woDelete(e)">Delete</button>
-                        </div>
-                      </template>
-                      <form class="type-row wo-edit" @submit.prevent="woAdd(t)">
-                        <input class="field-inline" x-model="woNew[t.id].name" :placeholder="'New exercise on ' + weekdays[wo[t.id].day]">
-                        <label class="mini">sets<input type="number" min="1" max="20" x-model.number="woNew[t.id].sets"></label>
-                        <label class="mini">reps<input type="number" min="1" max="100" x-model.number="woNew[t.id].reps"></label>
-                        <label class="mini">bar kg<input type="number" min="0" step="0.5" x-model.number="woNew[t.id].bar_kg"></label>
-                        <label class="mini">step<input type="number" min="0.25" step="0.25" x-model.number="woNew[t.id].step_kg"></label>
-                        <button class="btn small" type="submit">Add</button>
-                      </form>
-                      <div class="wo-copy" x-show="!woEx(t.id).length && woDays(t.id).size">
-                        <span class="muted small">Or copy the exercises of</span>
-                        <template x-for="d in [...woDays(t.id)].sort()" :key="d"><button class="btn small ghost" @click="woCopyDay(t, d)" x-text="weekdays[d]"></button></template>
-                        <span class="muted small">(the history starts fresh for this day)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </template>
           <details class="types">
             <summary x-text="'Edit ' + (kind === 'sport' ? 'sport types' : 'code projects')"></summary>
             <template x-for="t in (act?.[kind]?.types || [])" :key="t.id">
@@ -459,6 +375,12 @@
                 <span class="swatch" :style="'background:' + actColor(t.slot)"></span>
                 <input class="field-inline" :value="t.name" @change="saveActType(t, { name: $event.target.value })" aria-label="Name">
                 <input class="field-inline repo" x-show="kind === 'code'" :value="t.repo_path || ''" placeholder="~/git/project" @change="saveActType(t, { repo_path: $event.target.value })" aria-label="Local git folder">
+                <template x-if="kind === 'sport'">
+                  <span class="sm-edit">
+                    <input class="field-inline" :value="fieldNames(t, 'kg')" placeholder="Weights in kg, e.g. Squats, Lunges" @change="saveFields(t, $event.target.value, fieldNames(t, 'level') !== '')" aria-label="Weights asked in kg, separated by commas" title="Weights to ask for in kg, separated by commas. Empty: no weights.">
+                    <label class="inline-check" title="Ask for a level from 1 to 10"><input type="checkbox" :checked="fieldNames(t, 'level') !== ''" @change="saveFields(t, fieldNames(t, 'kg'), $event.target.checked)"> Level 1–10</label>
+                  </span>
+                </template>
                 <button class="btn small ghost" @click="saveActType(t, { archived: !t.archived })" x-text="t.archived ? 'Show again' : 'Hide'"></button>
                 <button class="btn small ghost danger" @click="deleteActType(t)">Delete</button>
               </div>
@@ -1017,27 +939,29 @@
         <span class="hint" x-text="entryIsOther ? 'Not counted as study time' : (entryStudied() > 0 ? 'Counted as studied: ' + dur(entryStudied() * 60) : 'Breaks must be shorter than the session')"></span>
       </label>
     </div>
-    <fieldset class="wl" x-show="wl.plan.length">
-      <legend>Weights <span class="muted">(kg on the bar, both sides together, bar not included)</span></legend>
-      <div class="wl-days" role="tablist" aria-label="Training day" x-show="wlDays().length > 1">
-        <template x-for="d in wlDays()" :key="d"><button type="button" class="chip" role="tab" :aria-selected="wl.day === d" @click="wl.day = d" x-text="weekdays[d]"></button></template>
+    <fieldset class="sm" x-show="sm.fields?.length">
+      <legend>Today's training</legend>
+      <span class="hint" x-text="smFrom()"></span>
+      <div class="sm-kg" x-show="sm.fields?.some(f => f.unit === 'kg')">
+        <template x-for="f in (sm.fields || []).filter(f => f.unit === 'kg')" :key="f.id">
+          <label class="sm-f">
+            <span class="sm-name" x-text="f.name"></span>
+            <span class="sm-in"><input type="number" min="0" step="0.5" inputmode="decimal" x-model.number="f.value" :aria-label="f.name + ' in kg'"><span class="muted">kg</span></span>
+            <span class="sm-ago muted" x-show="f.ago4 != null && f.ago4 !== f.value" x-text="'4 wk ago ' + kg(f.ago4)"></span>
+          </label>
+        </template>
       </div>
-      <span class="hint">Tick when you did it as planned. Empty weight + tick = the suggested weight. A weight without a tick = tried, not finished. Neither = skipped.</span>
-      <template x-for="e in wlDay()" :key="e.id">
-        <div class="wl-row" :class="{ done: wl.logs[e.id].done }">
-          <label class="wl-tick"><input type="checkbox" x-model="wl.logs[e.id].done"><span class="wl-name" x-text="e.name"></span></label>
-          <div class="wl-kg">
-            <button type="button" class="icon-btn" @click="wlBump(e, -1)" :aria-label="'Less weight for ' + e.name">−</button>
-            <input type="number" min="0" step="0.25" inputmode="decimal" x-model.number="wl.logs[e.id].weight" @input="if ($event.target.value === '') wl.logs[e.id].weight = null" :placeholder="e.suggest ?? 'kg'" :aria-label="'Weight for ' + e.name">
-            <button type="button" class="icon-btn" @click="wlBump(e, 1)" :aria-label="'More weight for ' + e.name">+</button>
+      <span class="hint" x-show="sm.fields?.some(f => f.unit === 'kg')">Plates on the bar, both sides together, bar not included.</span>
+      <template x-for="f in (sm.fields || []).filter(f => f.unit === 'level')" :key="f.id">
+        <div class="sm-level">
+          <span class="sm-name" x-text="f.name"></span>
+          <div class="scale" role="radiogroup" :aria-label="f.name + ' from 1 to 10'">
+            <template x-for="n in 10" :key="n">
+              <button type="button" role="radio" :aria-checked="f.value === n" @click="f.value = (f.value === n ? null : n)" x-text="n"></button>
+            </template>
           </div>
-          <div class="wl-sr">
-            <input type="number" min="0" max="20" x-model.number="wl.logs[e.id].sets" aria-label="Sets"><span>×</span><input type="number" min="0" max="100" x-model.number="wl.logs[e.id].reps" aria-label="Reps">
-          </div>
-          <span class="wl-why muted" x-text="e.last ? 'last ' + kg(e.last.weight) + ' kg' + (e.last.done ? '' : ' (not finished)') + ' · ' + e.why : 'first time'"></span>
         </div>
       </template>
-      <div class="muted small" x-show="!wlDay().length">No exercises planned for this day. Set them up in the Sport tab.</div>
     </fieldset>
     <fieldset class="rating" x-show="rated(entryKind)">
       <legend x-text="entryKind === 'sport' ? 'How satisfied are you with this training?' : 'How satisfied are you with what you got done?'"></legend>
@@ -1103,27 +1027,29 @@
 <dialog id="stopDlg">
   <form method="dialog" @submit.prevent="stop(true)">
     <h2 x-text="'Save ' + dur(elapsedNow) + ' of ' + (timer.course?.code || '').toUpperCase() + '?'"></h2>
-    <fieldset class="wl" x-show="wl.plan.length">
-      <legend>Weights <span class="muted">(kg on the bar, both sides together, bar not included)</span></legend>
-      <div class="wl-days" role="tablist" aria-label="Training day" x-show="wlDays().length > 1">
-        <template x-for="d in wlDays()" :key="d"><button type="button" class="chip" role="tab" :aria-selected="wl.day === d" @click="wl.day = d" x-text="weekdays[d]"></button></template>
+    <fieldset class="sm" x-show="sm.fields?.length">
+      <legend>Today's training</legend>
+      <span class="hint" x-text="smFrom()"></span>
+      <div class="sm-kg" x-show="sm.fields?.some(f => f.unit === 'kg')">
+        <template x-for="f in (sm.fields || []).filter(f => f.unit === 'kg')" :key="f.id">
+          <label class="sm-f">
+            <span class="sm-name" x-text="f.name"></span>
+            <span class="sm-in"><input type="number" min="0" step="0.5" inputmode="decimal" x-model.number="f.value" :aria-label="f.name + ' in kg'"><span class="muted">kg</span></span>
+            <span class="sm-ago muted" x-show="f.ago4 != null && f.ago4 !== f.value" x-text="'4 wk ago ' + kg(f.ago4)"></span>
+          </label>
+        </template>
       </div>
-      <span class="hint">Tick when you did it as planned. Empty weight + tick = the suggested weight. A weight without a tick = tried, not finished. Neither = skipped.</span>
-      <template x-for="e in wlDay()" :key="e.id">
-        <div class="wl-row" :class="{ done: wl.logs[e.id].done }">
-          <label class="wl-tick"><input type="checkbox" x-model="wl.logs[e.id].done"><span class="wl-name" x-text="e.name"></span></label>
-          <div class="wl-kg">
-            <button type="button" class="icon-btn" @click="wlBump(e, -1)" :aria-label="'Less weight for ' + e.name">−</button>
-            <input type="number" min="0" step="0.25" inputmode="decimal" x-model.number="wl.logs[e.id].weight" @input="if ($event.target.value === '') wl.logs[e.id].weight = null" :placeholder="e.suggest ?? 'kg'" :aria-label="'Weight for ' + e.name">
-            <button type="button" class="icon-btn" @click="wlBump(e, 1)" :aria-label="'More weight for ' + e.name">+</button>
+      <span class="hint" x-show="sm.fields?.some(f => f.unit === 'kg')">Plates on the bar, both sides together, bar not included.</span>
+      <template x-for="f in (sm.fields || []).filter(f => f.unit === 'level')" :key="f.id">
+        <div class="sm-level">
+          <span class="sm-name" x-text="f.name"></span>
+          <div class="scale" role="radiogroup" :aria-label="f.name + ' from 1 to 10'">
+            <template x-for="n in 10" :key="n">
+              <button type="button" role="radio" :aria-checked="f.value === n" @click="f.value = (f.value === n ? null : n)" x-text="n"></button>
+            </template>
           </div>
-          <div class="wl-sr">
-            <input type="number" min="0" max="20" x-model.number="wl.logs[e.id].sets" aria-label="Sets"><span>×</span><input type="number" min="0" max="100" x-model.number="wl.logs[e.id].reps" aria-label="Reps">
-          </div>
-          <span class="wl-why muted" x-text="e.last ? 'last ' + kg(e.last.weight) + ' kg' + (e.last.done ? '' : ' (not finished)') + ' · ' + e.why : 'first time'"></span>
         </div>
       </template>
-      <div class="muted small" x-show="!wlDay().length">No exercises planned for this day. Set them up in the Sport tab.</div>
     </fieldset>
     <fieldset class="rating" x-show="rated(timer.course?.kind)">
       <legend x-text="timer.course?.kind === 'sport' ? 'How satisfied are you with this training?' : 'How satisfied are you with what you got done?'"></legend>

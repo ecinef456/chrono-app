@@ -56,7 +56,7 @@ function chrono() {
     theme: store.get("chrono-theme", "system"),
     logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
-    wl: { course_id: null, day: 0, plan: [], logs: {} }, wo: {}, woNew: {},
+    sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
 
@@ -193,14 +193,14 @@ function chrono() {
       catch (e) { this.toast(e.message); await this.refreshTimer(); }
     },
     openStop() {
-      this.stopNotes = ""; this.stopRating = null; this.wlClear();
-      if (this.timer.course?.kind === "sport") this.wlLoad(this.timer.course.id, isoDate(wallNow()));
+      this.stopNotes = ""; this.stopRating = null; this.smClear();
+      if (this.timer.course?.kind === "sport") this.smLoad(this.timer.course.id, isoDate(wallNow()));
       document.getElementById("stopDlg").showModal(); this.$nextTick(() => this.$refs.stopNotes.focus());
     },
     async stop(save) {
       try {
         const r = await api("/api/timer/stop", { method: "POST", body: { save, notes: this.stopNotes, satisfaction: this.rated(this.timer.course?.kind) ? this.stopRating : null } });
-        if (save && r.saved_session_id) await this.wlSave(r.saved_session_id);
+        if (save && r.saved_session_id) await this.smSave(r.saved_session_id);
         document.getElementById("stopDlg").close();
         this.toast(save && r.saved_session_id ? `Saved ${this.dur(r.duration_sec)}` : "Session discarded");
         await this.refreshTimer(); await this.loadSemester(); if (this.act) this.loadActivities();
@@ -232,11 +232,11 @@ function chrono() {
         const st = parseLocal(s.start), en = parseLocal(s.end);
         const length = Math.round((en - st) / 60000);
         this.entry = { id: s.id, course_id: s.course_id, date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, length, breaks: Math.max(0, length - Math.round(s.duration_sec / 60)), notes: s.notes || "", satisfaction: s.satisfaction ?? null, wholeDay: s.course_kind === "other" && s.duration_sec === 0 };
-        this.wlClear(); if (s.course_kind === "sport") this.wlLoad(s.course_id, isoDate(st), s.id);
+        this.smClear(); if (s.course_kind === "sport") this.smLoad(s.course_id, isoDate(st), s.id);
       } else {
         const now = wallNow(), from = new Date(now - 3600e3);
         this.entry = { id: null, course_id: this.selectedId || this.courses[0]?.id, date: isoDate(now), from: `${pad(from.getHours())}:${pad(from.getMinutes())}`, to: `${pad(now.getHours())}:${pad(now.getMinutes())}`, length: 60, breaks: 0, notes: "", satisfaction: null, wholeDay: true };
-        this.wlClear(); this.entryChanged();
+        this.smClear(); this.entryChanged();
       }
       document.getElementById("entryDlg").showModal();
     },
@@ -271,7 +271,7 @@ function chrono() {
         let sid = this.entry.id;
         if (sid) await api(`/api/sessions/${sid}`, { method: "PUT", body });
         else sid = (await api("/api/sessions", { method: "POST", body })).id;
-        if (this.entryKind === "sport") await this.wlSave(sid);
+        if (this.entryKind === "sport") await this.smSave(sid);
         document.getElementById("entryDlg").close();
         this.toast(this.entry.id ? "Entry updated" : "Entry added");
         await this.loadSemester(); if (this.act) this.loadActivities();
@@ -588,121 +588,49 @@ function chrono() {
     },
 
 
-    /* ---------------- workouts: weights per exercise, one plan per training day */
+    /* ---------------- sport measures: weights in kg (Muscle pump) or a 1-10 level (Rowing), asked in the dialogs */
     weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     weekdayOf(iso) { return (parseLocal(iso + "T12:00:00").getDay() + 6) % 7; },   // 0 = Monday
-    wlClear() { this.wl = { course_id: null, day: 0, plan: [], logs: {}, session: null }; },
-    // Load the plan of a sport type for the logging block (stop dialog and entry dialog).
-    async wlLoad(courseId, dateIso, sessionId = null) {
+    smClear() { this.sm = { fields: [] }; },
+    // Prefilled from the last entry on the same weekday; when editing, the entry's own values.
+    async smLoad(courseId, dateIso, sessionId = null) {
+      const key = `${courseId}|${dateIso}|${sessionId}`; this._smKey = key;
       try {
-        const plan = (await api(`/api/workouts/plan?course_id=${courseId}`));
-        const done = sessionId ? await api(`/api/workouts/session/${sessionId}`) : [];
-        let day = this.weekdayOf(dateIso);
-        if (done.length) day = plan.find(e => e.id === done[0].exercise_id)?.weekday ?? day;
-        const logs = {};
-        for (const e of plan) {
-          const l = done.find(x => x.exercise_id === e.id);
-          logs[e.id] = l ? { weight: l.weight, sets: l.sets, reps: l.reps, done: !!l.done }
-                         : { weight: null, sets: e.sets, reps: e.reps, done: false };
-        }
-        this.wl = { course_id: courseId, day, plan, logs, session: sessionId };
-        // No exercises on this weekday (e.g. you trained a day late): take the nearest planned day before.
-        if (!sessionId && !this.wlDay().length) {
-          const days = [...new Set(plan.filter(e => !e.archived).map(e => e.weekday))];
-          if (days.length) this.wl.day = days.reduce((b, d) => ((day - d + 7) % 7 < (day - b + 7) % 7 ? d : b), days[0]);
-        }
+        const r = await api(`/api/sport/entry?course_id=${courseId}&day=${dateIso}` + (sessionId ? `&session_id=${sessionId}` : ""));
+        if (this._smKey !== key) return;     // the dialog changed meanwhile
+        this.sm = { ...r, course_id: courseId, day: dateIso, session: sessionId };
       } catch (e) { this.toast(e.message); }
     },
-    wlDays() { return [...new Set(this.wl.plan.filter(e => !e.archived).map(e => e.weekday))].sort(); },
-    wlDay() { return this.wl.plan.filter(e => e.weekday === this.wl.day && (!e.archived || this.wl.logs[e.id]?.done || this.wl.logs[e.id]?.weight != null)); },
-    wlBump(e, sign) {
-      const l = this.wl.logs[e.id]; const base = l.weight ?? e.suggest ?? 0;
-      l.weight = Math.max(0, Math.round((base + sign * e.step_kg) * 100) / 100);
+    smFrom() {
+      if (this.sm.session || !this.sm.from) return this.sm.session ? "" : "Nothing logged yet. Next time this is filled in for you.";
+      return `Filled in from ${this.sm.same_weekday ? "last " + this.weekdays[this.weekdayOf(this.sm.from)] : "your last entry"} (${this.dmy(this.sm.from)}). Change what changed.`;
     },
-    async wlSave(sid) {
-      if (!this.wl.plan.length) return;
-      // Ticked without a number = done at the suggested weight. A number without a tick = tried, not finished.
-      // Neither = skipped (not saved).
-      const logs = this.wlDay().map(e => {
-        const l = this.wl.logs[e.id];
-        const weight = l.weight ?? (l.done ? (e.suggest ?? e.last?.weight ?? null) : null);
-        return { exercise_id: e.id, weight, sets: l.sets || null, reps: l.reps || null, done: !!l.done };
-      });
-      try { await api(`/api/workouts/session/${sid}`, { method: "PUT", body: { logs } }); }
+    async smSave(sid) {
+      if (!this.sm.fields?.length) return;
+      const values = {};
+      for (const f of this.sm.fields) values[f.id] = (f.value === "" || f.value == null || isNaN(f.value)) ? null : Number(f.value);
+      try { await api(`/api/sport/values/${sid}`, { method: "PUT", body: { values } }); }
       catch (e) { this.toast("Weights not saved: " + e.message); }
     },
     entryChanged() {
-      // Course or date changed in the entry dialog: (re)load the workout plan for sport types.
-      if (this.entryKind !== "sport") { this.wlClear(); return; }
-      if (this.wl.course_id === this.entry.course_id && this.entry.id) return;
-      if (this.wl.course_id === this.entry.course_id && !this.entry.id) { this.wl.day = this.weekdayOf(this.entry.date); if (!this.wlDay().length) this.wlLoad(this.entry.course_id, this.entry.date); return; }
-      this.wlLoad(this.entry.course_id, this.entry.date, this.entry.id);
+      // Course or date changed in the entry dialog: load that sport's measures for that weekday.
+      if (this.entryKind !== "sport") { this.smClear(); return; }
+      if (this.entry.id && this.sm.session === this.entry.id && this.sm.course_id === this.entry.course_id) return;
+      this.smLoad(this.entry.course_id, this.entry.date, this.entry.id || null);
     },
-
-    // Sport tab: plan editor and statistics per sport type
-    async loadWorkouts() {
-      const types = (this.act?.sport?.types || []).filter(t => !t.archived);
-      const all = await Promise.all(types.map(t => api(`/api/workouts/stats?course_id=${t.id}`).catch(() => null)));
-      for (const [i, t] of types.entries()) {
-        try {
-          const st = all[i]; if (!st) continue;
-          const prev = this.wo[t.id];
-          const days = [...new Set(st.exercises.filter(e => !e.archived).map(e => e.weekday))].sort();
-          const today = (new Date().getDay() + 6) % 7;
-          const day = prev?.day ?? (days.includes(today) ? today : (days[0] ?? 0));
-          this.wo[t.id] = { stats: st, day, edit: prev?.edit ?? false, open: prev?.open ?? t.has_plan };
-          this.woNew[t.id] ??= { name: "", sets: 3, reps: 10, bar_kg: 20, step_kg: 2.5 };
-        } catch (e) { /* older server */ }
-      }
+    async saveFields(t, kgText, level) {
+      const kg = kgText.split(",").map(x => x.trim()).filter(Boolean);
+      try { await api(`/api/sport/fields/${t.id}`, { method: "PUT", body: { kg, level } }); await this.loadActivities(); }
+      catch (e) { this.actErr = e.message; }
     },
-    woDays(tid) { return new Set((this.wo[tid]?.stats.exercises || []).filter(e => !e.archived).map(e => e.weekday)); },
-    woEx(tid) { const w = this.wo[tid]; return w ? w.stats.exercises.filter(e => e.weekday === w.day && (w.edit || !e.archived)) : []; },
-    woDaySessions(tid) { const w = this.wo[tid]; return w ? w.stats.sessions.filter(s => s.weekday === w.day) : []; },
-    woDaySat(tid) { const r = this.woDaySessions(tid).map(s => s.satisfaction).filter(v => v != null); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; },
-    async woAdd(t) {
-      const f = this.woNew[t.id]; if (!f.name.trim()) return;
-      try {
-        await api("/api/workouts/exercises", { method: "POST", body: { course_id: t.id, weekday: this.wo[t.id].day, name: f.name, sets: f.sets || null, reps: f.reps || null, bar_kg: f.bar_kg || 0, step_kg: f.step_kg || 2.5 } });
-        f.name = ""; await this.loadWorkouts(); await this.loadActivities();
-      } catch (e) { this.toast(e.message); }
-    },
-    async woSave(e, patch) {
-      const b = { course_id: 0, weekday: e.weekday, name: e.name, sets: e.sets, reps: e.reps, bar_kg: e.bar_kg, step_kg: e.step_kg, archived: e.archived, ...patch };
-      for (const k of ["sets", "reps"]) if (!b[k]) b[k] = null;
-      try { await api(`/api/workouts/exercises/${e.id}`, { method: "PUT", body: b }); await this.loadWorkouts(); }
-      catch (err) { this.toast(err.message); }
-    },
-    async woMove(e, d) { await api(`/api/workouts/exercises/${e.id}/move?delta=${d}`, { method: "POST" }); await this.loadWorkouts(); },
-    async woDelete(e) {
-      if (!(await this.ask(`Delete ${e.name}?`))) return;
-      try { await api(`/api/workouts/exercises/${e.id}`, { method: "DELETE" }); await this.loadWorkouts(); }
-      catch (err) { this.toast(err.message); }
-    },
-    async woCopyDay(t, from) {
-      // Copy all exercises of another training day (e.g. Wednesday -> Sunday); histories stay separate.
-      const src = this.wo[t.id].stats.exercises.filter(e => e.weekday === from && !e.archived);
-      for (const e of src) await api("/api/workouts/exercises", { method: "POST", body: { course_id: t.id, weekday: this.wo[t.id].day, name: e.name, sets: e.sets, reps: e.reps, bar_kg: e.bar_kg, step_kg: e.step_kg } });
-      await this.loadWorkouts(); await this.loadActivities();
-    },
+    fieldNames(t, unit) { return (t.fields || []).filter(f => f.unit === unit).map(f => f.name).join(", "); },
     kg(v) { return v == null ? "–" : (Math.round(v * 10) / 10).toLocaleString("en-GB") ; },
     signed(v, d = 1) { if (v == null) return "–"; const r = Math.round(v * 10 ** d) / 10 ** d; return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toLocaleString("en-GB"); },
-    // Tiny sparkline of the weight over time; hollow dots = not finished.
-    spark(series, w = 120, h = 28) {
-      const pts = series.filter(x => x.weight != null);
-      if (!pts.length) return { line: "", dots: [] };
-      const t0 = parseLocal(pts[0].date + "T12:00:00").getTime(), t1 = parseLocal(pts.at(-1).date + "T12:00:00").getTime();
-      const ws = pts.map(x => x.weight), lo = Math.min(...ws), hi = Math.max(...ws);
-      const X = x => 3 + (t1 > t0 ? (parseLocal(x.date + "T12:00:00").getTime() - t0) / (t1 - t0) : 0.5) * (w - 6);
-      const Y = x => hi > lo ? 3 + (1 - (x.weight - lo) / (hi - lo)) * (h - 6) : h / 2;
-      const dots = pts.map(x => ({ x: X(x), y: Y(x), done: x.done, tip: `${this.dmy(x.date)}: ${this.kg(x.weight)} kg${x.sets && x.reps ? `, ${x.sets}×${x.reps}` : ""}${x.done ? "" : " (not finished)"}` }));
-      return { line: dots.map(d => `${d.x.toFixed(1)},${d.y.toFixed(1)}`).join(" "), dots };
-    },
 
     /* ---------------- sport & code (never study time) */
     async loadActivities() {
       this.act = await api("/api/activities");
       if (this.tab === "sport" || this.tab === "code") this.$nextTick(() => this.renderActCharts());
-      if (this.act?.sport) this.loadWorkouts();
     },
     actColor(slot) {
       const dark = cssVar("color-scheme") === "dark";
