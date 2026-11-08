@@ -1,3 +1,16 @@
+/* Atkinson Hyperlegible Next (Braille Institute, SIL Open Font License: fonts/OFL-atkinson-hyperlegible-next.txt) */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("fonts/atkinson-hyperlegible-next-wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("fonts/atkinson-hyperlegible-next-italic-wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: italic;
+}
 @font-face {
   font-family: "Hanken Grotesk";
   src: url("fonts/hanken-grotesk-latin-wght-normal.woff2") format("woff2");
@@ -63,7 +76,7 @@ html, body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--ink);
-  font: 400 15px/1.5 "Hanken Grotesk", system-ui, sans-serif;
+  font: 400 15px/1.5 "Atkinson Hyperlegible Next", "Hanken Grotesk", system-ui, sans-serif;
   font-feature-settings: "tnum" 1;
   -webkit-font-smoothing: antialiased;
 }
@@ -493,7 +506,8 @@ label.f textarea { min-height: 84px; resize: vertical; }
   .panel-head { flex-wrap: wrap; gap: 2px 12px; }
   .panel-head .right { margin-left: 0; width: 100%; }
   .daystrip-scale span:nth-child(even) { visibility: hidden; }
-  .tabs button { flex: 1; }
+  .tabs button { flex: 1 0 auto; white-space: nowrap; }
+  .tabs { overflow-x: auto; scrollbar-width: none; border-radius: 16px; }
   .hero { padding: 20px 18px; }
   .hero-grid { grid-template-columns: 1fr; }
   .controls, .resume-choice { justify-content: flex-start; }
@@ -584,3 +598,27 @@ label.f textarea { min-height: 84px; resize: vertical; }
 .support-opt { display: grid; gap: 3px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 12px; color: var(--ink); text-decoration: none; }
 .support-opt:hover { border-color: var(--ink-3); background: var(--sunk); }
 .support-opt .muted { font-size: 13.5px; }
+
+/* sleep: the night strip */
+.night { display: grid; gap: 10px; }
+.night-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.night-nav .btn { font-size: 18px; padding: 4px 16px; }
+.night-state { font-size: 13.5px; color: var(--ink-3); }
+.night-state.ok { color: var(--good); font-weight: 650; }
+.ns { padding: 0 6px; }
+.ns-dates { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 30px; }
+.ns-track { position: relative; height: 44px; border-radius: 10px; background: var(--sunk); cursor: pointer; touch-action: none; user-select: none; }
+.ns-day2 { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.ns-tick { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid var(--rule); }
+.ns-tick.mid { border-left: 3px solid var(--ink); margin-left: -1px; z-index: 2; }
+.ns-sleep { position: absolute; top: 8px; bottom: 8px; background: var(--c-master); border-radius: 6px; z-index: 1; }
+.ns-h { position: absolute; top: -4px; bottom: -4px; width: 14px; margin-left: -7px; padding: 0; border: 2px solid var(--panel); border-radius: 7px;
+  background: var(--ink); cursor: ew-resize; z-index: 3; }
+.ns-h:focus-visible { outline: 3px solid var(--c-lehrdiplom); outline-offset: 2px; }
+.ns-h span { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; pointer-events: none; }
+.ns-scale { position: relative; height: 20px; margin-top: 5px; }
+.ns-scale span { position: absolute; transform: translateX(-50%); font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.ns-scale span.mid { color: var(--ink); font-weight: 750; font-size: 12.5px; }
+.ns-sum { font-size: 17px; font-weight: 650; padding-top: 6px; }
+@media (max-width: 620px) { .ns-scale span.odd { display: none; } }

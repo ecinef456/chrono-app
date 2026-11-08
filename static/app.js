@@ -413,7 +413,7 @@ function chrono() {
       if (!this.stats || this.tab !== "dash" || !window.echarts) return;
       const ink2 = cssVar("--ink-2"), ink3 = cssVar("--ink-3"), rule = cssVar("--rule"), panel = cssVar("--panel"), ink = cssVar("--ink");
       const dark = cssVar("color-scheme") === "dark";
-      const font = { fontFamily: "Hanken Grotesk, system-ui, sans-serif" };
+      const font = { fontFamily: "Atkinson Hyperlegible Next, Hanken Grotesk, system-ui, sans-serif" };
       const tooltipBase = { backgroundColor: panel, borderColor: rule, textStyle: { color: ink, ...font, fontSize: 13 }, extraCssText: "border-radius:10px;box-shadow:0 8px 24px -12px rgba(0,0,0,.35);" };
       const get = id => { const el = document.getElementById(id); if (!el) return null; let c = echarts.getInstanceByDom(el); if (!c) c = echarts.init(el, null, { renderer: "svg" }); this.charts[id] = c; return c; };
       const weeks = this.stats.weeks;
@@ -509,9 +509,9 @@ function chrono() {
           }, true);
           el.style.height = `${22 + cell * 7 + 34}px`; sc.resize();
           sc.setOption({ graphic: [{ type: "group", right: 8, bottom: 2, children: [
-            { type: "text", left: 0, top: 0, style: { text: "0", fill: ink3, font: "11px Hanken Grotesk" } },
+            { type: "text", left: 0, top: 0, style: { text: "0", fill: ink3, font: "11px Atkinson Hyperlegible Next, Hanken Grotesk" } },
             { type: "rect", left: 12, top: 2, shape: { width: 90, height: 8, r: 2 }, style: { fill: new echarts.graphic.LinearGradient(0, 0, 1, 0, ramp.map((c, i) => ({ offset: i / 2, color: c }))) } },
-            { type: "text", left: 108, top: 0, style: { text: "10", fill: ink3, font: "11px Hanken Grotesk" } },
+            { type: "text", left: 108, top: 0, style: { text: "10", fill: ink3, font: "11px Atkinson Hyperlegible Next, Hanken Grotesk" } },
           ] }] });
         }
 
@@ -578,7 +578,7 @@ function chrono() {
     renderActCharts() {
       if (!this.act || this.tab !== "act" || !window.echarts) return;
       const ink = cssVar("--ink"), ink2 = cssVar("--ink-2"), ink3 = cssVar("--ink-3"), rule = cssVar("--rule"), panel = cssVar("--panel");
-      const font = { fontFamily: "Hanken Grotesk, system-ui, sans-serif" };
+      const font = { fontFamily: "Atkinson Hyperlegible Next, Hanken Grotesk, system-ui, sans-serif" };
       const tip = { backgroundColor: panel, borderColor: rule, textStyle: { color: ink, ...font, fontSize: 13 }, extraCssText: "border-radius:10px;box-shadow:0 8px 24px -12px rgba(0,0,0,.35);" };
       const axis = { axisLine: { lineStyle: { color: rule } }, axisTick: { show: false }, axisLabel: { color: ink3, ...font } };
       const yAxis = unit => ({ type: "value", minInterval: unit === "h" ? 0.5 : 1, splitLine: { lineStyle: { color: rule, type: [3, 4] } }, axisLabel: { color: ink3, ...font, formatter: v => unit === "h" ? `${v} h` : v } });
@@ -646,7 +646,7 @@ function chrono() {
           api(`/api/sleep/stats?days=${this.sleepDays}`),
         ]);
         this.sleepList = list; this.sleepSt = st;
-        if (!this.sleepForm) this.sleepNew();
+        if (!this.sleepForm) this.sleepGo(this.sleepLastNight());
         if (!this.sleepSched) this.sleepSched = JSON.parse(JSON.stringify(st.schedule));
       } catch (e) { this.toast(e.message); }
     },
@@ -656,35 +656,96 @@ function chrono() {
       const wd = (d.getDay() + 6) % 7;   // 0 = Monday
       return (this.sleepSt?.schedule.free_days || [5, 6]).includes(wd);
     },
-    sleepNew(kind = "night") {
+    /** Last night: before 15:00 that is yesterday's evening. */
+    sleepLastNight() { const now = wallNow(); const d = new Date(now); if (now.getHours() < 15) d.setDate(d.getDate() - 1); return isoDate(d); },
+    sleepShift(iso, days) { const d = new Date(iso + "T12:00"); d.setDate(d.getDate() + days); return isoDate(d); },
+    /** Open one night: the logged entry if there is one, else a new one from the schedule. */
+    sleepGo(iso) {
+      const e = this.sleepList.find(x => x.kind === "night" && x.night === iso);
+      if (e) this.sleepEdit(e, false); else this.sleepNew("night", iso);
+    },
+    sleepStep(days) {
+      const iso = this.sleepShift(this.sleepForm?.night || this.sleepLastNight(), days);
+      if (iso > this.sleepLastNight()) return;
+      this.sleepGo(iso);
+    },
+    sleepNew(kind = "night", iso = null) {
       const now = wallNow();
-      const night = new Date(now); if (now.getHours() < 15) night.setDate(night.getDate() - 1);
-      const iso = isoDate(kind === "nap" ? now : night);
+      iso = iso || (kind === "nap" ? isoDate(now) : this.sleepLastNight());
       const sch = this.sleepSt?.schedule || { work: { bed: "23:00", wake: "07:00" }, free: { bed: "23:30", wake: "08:00" } };
-      const part = this.sleepIsFreeMorning(iso) ? sch.free : sch.work;
+      const free = this.sleepIsFreeMorning(iso), part = free ? sch.free : sch.work;
       this.sleepForm = kind === "nap"
         ? { id: null, kind, night: iso, bedT: "14:00", wakeT: "14:20", latency: null, awake: null, quality: null, free: null, alarm: false, notes: "" }
-        : { id: null, kind, night: iso, bedT: part.bed, wakeT: part.wake, latency: null, awake: null, quality: null, free: this.sleepIsFreeMorning(iso), alarm: !this.sleepIsFreeMorning(iso), notes: "" };
+        : { id: null, kind, night: iso, bedT: part.bed, wakeT: part.wake, latency: null, awake: null, quality: null, free, alarm: !free, notes: "" };
       this.sleepErr = "";
     },
-    sleepEdit(e) {
+    sleepEdit(e, scroll = true) {
       const t = s => s.slice(11, 16);
       this.sleepForm = { id: e.id, kind: e.kind, night: e.night, bedT: t(e.bed), wakeT: t(e.wake), latency: e.latency_min, awake: e.awake_min,
                          quality: e.quality, free: !!e.free, alarm: !!e.alarm, notes: e.notes || "" };
-      this.sleepErr = ""; window.scrollTo({ top: 0, behavior: "smooth" });
+      this.sleepErr = ""; if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    /** bed and wake as full timestamps: a night's bedtime before noon is after midnight; its wake-up is the next day. */
+    /** bed and wake as full timestamps. A night runs from 18:00 of its date: a bedtime before
+     *  16:00 is the next morning; the wake-up is always the next day. */
     sleepTimes(f) {
-      const day = (iso, plus) => { const d = new Date(iso + "T12:00"); d.setDate(d.getDate() + plus); return isoDate(d); };
       if (f.kind === "nap") return { bed: `${f.night}T${f.bedT}`, wake: `${f.night}T${f.wakeT}` };
-      const bedNext = f.bedT < "12:00";
-      return { bed: `${day(f.night, bedNext ? 1 : 0)}T${f.bedT}`, wake: `${day(f.night, 1)}T${f.wakeT}` };
+      return { bed: `${this.sleepShift(f.night, f.bedT < "16:00" ? 1 : 0)}T${f.bedT}`, wake: `${this.sleepShift(f.night, 1)}T${f.wakeT}` };
     },
     sleepFormHours() {
       const f = this.sleepForm; if (!f || !f.bedT || !f.wakeT) return "";
       const { bed, wake } = this.sleepTimes(f);
-      const m = (new Date(wake) - new Date(bed)) / 60000 - (+f.latency || 0) - (+f.awake || 0);
-      return m > 0 ? `${Math.floor(m / 60)} h ${pad(Math.round(m % 60))} min asleep` : "";
+      const inBed = (new Date(wake) - new Date(bed)) / 60000;
+      const m = inBed - (+f.latency || 0) - (+f.awake || 0);
+      if (inBed <= 0) return "";
+      return `${Math.floor(m / 60)} h ${pad(Math.round(m % 60))} min asleep`;
+    },
+
+    // ---- the night strip: 18:00 of the night's date to 16:00 next day (22 h), minutes from 18:00
+    NS_LEN: 22 * 60,
+    nsMin(f, which) {
+      const [h, m] = f[which === "bed" ? "bedT" : "wakeT"].split(":").map(Number);
+      const next = which === "wake" || f.bedT < "16:00";
+      return h * 60 + m - 18 * 60 + (next ? 1440 : 0);
+    },
+    nsClock(min) { const t = (18 * 60 + min) % 1440; return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`; },
+    nsSet(which, min) {
+      const f = this.sleepForm, other = this.nsMin(f, which === "bed" ? "wake" : "bed");
+      min = Math.round(min / 5) * 5;
+      if (which === "bed") min = Math.max(0, Math.min(min, other - 15));
+      else min = Math.min(this.NS_LEN, Math.max(min, other + 15, 6 * 60));     // wake-up after midnight
+      f[which === "bed" ? "bedT" : "wakeT"] = this.nsClock(min);
+    },
+    nsView() {
+      this.tick;
+      const f = this.sleepForm; if (!f || f.kind !== "night") return null;
+      const pc = m => Math.max(0, Math.min(100, (m / this.NS_LEN) * 100));
+      const b = this.nsMin(f, "bed"), w = this.nsMin(f, "wake");
+      const day = iso => new Date(iso + "T12:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+      const ticks = [];
+      for (let k = 0; k <= 22; k++) {
+        const h = (18 + k) % 24;
+        ticks.push({ key: k, left: (k / 22) * 100, label: h === 0 ? "00:00" : (h === 23 || h === 1 ? "" : String(h)), mid: h === 0, odd: k % 2 === 1 });   // room for "00:00"
+      }
+      return {
+        bed: pc(b), wake: pc(w), mid: (6 / 22) * 100, ticks,
+        left: day(f.night), right: day(this.sleepShift(f.night, 1)),
+        logged: !!f.id, last: f.night >= this.sleepLastNight(),
+      };
+    },
+    nsDown(ev) {
+      const track = this.$refs.ntrack; if (!track || !this.sleepForm) return;
+      const at = e => { const r = track.getBoundingClientRect(); return ((e.clientX - r.left) / r.width) * this.NS_LEN; };
+      const m0 = at(ev), f = this.sleepForm;
+      const which = ev.target.dataset?.h || (Math.abs(m0 - this.nsMin(f, "bed")) <= Math.abs(m0 - this.nsMin(f, "wake")) ? "bed" : "wake");
+      this.nsSet(which, m0);
+      track.setPointerCapture?.(ev.pointerId);
+      const move = e => this.nsSet(which, at(e));
+      const up = () => { track.removeEventListener("pointermove", move); track.removeEventListener("pointerup", up); track.removeEventListener("pointercancel", up); };
+      track.addEventListener("pointermove", move); track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
+    },
+    nsKey(which, ev) {
+      const d = (ev.shiftKey ? 30 : 5) * (ev.key === "ArrowLeft" || ev.key === "ArrowDown" ? -1 : 1);
+      this.nsSet(which, this.nsMin(this.sleepForm, which) + d); ev.preventDefault();
     },
     async sleepSave() {
       const f = this.sleepForm;
@@ -695,7 +756,8 @@ function chrono() {
       try {
         await api(f.id ? `/api/sleep/${f.id}` : "/api/sleep", { method: f.id ? "PUT" : "POST", body });
         this.toast(f.id ? "Saved" : (f.kind === "nap" ? "Nap logged" : "Night logged"));
-        this.sleepForm = null; await this.sleepInit();
+        await this.sleepInit();
+        if (f.kind === "night") this.sleepGo(f.night); else this.sleepGo(this.sleepLastNight());   // stay on this night: ← for the one before
       } catch (e) { this.sleepErr = e.message; }
     },
     async sleepDelete(e) {

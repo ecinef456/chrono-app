@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=15">
+<link rel="stylesheet" href="/static/style.css?v=16">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=2"></script>
-<script src="/static/app.js?v=14"></script>
+<script src="/static/app.js?v=15"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
@@ -661,20 +661,45 @@
       <!-- log a night or a nap -->
       <section class="panel">
         <div class="panel-head">
-          <h2 x-text="sleepForm?.id ? 'Edit ' + (sleepForm.kind === 'nap' ? 'nap' : 'night') : (sleepForm?.kind === 'nap' ? 'Log a nap' : 'Log last night')"></h2>
-          <span class="sub" x-show="sleepForm && !sleepForm.id">
+          <h2 x-text="sleepForm?.kind === 'nap' ? (sleepForm.id ? 'Edit nap' : 'Log a nap') : 'Night'"></h2>
+          <span class="sub" x-show="sleepForm">
             <button class="btn small ghost" x-show="sleepForm?.kind === 'night'" @click="sleepNew('nap')">a nap instead</button>
-            <button class="btn small ghost" x-show="sleepForm?.kind === 'nap'" @click="sleepNew('night')">a night instead</button>
+            <button class="btn small ghost" x-show="sleepForm?.kind === 'nap'" @click="sleepGo(sleepLastNight())">a night instead</button>
           </span>
         </div>
         <div class="panel-body sleep-form" x-show="sleepForm">
           <template x-if="sleepForm">
             <div class="stack-sm">
-              <div class="grid3">
-                <label class="f"><span x-text="sleepForm.kind === 'nap' ? 'Day' : 'Night of (evening)'"></span><input type="date" x-model="sleepForm.night"
-                       @change="sleepForm.kind === 'night' && !sleepForm.id && (sleepForm.free = sleepIsFreeMorning(sleepForm.night), sleepForm.alarm = !sleepForm.free)"></label>
-                <label class="f"><span x-text="sleepForm.kind === 'nap' ? 'From' : 'In bed, lights out'"></span><input type="time" x-model="sleepForm.bedT"></label>
-                <label class="f"><span x-text="sleepForm.kind === 'nap' ? 'To' : 'Woke up (final)'"></span><input type="time" x-model="sleepForm.wakeT"></label>
+              <!-- a night: one strip from the evening to the next afternoon; ← → for other nights -->
+              <template x-if="nsView()">
+                <div class="night">
+                  <div class="night-nav">
+                    <button type="button" class="btn small" @click="sleepStep(-1)" title="Previous night" aria-label="Previous night">←</button>
+                    <span class="night-state" :class="{ok: nsView().logged}" x-text="nsView().logged ? '✓ logged, change and save' : 'not logged yet'"></span>
+                    <button type="button" class="btn small" @click="sleepStep(1)" :disabled="nsView().last" title="Next night" aria-label="Next night">→</button>
+                  </div>
+                  <div class="ns">
+                    <div class="ns-dates"><b x-text="nsView().left"></b><b x-text="nsView().right"></b></div>
+                    <div class="ns-track" x-ref="ntrack" @pointerdown.prevent="nsDown($event)">
+                      <i class="ns-day2" :style="'left:' + nsView().mid + '%'"></i>
+                      <template x-for="t in nsView().ticks" :key="t.key"><i class="ns-tick" :class="{mid: t.mid}" :style="'left:' + t.left + '%'"></i></template>
+                      <div class="ns-sleep" :style="'left:' + nsView().bed + '%;width:' + (nsView().wake - nsView().bed) + '%'"></div>
+                      <button type="button" class="ns-h bed" data-h="bed" :style="'left:' + nsView().bed + '%'" @keydown.left="nsKey('bed', $event)" @keydown.right="nsKey('bed', $event)" aria-label="Bedtime"><span data-h="bed" x-text="'bed ' + sleepForm.bedT"></span></button>
+                      <button type="button" class="ns-h wake" data-h="wake" :style="'left:' + nsView().wake + '%'" @keydown.left="nsKey('wake', $event)" @keydown.right="nsKey('wake', $event)" aria-label="Wake-up"><span data-h="wake" x-text="'up ' + sleepForm.wakeT"></span></button>
+                    </div>
+                    <div class="ns-scale"><template x-for="t in nsView().ticks" :key="t.key"><span :class="{mid: t.mid, odd: t.odd}" :style="'left:' + t.left + '%'" x-text="t.label"></span></template></div>
+                  </div>
+                  <div class="grid3">
+                    <label class="f">In bed, lights out<input type="time" x-model="sleepForm.bedT"></label>
+                    <label class="f">Woke up (final)<input type="time" x-model="sleepForm.wakeT"></label>
+                    <div class="f">&nbsp;<div class="ns-sum" x-text="sleepFormHours()"></div></div>
+                  </div>
+                </div>
+              </template>
+              <div class="grid3" x-show="sleepForm.kind === 'nap'">
+                <label class="f">Day<input type="date" x-model="sleepForm.night"></label>
+                <label class="f">From<input type="time" x-model="sleepForm.bedT"></label>
+                <label class="f">To<input type="time" x-model="sleepForm.wakeT"></label>
               </div>
               <div class="grid3" x-show="sleepForm.kind === 'night'">
                 <label class="f">Fell asleep after (min)<input type="number" min="0" max="600" x-model="sleepForm.latency" placeholder="optional"></label>
@@ -692,9 +717,9 @@
               <label class="f">Notes<input type="text" x-model="sleepForm.notes" placeholder="optional: caffeine late, exam, ill, ..."></label>
               <div class="error" x-show="sleepErr" x-text="sleepErr"></div>
               <div class="actions">
-                <span class="muted" x-text="sleepFormHours()"></span>
+                <span class="muted" x-show="sleepForm.kind === 'nap'" x-text="sleepFormHours()"></span>
                 <span class="grow"></span>
-                <button class="btn ghost" x-show="sleepForm.id" @click="sleepNew()">Cancel</button>
+                <button class="btn ghost danger" x-show="sleepForm.id" @click="sleepDelete(sleepList.find(x => x.id === sleepForm.id)).then(() => sleepGo(sleepForm.night))">Delete</button>
                 <button class="btn primary" @click="sleepSave()" x-text="sleepForm.id ? 'Save changes' : 'Save'"></button>
               </div>
             </div>
