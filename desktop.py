@@ -14,6 +14,7 @@ import socket
 import sys
 import threading
 import time
+import subprocess
 import urllib.request
 from pathlib import Path
 
@@ -46,6 +47,29 @@ def is_chrono(port) -> bool:
             return "categories" in json.load(r)
     except Exception:
         return False
+
+
+def is_stale(port) -> bool:
+    """The running server is older than app.py on disk (Chrono was updated since it started)."""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=1) as r:
+            return bool(json.load(r).get("stale"))
+    except Exception:
+        return False
+
+
+def restart_service(port) -> bool:
+    """Restart the background service (install.sh) so it runs the updated code."""
+    try:
+        if subprocess.run(["systemctl", "--user", "restart", "chrono"], capture_output=True, timeout=15).returncode:
+            return False
+    except (OSError, subprocess.SubprocessError):
+        return False
+    for _ in range(100):
+        if is_chrono(port) and not is_stale(port):
+            return True
+        time.sleep(0.1)
+    return False
 
 
 def free_port() -> int:
@@ -182,7 +206,10 @@ def main():
     webview.settings["ALLOW_DOWNLOADS"] = True
 
     port = PORT
-    if not is_chrono(port):
+    if is_chrono(port) and is_stale(port) and not (LINUX and restart_service(port)):
+        port = free_port()           # an old server we can't restart: run the new code next to it
+        start_server(port)
+    elif not is_chrono(port):
         if port_open(port):          # something else uses 8765: take any free port
             port = free_port()
         start_server(port)

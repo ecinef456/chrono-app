@@ -703,3 +703,5 @@ body.frameless .top { position: sticky; top: 0; z-index: 30; background: var(--b
 @media (prefers-reduced-motion: reduce) { .splash svg { animation: none; } }
 body.ready .splash { display: none; }
 body:not(.ready) > :not(.splash) { visibility: hidden; }
+.stale-bar { position: sticky; top: 0; z-index: 50; background: var(--warn); color: #fff; padding: 8px 16px; text-align: center; font-weight: 600; }
+.stale-bar code { background: rgba(0,0,0,.2); padding: 1px 6px; border-radius: 4px; }

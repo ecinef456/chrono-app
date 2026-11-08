@@ -7,12 +7,13 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=20">
+<link rel="stylesheet" href="/static/style.css?v=21">
 <script defer src="/static/teach.js?v=2"></script>
 <script defer src="/static/app.js?v=20"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
+<div class="stale-bar" x-show="meta.stale" x-cloak role="status">Chrono was updated, but the server still runs the old version. Close Chrono and open it again, or run <code>systemctl --user restart chrono</code>.</div>
 <div class="splash" aria-label="Loading Chrono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4M12 2v3"/></svg></div>
 <script>setTimeout(() => document.body.classList.add("ready"), 5000);  /* never stay hidden, even if something fails */</script>
 <!-- desktop app on Linux: no title bar from the desktop, so these edges resize the window -->

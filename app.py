@@ -342,10 +342,24 @@ def check_category(cat):
 
 # ---------------------------------------------------------------- meta
 
+# The server keeps running the code it started with (e.g. the background service since login).
+# After an update (git am / git pull) it must restart; /api/meta tells the window when that is due.
+_CODE_FILE = Path(__file__)
+_CODE_MTIME = _CODE_FILE.stat().st_mtime if _CODE_FILE.exists() else 0
+
+
+def _code_stale() -> bool:
+    try:
+        return _CODE_FILE.stat().st_mtime > _CODE_MTIME + 1
+    except OSError:
+        return False
+
+
 @app.get("/api/meta")
 def meta():
     return {"categories": CATEGORIES, "break_types": BREAK_TYPES, "ects_hours": ECTS_HOURS,
-            "today": date.today().isoformat(), "support": [x for x in SUPPORT if x["url"]]}
+            "today": date.today().isoformat(), "support": [x for x in SUPPORT if x["url"]],
+            "stale": _code_stale()}
 
 
 # ---------------------------------------------------------------- semesters
