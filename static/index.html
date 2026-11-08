@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=23">
+<link rel="stylesheet" href="/static/style.css?v=24">
 <script defer src="/static/i18n.js?v=2"></script>
 <script defer src="/static/teach.js?v=2"></script>
-<script defer src="/static/app.js?v=23"></script>
+<script defer src="/static/app.js?v=25"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -178,7 +178,12 @@
       </div>
       <div class="panel-body" style="padding-bottom:0"></div>
       <div class="figures" x-show="stats">
-        <div class="figure">
+        <div class="figure" x-show="weekly">
+          <div class="k">Weekly goals met</div>
+          <div class="v"><span x-text="stats?.summary.goals_met ?? 0"></span> <small x-text="'of ' + (stats?.summary.goals_n ?? 0)"></small></div>
+          <div class="ectsbar"><i :style="'width:' + Math.min(100, (stats?.summary.goal_progress || 0) / Math.max(stats?.summary.goal_week || 0, 0.01) * 100) + '%;background:var(--ink-2)'" :title="fx(stats?.summary.goal_progress, 1) + ' / ' + fx(stats?.summary.goal_week, 1) + ' h'"></i></div>
+        </div>
+        <div class="figure" x-show="!weekly">
           <div class="k">ECTS earned (finished courses count in full)</div>
           <div class="v"><span x-text="fx(stats?.summary.ects_done, 1)"></span> <small x-text="'of ' + fx(stats?.summary.ects_target, 0)"></small></div>
           <div class="ectsbar">
@@ -187,14 +192,15 @@
         </div>
         <div class="figure"><div class="k">This week</div><div class="v"><span x-text="fx(stats?.summary.this_week,1)"></span><small> h</small></div></div>
         <div class="figure"><div class="k">Ø semester</div><div class="v"><span x-text="fx(stats?.summary.avg_week,1)"></span><small> h/wk</small></div></div>
-        <div class="figure"><div class="k">Study streak</div><div class="v"><span x-text="stats?.summary.streak ?? 0"></span><small x-text="(stats?.summary.streak === 1 ? ' day' : ' days')"></small></div></div>
+        <div class="figure" x-show="!weekly || !stats?.summary.goals_n"><div class="k">Study streak</div><div class="v"><span x-text="stats?.summary.streak ?? 0"></span><small x-text="(stats?.summary.streak === 1 ? ' day' : ' days')"></small></div></div>
+        <div class="figure" x-show="weekly && stats?.summary.goals_n"><div class="k">Weeks on target in a row</div><div class="v"><span x-text="stats?.summary.week_streak ?? 0"></span><small x-text="(stats?.summary.week_streak === 1 ? ' week' : ' weeks')"></small></div></div>
       </div>
     </section>
 
     <section class="panel">
       <div class="panel-head">
         <h2>Time per course</h2>
-        <span class="sub">Needed is the weekly pace to reach the ECTS by the deadline (30 h per ECTS): ✓ when your semester average covers it, ▲ when it doesn’t</span>
+        <span class="sub" x-text="countingHint()"></span>
       </div>
       <div class="panel-body">
         <template x-if="!stats || !stats.courses.length">
@@ -202,19 +208,21 @@
         </template>
         <table class="ctable" x-show="stats && stats.courses.length">
           <thead><tr>
-            <th>Course</th><th class="pbar"></th><th>Progress</th><th class="opt2">Deadline</th><th>This week</th><th class="opt">Ø semester</th><th>Needed</th>
+            <th>Course</th><th class="pbar"></th><th x-text="weekly ? 'This week' : 'Progress'"></th><th class="opt2">Deadline</th><th x-text="weekly ? 'Weeks met' : 'This week'"></th><th class="opt">Ø semester</th><th x-text="weekly ? 'Goal' : 'Needed'"></th>
           </tr></thead>
           <tbody>
             <template x-for="c in sortedCourses()" :key="c.id">
               <tr :class="{done: c.finished}">
                 <td><div class="cname"><span class="swatch" :style="sw(c.category)"></span><span class="code" x-text="c.code"></span><span class="nm" x-text="c.name" :title="c.name"></span><span class="span-tag" x-show="c.spans" :title="spanTitle(c)" x-text="c.home === false ? 'from ' + c.home_code : 'across semesters'"></span></div></td>
-                <td class="pbar"><span class="bar"><i :style="'width:' + Math.min(100, c.hours / Math.max(c.target_hours, 0.01) * 100) + '%;' + bg(c.category)"></i></span></td>
-                <td class="ptxt"><span class="num" x-text="fx(c.hours, 1)"></span> <span class="muted" x-text="'/ ' + fx(c.target_hours, 0) + ' h'"></span></td>
+                <td class="pbar"><span class="bar"><i :style="'width:' + (weekly ? Math.min(100, c.this_week / Math.max(c.goal_week || 0, 0.01) * 100 * (c.goal_week ? 1 : 0)) : Math.min(100, c.hours / Math.max(c.target_hours, 0.01) * 100)) + '%;' + bg(c.category)"></i></span></td>
+                <td class="ptxt" x-show="!weekly"><span class="num" x-text="fx(c.hours, 1)"></span> <span class="muted" x-text="'/ ' + fx(c.target_hours, 0) + ' h'"></span></td>
+                <td class="ptxt" x-show="weekly"><span class="num" x-text="fx(c.this_week, 1)"></span> <span class="muted" x-text="c.goal_week ? '/ ' + fx(c.goal_week, 1) + ' h' : 'h'"></span></td>
                 <td class="opt2 deadline">
                   <span x-text="c.deadline ? dmy(c.deadline) : '–'"></span>
                   <span class="muted" x-show="!c.finished && c.days_left > 0" x-text="c.days_left + ' d'"></span>
                 </td>
-                <td class="num" x-text="hoursOrDash(c.this_week)"></td>
+                <td class="num" x-show="!weekly" x-text="hoursOrDash(c.this_week)"></td>
+                <td class="num" x-show="weekly" x-text="c.weeks_total ? c.weeks_met + ' / ' + c.weeks_total : '–'" :title="c.weeks_total ? 'Full weeks in which you reached the goal' : ''"></td>
                 <td class="opt" x-text="hoursOrDash(c.avg_week)"></td>
                 <td class="needed" :class="neededOf(c).cls" x-text="neededOf(c).text"></td>
               </tr>
@@ -920,7 +928,7 @@
         <template x-for="c in studyCourses" :key="c.id">
           <div class="admin-row">
             <div class="cname"><span class="swatch" :style="sw(c.category)"></span><span class="code" x-text="c.code"></span><span x-text="c.name"></span><span class="span-tag" x-show="c.spans" :title="spanTitle(c)" x-text="c.home === false ? 'from ' + c.home_code : 'across semesters'"></span></div>
-            <div class="opt" x-text="fx(c.ects, 0) + ' ECTS'"></div>
+            <div class="opt" x-text="courseUnit(c)"></div>
             <div class="opt" x-text="c.deadline ? dmy(c.deadline) : '–'"></div>
             <div class="opt muted" x-text="c.finished ? 'Finished, ' + (c.grade || 'no grade') : catLabel(c.category)"></div>
             <div class="acts"><button class="btn small ghost" @click="openCourse(c)">Edit</button></div>
@@ -1006,6 +1014,18 @@
     <template x-for="(desc, k) in features?.available || {}" :key="k">
       <label class="feat-row"><input type="checkbox" x-model="featPick[k]"><span><b x-text="desc.split(':')[0]"></b><span class="muted" x-text="':' + desc.split(':').slice(1).join(':')"></span></span></label>
     </template>
+    <h3 class="feat-sub">How are your courses counted?</h3>
+    <div class="count-opts" role="radiogroup" aria-label="How are your courses counted?">
+      <label class="count-opt" :class="{ on: featCount.mode === 'ects' }"><input type="radio" value="ects" x-model="featCount.mode">
+        <span><b>Credits (ECTS)</b><span class="muted">University, university of applied sciences: each course has ECTS and a deadline.</span>
+          <span class="count-num" x-show="featCount.mode === 'ects'">1 ECTS = <input type="number" min="10" max="60" step="1" x-model.number="featCount.ects_hours" aria-label="Hours per ECTS"> h</span></span></label>
+      <label class="count-opt" :class="{ on: featCount.mode === 'lessons' }"><input type="radio" value="lessons" x-model="featCount.mode">
+        <span><b>Lessons per week</b><span class="muted">School, Gymnasium, vocational school: each subject has its lessons per week, and you set how much study you aim for per lesson.</span>
+          <span class="count-num" x-show="featCount.mode === 'lessons'">Study per lesson: <input type="number" min="0" max="240" step="5" x-model.number="featCount.lesson_min" aria-label="Minutes of study per lesson"> min</span></span></label>
+      <label class="count-opt" :class="{ on: featCount.mode === 'hours' }"><input type="radio" value="hours" x-model="featCount.mode">
+        <span><b>Just hours</b><span class="muted">No credits: each course can have a weekly goal in hours, or none.</span></span></label>
+    </div>
+    <p class="muted small">You can switch later; what you entered for each course is kept.</p>
     <p class="muted small" x-show="startMs" x-text="'Started in ' + (startMs / 1000).toFixed(1) + ' s.'"></p>
     <p class="muted coffee-note" x-show="meta.support?.length">Chrono is free. If it helps you, you can <a href="#" @click.prevent="$el.closest('dialog').close(); openSupport()">buy me a coffee</a>.</p>
     <div class="actions">
@@ -1091,11 +1111,13 @@
   <form method="dialog" @submit.prevent="saveCourse()">
     <h2 x-text="courseForm.id ? 'Edit course' : 'Add course'"></h2>
     <div class="grid2" style="grid-template-columns: 110px 1fr">
-      <label class="f">Initials<input x-model="courseForm.code" required maxlength="8" placeholder="qft2"></label>
-      <label class="f">Name<input x-model="courseForm.name" required placeholder="Quantum Field Theory 2"></label>
+      <label class="f">Initials<input x-model="courseForm.code" required maxlength="8" :placeholder="weekly ? 'ma' : 'qft2'"></label>
+      <label class="f">Name<input x-model="courseForm.name" required :placeholder="weekly ? 'Mathematics' : 'Quantum Field Theory 2'"></label>
     </div>
     <div class="grid3">
-      <label class="f">ECTS<input type="number" step="0.5" min="0" x-model.number="courseForm.ects" required></label>
+      <label class="f" x-show="mode === 'ects'">ECTS<input type="number" step="0.5" min="0" x-model.number="courseForm.ects" :required="mode === 'ects'"></label>
+      <label class="f" x-show="mode === 'lessons'">Lessons per week<input type="number" step="0.5" min="0" max="40" x-model.number="courseForm.lessons_week" :required="mode === 'lessons'"></label>
+      <label class="f" x-show="mode === 'hours'">Goal (h per week)<input type="number" step="0.25" min="0" max="80" x-model.number="courseForm.goal_week" placeholder="optional"></label>
       <label class="f">Deadline<input type="date" x-model="courseForm.deadline"></label>
       <label class="f">Category
         <select x-model="courseForm.category">
@@ -1107,7 +1129,7 @@
     <label class="check"><input type="checkbox" x-model="courseForm.spans"> Runs across several semesters, like a master thesis</label>
     <div class="grid2" x-show="courseForm.spans">
       <label class="f">Start date<input type="date" x-model="courseForm.start_date" :required="courseForm.spans"></label>
-      <label class="f">ECTS count in
+      <label class="f"><span x-text="weekly ? 'Counts in' : 'ECTS count in'"></span>
         <select x-model.number="courseForm.semester_id">
           <template x-for="s in semesters" :key="s.id"><option :value="s.id" x-text="s.code"></option></template>
         </select>

@@ -354,10 +354,10 @@
 "Zeit pro Kurs",
 "Tempo per corso"
 ],
-"Needed is the weekly pace to reach the ECTS by the deadline (30 h per ECTS): ✓ when your semester average covers it, ▲ when it doesn’t": [
-"« Nécessaire » est le rythme hebdomadaire pour atteindre les ECTS avant l'échéance (30 h par ECTS) : ✓ quand ta moyenne du semestre le couvre, ▲ sinon",
-"«Nötig» ist das Wochentempo, um die ECTS bis zur Frist zu erreichen (30 h pro ECTS): ✓ wenn dein Semesterschnitt reicht, ▲ wenn nicht",
-"«Necessario» è il ritmo settimanale per raggiungere gli ECTS entro la scadenza (30 h per ECTS): ✓ se la tua media del semestre basta, ▲ se no"
+"Needed is the weekly pace to reach the ECTS by the deadline ({a} h per ECTS): ✓ when your semester average covers it, ▲ when it doesn’t": [
+"« Nécessaire » est le rythme hebdomadaire pour atteindre les ECTS avant l'échéance ({a} h par ECTS) : ✓ quand ta moyenne du semestre le couvre, ▲ sinon",
+"«Nötig» ist das Wochentempo, um die ECTS bis zur Frist zu erreichen ({a} h pro ECTS): ✓ wenn dein Semesterschnitt reicht, ▲ wenn nicht",
+"«Necessario» è il ritmo settimanale per raggiungere gli ECTS entro la scadenza ({a} h per ECTS): ✓ se la tua media del semestre basta, ▲ se no"
 ],
 "No courses in this semester yet.": [
 "Pas encore de cours ce semestre.",
@@ -2518,5 +2518,160 @@
 "Il a {a} sessions enregistrées. Masque-le plutôt, pour qu'elles restent dans ton historique.",
 "Es hat {a} erfasste Sitzungen. Blende es stattdessen aus, damit sie in deinem Verlauf bleiben.",
 "Ha {a} sessioni registrate. Nascondilo invece, così restano nella tua cronologia."
+],
+"How are your courses counted?": [
+"Comment tes cours sont-ils comptés ?",
+"Wie werden deine Kurse gezählt?",
+"Come vengono contati i tuoi corsi?"
+],
+"Credits (ECTS)": [
+"Crédits (ECTS)",
+"Kreditpunkte (ECTS)",
+"Crediti (ECTS)"
+],
+"University, university of applied sciences: each course has ECTS and a deadline.": [
+"Université, haute école : chaque cours a des ECTS et une échéance.",
+"Universität, Fachhochschule: Jeder Kurs hat ECTS und eine Frist.",
+"Università, scuola universitaria professionale: ogni corso ha ECTS e una scadenza."
+],
+"1 ECTS =": [
+"1 ECTS =",
+"1 ECTS =",
+"1 ECTS ="
+],
+"Hours per ECTS": [
+"Heures par ECTS",
+"Stunden pro ECTS",
+"Ore per ECTS"
+],
+"Lessons per week": [
+"Leçons par semaine",
+"Lektionen pro Woche",
+"Lezioni per settimana"
+],
+"School, Gymnasium, vocational school: each subject has its lessons per week, and you set how much study you aim for per lesson.": [
+"École, gymnase, école professionnelle : chaque branche a ses leçons par semaine, et tu fixes combien d'étude tu vises par leçon.",
+"Schule, Gymnasium, Berufsschule: Jedes Fach hat seine Lektionen pro Woche, und du legst fest, wie viel Lernzeit du pro Lektion anstrebst.",
+"Scuola, liceo, scuola professionale: ogni materia ha le sue lezioni settimanali, e tu decidi quanto studio vuoi per lezione."
+],
+"Study per lesson:": [
+"Étude par leçon :",
+"Lernzeit pro Lektion:",
+"Studio per lezione:"
+],
+"Minutes of study per lesson": [
+"Minutes d'étude par leçon",
+"Lernminuten pro Lektion",
+"Minuti di studio per lezione"
+],
+"Just hours": [
+"Seulement des heures",
+"Nur Stunden",
+"Solo ore"
+],
+"No credits: each course can have a weekly goal in hours, or none.": [
+"Sans crédits : chaque cours peut avoir un objectif hebdomadaire en heures, ou aucun.",
+"Ohne Kreditpunkte: Jeder Kurs kann ein Wochenziel in Stunden haben, oder keines.",
+"Senza crediti: ogni corso può avere un obiettivo settimanale in ore, o nessuno."
+],
+"You can switch later; what you entered for each course is kept.": [
+"Tu peux changer plus tard ; ce que tu as saisi pour chaque cours est conservé.",
+"Du kannst später wechseln; was du für jeden Kurs eingegeben hast, bleibt erhalten.",
+"Puoi cambiare più tardi; ciò che hai inserito per ogni corso resta."
+],
+"Weekly goals met": [
+"Objectifs de la semaine atteints",
+"Wochenziele erreicht",
+"Obiettivi settimanali raggiunti"
+],
+"Weeks on target in a row": [
+"Semaines dans l'objectif d'affilée",
+"Wochen im Ziel in Folge",
+"Settimane in obiettivo di fila"
+],
+"week": [
+"semaine",
+"Woche",
+"settimana"
+],
+"weeks": [
+"semaines",
+"Wochen",
+"settimane"
+],
+"Weeks met": [
+"Semaines atteintes",
+"Wochen erreicht",
+"Settimane raggiunte"
+],
+"Goal": [
+"Objectif",
+"Ziel",
+"Obiettivo"
+],
+"Full weeks in which you reached the goal": [
+"Semaines complètes où tu as atteint l'objectif",
+"Ganze Wochen, in denen du das Ziel erreicht hast",
+"Settimane intere in cui hai raggiunto l'obiettivo"
+],
+"{a} lessons/wk": [
+"{a} leçons/sem.",
+"{a} Lektionen/Wo.",
+"{a} lezioni/sett."
+],
+"{a} h/wk goal": [
+"objectif {a} h/sem.",
+"Ziel {a} h/Wo.",
+"obiettivo {a} h/sett."
+],
+"no goal": [
+"sans objectif",
+"kein Ziel",
+"nessun obiettivo"
+],
+"Goal per week: lessons × {a} min of study. ✓ when this week reaches it, ▲ what is still missing": [
+"Objectif par semaine : leçons × {a} min d'étude. ✓ quand cette semaine l'atteint, ▲ ce qui manque encore",
+"Wochenziel: Lektionen × {a} min Lernzeit. ✓ wenn diese Woche es erreicht, ▲ was noch fehlt",
+"Obiettivo settimanale: lezioni × {a} min di studio. ✓ quando questa settimana lo raggiunge, ▲ quanto manca ancora"
+],
+"Goal per week in hours: ✓ when this week reaches it, ▲ what is still missing": [
+"Objectif par semaine en heures : ✓ quand cette semaine l'atteint, ▲ ce qui manque encore",
+"Wochenziel in Stunden: ✓ wenn diese Woche es erreicht, ▲ was noch fehlt",
+"Obiettivo settimanale in ore: ✓ quando questa settimana lo raggiunge, ▲ quanto manca ancora"
+],
+"▲ {a} h to go": [
+"▲ encore {a} h",
+"▲ noch {a} h",
+"▲ mancano {a} h"
+],
+"Goal (h per week)": [
+"Objectif (h par semaine)",
+"Ziel (h pro Woche)",
+"Obiettivo (h a settimana)"
+],
+"Counts in": [
+"Compte dans",
+"Zählt in",
+"Conta in"
+],
+"Runs {a} to {b}. Counts in {c}.": [
+"Du {a} au {b}. Compte dans {c}.",
+"Läuft von {a} bis {b}. Zählt in {c}.",
+"Dal {a} al {b}. Conta in {c}."
+],
+"Runs {a} to {b}. Counts in {c}; {d} in this semester.": [
+"Du {a} au {b}. Compte dans {c} ; {d} dans ce semestre.",
+"Läuft von {a} bis {b}. Zählt in {c}; {d} in diesem Semester.",
+"Dal {a} al {b}. Conta in {c}; {d} in questo semestre."
+],
+"Mathematics": [
+"Mathématiques",
+"Mathematik",
+"Matematica"
+],
+"Unknown counting.": [
+"Mode de comptage inconnu.",
+"Unbekannte Zählweise.",
+"Modo di conteggio sconosciuto."
 ]
 }

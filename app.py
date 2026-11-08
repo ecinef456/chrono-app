@@ -157,6 +157,9 @@ def init_db():
             con.execute("ALTER TABLE courses ADD COLUMN kind TEXT NOT NULL DEFAULT 'course'")
         if "repo_path" not in [r["name"] for r in con.execute("PRAGMA table_info(courses)")]:
             con.execute("ALTER TABLE courses ADD COLUMN repo_path TEXT")
+        if "lessons_week" not in [r["name"] for r in con.execute("PRAGMA table_info(courses)")]:
+            con.execute("ALTER TABLE courses ADD COLUMN lessons_week REAL")   # counting 'lessons'
+            con.execute("ALTER TABLE courses ADD COLUMN goal_week REAL")      # counting 'hours': h per week
         con.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
         con.execute("""CREATE TABLE IF NOT EXISTS lessons (
             id INTEGER PRIMARY KEY,
@@ -286,13 +289,15 @@ class CourseIn(BaseModel):
     semester_id: int
     code: str
     name: str
-    ects: float
+    ects: float = 0
     deadline: Optional[str] = None
     category: Optional[str] = None
     finished: bool = False
     grade: Optional[str] = None
     spans: bool = False              # runs across several semesters (e.g. a master thesis)
     start_date: Optional[str] = None  # first day, for spanning courses
+    lessons_week: Optional[float] = Field(default=None, ge=0, le=40)   # lessons per week (school)
+    goal_week: Optional[float] = Field(default=None, ge=0, le=80)      # study goal in hours per week
 
 
 class SessionIn(BaseModel):
@@ -481,11 +486,11 @@ def create_course(body: CourseIn):
             sort = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM courses WHERE semester_id=?",
                                (body.semester_id,)).fetchone()[0]
             cur = con.execute(
-                "INSERT INTO courses (semester_id,code,name,ects,deadline,category,finished,grade,sort,spans,start_date)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO courses (semester_id,code,name,ects,deadline,category,finished,grade,sort,spans,start_date,lessons_week,goal_week)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (body.semester_id, body.code.strip().lower(), body.name.strip(), body.ects,
                  body.deadline, body.category, int(body.finished), body.grade, sort,
-                 int(body.spans), body.start_date if body.spans else None))
+                 int(body.spans), body.start_date if body.spans else None, body.lessons_week, body.goal_week))
         except sqlite3.IntegrityError:
             raise HTTPException(409, f"A course with initials '{body.code}' already exists in this semester.")
         return {"id": cur.lastrowid}
@@ -499,10 +504,10 @@ def update_course(cid: int, body: CourseIn):
         try:
             con.execute(
                 "UPDATE courses SET semester_id=?, code=?, name=?, ects=?, deadline=?, category=?,"
-                " finished=?, grade=?, spans=?, start_date=? WHERE id=?",
+                " finished=?, grade=?, spans=?, start_date=?, lessons_week=?, goal_week=? WHERE id=?",
                 (body.semester_id, body.code.strip().lower(), body.name.strip(), body.ects,
                  body.deadline, body.category, int(body.finished), body.grade,
-                 int(body.spans), body.start_date if body.spans else None, cid))
+                 int(body.spans), body.start_date if body.spans else None, body.lessons_week, body.goal_week, cid))
         except sqlite3.IntegrityError:
             raise HTTPException(409, f"A course with initials '{body.code}' already exists in this semester.")
     return {"ok": True}
@@ -811,6 +816,19 @@ def stats(semester_id: int):
     n_weeks = (last_week - week0).days // 7 + 1
     this_monday = _monday(today)
 
+    with db() as con:
+        cnt = counting(con)
+    eh = cnt["ects_hours"]
+    weekly_mode = cnt["mode"] in ("lessons", "hours")
+
+    def goal_of(c):
+        """Weekly study goal in hours (lessons and hours counting); None = no goal."""
+        if cnt["mode"] == "lessons":
+            return (c.get("lessons_week") or 0) * cnt["lesson_min"] / 60 or None
+        if cnt["mode"] == "hours":
+            return c.get("goal_week") or None
+        return None
+
     cat_of = {c["id"]: c["category"] or "none" for c in courses}
     per_course = defaultdict(lambda: {"total": 0, "week": 0, "first": None, "last": None})
     weekly_cat = defaultdict(lambda: defaultdict(float))
@@ -834,7 +852,7 @@ def stats(semester_id: int):
     for c in courses:
         pc = per_course[c["id"]]
         done_h = all_hours[c["id"]]  # all semesters, for a spanning course
-        target = c["ects"] * ECTS_HOURS
+        target = c["ects"] * eh
         remaining = max(target - done_h, 0)
         dl = _d(c["deadline"])
         needed = None
@@ -850,7 +868,8 @@ def stats(semester_id: int):
             "hours": round(done_h, 3),
             "hours_here": round(pc["total"], 3),
             "target_hours": target,
-            "ects_done": round(done_h / ECTS_HOURS, 3),
+            "ects_done": round(done_h / eh, 3),
+            "goal_week": round(g, 3) if (g := goal_of(c)) else None,
             "avg_week": round(pc["total"] / elapsed_weeks, 3),
             "this_week": round(pc["week"], 3),
             "needed_week": round(needed, 3) if needed is not None else None,
@@ -863,6 +882,27 @@ def stats(semester_id: int):
     ects_courses = [c for c in out_courses if c["home"]]
     ects_target = sum(c["ects"] for c in ects_courses)
     ects_done = sum(c["ects"] if c["finished"] else min(c["ects_done"], c["ects"]) for c in ects_courses)
+
+    # Weekly goals (lessons / hours counting): which goals are met this week, and in how many
+    # full weeks before. The streak counts weeks in a row in which all goals together were reached.
+    goals = {c["id"]: c["goal_week"] for c in out_courses if c["goal_week"] and not c["finished"]}
+    goal_total = sum(goals.values())
+    full_weeks = [i for i in range(n_weeks) if week0 + timedelta(weeks=i) < this_monday]
+    for c in out_courses:
+        g = goals.get(c["id"])
+        c["goal_met"] = bool(g) and c["this_week"] >= g - 1e-9
+        c["weeks_met"] = sum(1 for i in full_weeks if g and weekly_course[i].get(c["id"], 0) >= g - 1e-9) if g else None
+        c["weeks_total"] = len(full_weeks) if g else None
+    week_streak = 0
+    if goal_total:
+        cur = (this_monday - week0).days // 7
+        if sum(min(weekly_course[cur].get(k, 0), v) for k, v in goals.items()) >= goal_total - 1e-9:
+            week_streak = 1
+        for i in sorted(full_weeks, reverse=True):
+            if sum(min(weekly_course[i].get(k, 0), v) for k, v in goals.items()) >= goal_total - 1e-9:
+                week_streak += 1
+            else:
+                break
 
     weeks = []
     for i in range(n_weeks):
@@ -908,7 +948,13 @@ def stats(semester_id: int):
             "this_week": round(sum(c["this_week"] for c in out_courses), 2),
             "today": round(daily.get(today.isoformat(), 0), 2),
             "streak": streak,
+            "goal_week": round(goal_total, 2),
+            "goals_n": len(goals),
+            "goals_met": sum(1 for c in out_courses if c["goal_met"]),
+            "goal_progress": round(sum(min(c["this_week"], goals[c["id"]]) for c in out_courses if c["id"] in goals), 2),
+            "week_streak": week_streak,
         },
+        "counting": cnt,
         "courses": out_courses,
         "weeks": weeks,
         "daily": {k: round(v, 3) for k, v in daily.items()},
@@ -1287,11 +1333,31 @@ def get_features():
             both = chosen.pop("sport_code")
             chosen.setdefault("sport", both)
             chosen.setdefault("code", both)
-        return {"available": FEATURES, "chosen": chosen, "suggested": _feature_guess(con)}
+        return {"available": FEATURES, "chosen": chosen, "suggested": _feature_guess(con), "counting": counting(con),
+                "counting_chosen": bool(con.execute("SELECT 1 FROM settings WHERE key='counting'").fetchone())}
+
+
+# How courses are counted, chosen on first launch:
+#   ects     credits: a total of hours by the deadline (1 ECTS = ects_hours h)
+#   lessons  lessons per week (e.g. Gymnasium): weekly goal = lessons x lesson_min minutes of study
+#   hours    a weekly goal in hours per course, or none
+COUNTING_DEFAULT = {"mode": "ects", "ects_hours": 30, "lesson_min": 30}
+
+
+def counting(con) -> dict:
+    r = con.execute("SELECT value FROM settings WHERE key='counting'").fetchone()
+    return {**COUNTING_DEFAULT, **(json.loads(r["value"]) if r else {})}
+
+
+class CountingIn(BaseModel):
+    mode: str = "ects"
+    ects_hours: float = Field(default=30, ge=10, le=60)
+    lesson_min: int = Field(default=30, ge=0, le=240)
 
 
 class FeaturesIn(BaseModel):
     chosen: dict
+    counting: Optional[CountingIn] = None
 
 
 @app.put("/api/features")
@@ -1299,7 +1365,11 @@ def put_features(body: FeaturesIn):
     chosen = {k: bool(body.chosen.get(k, False)) for k in FEATURES}
     with db() as con:
         con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('features',?)", (json.dumps(chosen),))
-    return {"available": FEATURES, "chosen": chosen}
+        if body.counting:
+            if body.counting.mode not in ("ects", "lessons", "hours"):
+                raise HTTPException(400, "Unknown counting.")
+            con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('counting',?)", (json.dumps(body.counting.model_dump()),))
+        return {"available": FEATURES, "chosen": chosen, "counting": counting(con), "counting_chosen": True}
 
 
 # ---------------------------------------------------------------- sleep: diary, schedule, statistics, advice
@@ -1991,12 +2061,18 @@ def export_logs():
             for c in courses:
                 sess = rows(con.execute("SELECT * FROM sessions WHERE course_id=? ORDER BY start", (c["id"],)))
                 total_h = sum(s["duration_sec"] for s in sess) / 3600
-                lines = [c["name"], f"Progress: {total_h / ECTS_HOURS:.2f} / {c['ects']:g} ECTS"]
+                cnt = counting(con)
+                if cnt["mode"] == "ects":
+                    lines = [c["name"], f"Progress: {total_h / cnt['ects_hours']:.2f} / {c['ects']:g} ECTS"]
+                elif cnt["mode"] == "lessons":
+                    lines = [c["name"], f"{c['lessons_week'] or 0:g} lessons per week, goal {(c['lessons_week'] or 0) * cnt['lesson_min'] / 60:.2f} h/week; {total_h:.2f} h so far"]
+                else:
+                    lines = [c["name"], (f"Goal {c['goal_week']:g} h/week; " if c["goal_week"] else "") + f"{total_h:.2f} h so far"]
                 if c["finished"]:
                     lines.append(f"Finished: {c['grade'] or 'yes'}")
-                elif c["deadline"]:
+                elif c["deadline"] and cnt["mode"] == "ects":
                     days = max((date.fromisoformat(c["deadline"]) - today).days, 1)
-                    remaining = max(c["ects"] * ECTS_HOURS - total_h, 0)
+                    remaining = max(c["ects"] * cnt["ects_hours"] - total_h, 0)
                     lines.append(f"Pace Needed: {remaining / max(days / 7, 0.1):.2f} h/week ({days} days left)")
                 lines.append("=" * 50)
                 lines += session_blocks(sess)

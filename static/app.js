@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -325,12 +325,12 @@ function chrono() {
     openCourse(c = null) {
       this.courseErr = "";
       this.courseForm = c ? { ...c, category: c.category || "", deadline: c.deadline || "", grade: c.grade || "", spans: !!c.spans, start_date: c.start_date || "" }
-                          : { id: null, semester_id: this.semesterId, code: "", name: "", ects: 3, deadline: this.currentSemester?.end_date || "", category: "master", finished: false, grade: "", spans: false, start_date: "" };
+                          : { id: null, semester_id: this.semesterId, code: "", name: "", ects: 3, lessons_week: 3, goal_week: 2, deadline: this.currentSemester?.end_date || "", category: this.mode === "ects" ? "master" : "", finished: false, grade: "", spans: false, start_date: "" };
       document.getElementById("courseDlg").showModal();
     },
     async saveCourse() {
       const f = this.courseForm;
-      const body = { semester_id: f.semester_id || this.semesterId, spans: !!f.spans, start_date: f.spans ? (f.start_date || null) : null, code: f.code, name: f.name, ects: Number(f.ects), deadline: f.deadline || null, category: f.category || null, finished: !!f.finished, grade: f.finished ? (f.grade || null) : null };
+      const body = { semester_id: f.semester_id || this.semesterId, spans: !!f.spans, start_date: f.spans ? (f.start_date || null) : null, code: f.code, name: f.name, ects: Number(f.ects) || 0, lessons_week: f.lessons_week === "" || f.lessons_week == null ? null : Number(f.lessons_week), goal_week: f.goal_week === "" || f.goal_week == null ? null : Number(f.goal_week), deadline: f.deadline || null, category: f.category || null, finished: !!f.finished, grade: f.finished ? (f.grade || null) : null };
       try {
         if (f.id) await api(`/api/courses/${f.id}`, { method: "PUT", body });
         else await api("/api/courses", { method: "POST", body });
@@ -363,13 +363,20 @@ function chrono() {
       const span = `${c.start_date ? this.dmy(c.start_date) : "?"} to ${c.deadline ? this.dmy(c.deadline) : "?"}`;
       const home = this.semesters.find(s => s.id === c.semester_id)?.code || "its own semester";
       const here = c.hours_here != null ? `; ${this.hoursFmt(c.hours_here)} in this semester` : "";
-      return `Runs ${span}. ECTS count in ${home}${here}.`;
+      return this.weekly ? `Runs ${span}. Counts in ${home}${here}.` : `Runs ${span}. ECTS count in ${home}${here}.`;
     },
     sortedCourses() {
       const cs = [...(this.stats?.courses || [])];
       return cs.sort((a, b) => (a.finished - b.finished) || ((a.home === false) - (b.home === false)) || (a.sort - b.sort));
     },
     neededOf(c) {
+      if (this.weekly) {
+        // Weekly goal: met this week, or how much is still missing.
+        if (c.finished) return { cls: "good", text: "✓ " + (c.grade || "done") };
+        if (!c.goal_week) return { cls: "", text: "–" };
+        if (c.goal_met) return { cls: "good", text: "✓ " + this.fx(c.goal_week, 1) + " h" };
+        return { cls: "bad", text: "▲ " + this.fx(c.goal_week - c.this_week, 1) + " h to go" };
+      }
       // Green when the semester average already covers the weekly pace still needed.
       if (c.finished) return { cls: "good", text: "✓ " + (c.grade || "done") };
       if (c.hours >= c.target_hours) return { cls: "good", text: "✓ done" };
@@ -387,8 +394,10 @@ function chrono() {
       });
     },
     usedCategories() {
-      const used = new Set(this.courses.map(c => c.category || "none"));
-      return this.meta.categories.filter(c => used.has(c.key));
+      const used = new Set(this.studyCourses.map(c => c.category || "none"));
+      const cats = this.meta.categories.filter(c => used.has(c.key));
+      // courses without a category (usual at school) still show up in the charts
+      return used.has("none") ? [...cats, { key: "none", label: "No category" }] : cats;
     },
     breakTypes() { return Object.keys(this.stats?.break_totals || {}).length ? Object.keys(this.stats.break_totals) : this.meta.break_types; },
     breakRatio() {
@@ -729,16 +738,32 @@ function chrono() {
       try { this.features = await api("/api/features"); } catch { return; }
       if (!this.features.chosen) {
         this.featPick = { ...this.features.suggested };
+        this.featCount = { ...this.features.counting };
         this.$nextTick(() => document.getElementById("featDlg")?.showModal());
       }
       this.fixTab();
     },
     feat(k) { return !!this.features?.chosen?.[k]; },
-    openFeatures() { this.featPick = { ...(this.features?.chosen || this.features?.suggested || {}) }; document.getElementById("featDlg").showModal(); },
+    openFeatures() { this.featPick = { ...(this.features?.chosen || this.features?.suggested || {}) }; this.featCount = { ...(this.features?.counting || this.featCount) }; document.getElementById("featDlg").showModal(); },
     async saveFeatures() {
-      this.features = await api("/api/features", { method: "PUT", body: { chosen: this.featPick } });
+      const c = this.featCount;
+      this.features = await api("/api/features", { method: "PUT", body: { chosen: this.featPick, counting: { mode: c.mode, ects_hours: Number(c.ects_hours) || 30, lesson_min: Number(c.lesson_min) || 0 } } });
       document.getElementById("featDlg").close();
       this.fixTab();
+      await this.loadSemester();
+    },
+    // How courses are counted: "ects" (credits by a deadline), "lessons" (lessons per week), "hours" (weekly goal)
+    get mode() { return this.features?.counting?.mode || this.stats?.counting?.mode || "ects"; },
+    get weekly() { return this.mode !== "ects"; },
+    courseUnit(c) {
+      if (this.mode === "lessons") return c.lessons_week ? this.fx(c.lessons_week, 0) + " lessons/wk" : "–";
+      if (this.mode === "hours") return c.goal_week ? this.fx(c.goal_week, 1) + " h/wk goal" : "no goal";
+      return this.fx(c.ects, 0) + " ECTS";
+    },
+    countingHint() {
+      if (this.mode === "lessons") return `Goal per week: lessons × ${this.features?.counting?.lesson_min ?? 30} min of study. ✓ when this week reaches it, ▲ what is still missing`;
+      if (this.mode === "hours") return "Goal per week in hours: ✓ when this week reaches it, ▲ what is still missing";
+      return `Needed is the weekly pace to reach the ECTS by the deadline (${this.features?.counting?.ects_hours ?? 30} h per ECTS): ✓ when your semester average covers it, ▲ when it doesn’t`;
     },
     fixTab() {
       const need = { sport: "sport", code: "code", teach: "teach", sleep: "sleep" }[this.tab];

@@ -160,6 +160,16 @@ Run this once:
 
 It sets up a small background service that starts Chrono every time you log in. You never touch the terminal again: open the installed app icon, or http://127.0.0.1:8765. To turn autostart off, run `systemctl --user disable --now chrono`.
 
+## How courses are counted
+
+Chosen on the first start, and changeable any time under ⚙ (what you entered for each course is kept):
+
+- **Credits (ECTS)**: university, university of applied sciences. Each course has ECTS and a deadline; *Needed* is the weekly pace to reach them (1 ECTS = 30 h, adjustable, e.g. 25).
+- **Lessons per week**: school, Gymnasium, vocational school. Each subject has its lessons per week, and you set how much study you aim for per lesson (default 30 min): 4 lessons × 30 min = a goal of 2 h a week.
+- **Just hours**: no credits; each course can have a weekly goal in hours, or none.
+
+With lessons or hours, the dashboard compares this week with each goal (✓ reached, ▲ still missing), counts the full weeks in which you reached it, shows *Weekly goals met* instead of ECTS, and the streak counts weeks in a row on target.
+
 ## Languages
 
 Chrono speaks English, French, German and Italian. Switch with the translate icon at the top (文A); the choice is remembered. On the first start it follows the language of your system.
