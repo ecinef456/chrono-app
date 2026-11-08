@@ -7,7 +7,7 @@ const store = {
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Lang": (window.I18N && I18N.lang) || "en" },
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -72,7 +72,7 @@ function chrono() {
       const current = this.semesters.find(s => s.start_date && s.start_date <= today && (!s.end_date || today <= s.end_date));
       const saved = store.get("chrono-semester", null);
       this.semesterId = (this.semesters.find(s => s.id === saved) || current || this.semesters.filter(s => s.course_count).pop() || this.semesters[0] || {}).id ?? null;
-      try { await this.loadSemester(); }
+      try { await Promise.all([this.loadSemester(), window.I18N?.ready]); this.lang = I18N.lang; }
       finally {
         // The first screen is filled: show it. Charts come a moment later (the chart library is big).
         this.$nextTick(() => { document.body.classList.add("ready"); this.startMs = Math.round(performance.now()); });
@@ -498,8 +498,8 @@ function chrono() {
           calendar: {
             top: "middle", left: 34, right: 8, orient: "horizontal", range: [r.start, r.end], cellSize: [cell, cell],
             splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3, borderRadius: cell < 16 ? 2 : 3 },
-            yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: ["S", "M", "T", "W", "T", "F", "S"], color: ink3, fontSize: 11, ...font },
-            monthLabel: { color: ink2, ...font, fontSize: 12 },
+            yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: this.dayLetters(), color: ink3, fontSize: 11, ...font },
+            monthLabel: { color: ink2, ...font, fontSize: 12, nameMap: this.monthShort() },
           },
           series: [{ type: "heatmap", coordinateSystem: "calendar", data, itemStyle: { borderRadius: cell < 16 ? 2 : 3, borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3 } }],
         }, true);
@@ -545,8 +545,8 @@ function chrono() {
             calendar: {
               top: 22, left: 34, right: 8, range: [r.start, r.end], cellSize: [cell, cell],
               splitLine: { show: false }, itemStyle: { color: cssVar("--track"), borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3, borderRadius: cell < 16 ? 2 : 3 },
-              yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: ["S", "M", "T", "W", "T", "F", "S"], color: ink3, fontSize: 11, ...font },
-              monthLabel: { color: ink2, ...font, fontSize: 12 },
+              yearLabel: { show: false }, dayLabel: { firstDay: 1, nameMap: this.dayLetters(), color: ink3, fontSize: 11, ...font },
+              monthLabel: { color: ink2, ...font, fontSize: 12, nameMap: this.monthShort() },
             },
             series: [{ type: "heatmap", coordinateSystem: "calendar", data, itemStyle: { borderRadius: cell < 16 ? 2 : 3, borderColor: panel, borderWidth: cell < 16 ? 1.5 : 3 } }],
           }, true);
@@ -603,7 +603,7 @@ function chrono() {
     },
     smFrom() {
       if (this.sm.session || !this.sm.from) return this.sm.session ? "" : "Nothing logged yet. Next time this is filled in for you.";
-      return `Filled in from ${this.sm.same_weekday ? "last " + this.weekdays[this.weekdayOf(this.sm.from)] : "your last entry"} (${this.dmy(this.sm.from)}). Change what changed.`;
+      return `Filled in from ${this.sm.same_weekday ? "the same weekday" : "your last entry"}, ${this.sleepDayLabel(this.sm.from)}. Change what changed.`;
     },
     async smSave(sid) {
       if (!this.sm.fields?.length) return;
@@ -624,8 +624,8 @@ function chrono() {
       catch (e) { this.actErr = e.message; }
     },
     fieldNames(t, unit) { return (t.fields || []).filter(f => f.unit === unit).map(f => f.name).join(", "); },
-    kg(v) { return v == null ? "–" : (Math.round(v * 10) / 10).toLocaleString("en-GB") ; },
-    signed(v, d = 1) { if (v == null) return "–"; const r = Math.round(v * 10 ** d) / 10 ** d; return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toLocaleString("en-GB"); },
+    kg(v) { return v == null ? "–" : (Math.round(v * 10) / 10).toLocaleString(this.loc()) ; },
+    signed(v, d = 1) { if (v == null) return "–"; const r = Math.round(v * 10 ** d) / 10 ** d; return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toLocaleString(this.loc()); },
 
     /* ---------------- sport & code (never study time) */
     async loadActivities() {
@@ -657,7 +657,7 @@ function chrono() {
       try { await api(`/api/activity-types/${t.id}`, { method: "DELETE" }); await this.loadSemester(); await this.loadActivities(); }
       catch (e) { this.actErr = e.message; }
     },
-    actMonthLabel(iso) { return parseLocal(iso).toLocaleDateString("en-GB", { month: "short" }) + (iso.slice(5, 7) === "01" ? " " + iso.slice(2, 4) : ""); },
+    actMonthLabel(iso) { return parseLocal(iso).toLocaleDateString(this.loc(), { month: "short" }) + (iso.slice(5, 7) === "01" ? " " + iso.slice(2, 4) : ""); },
     renderActCharts() {
       if (!this.act || !["sport", "code"].includes(this.tab) || !window.echarts) return;
       const ink = cssVar("--ink"), ink2 = cssVar("--ink-2"), ink3 = cssVar("--ink-3"), rule = cssVar("--rule"), panel = cssVar("--panel");
@@ -685,7 +685,7 @@ function chrono() {
         const wLabels = g.weeks.map(w => this.dmy(w).slice(0, 5));
         const mLabels = g.months.map(m => this.actMonthLabel(m));
         chart(`${kind}Week`, wLabels, shown.map(({ t, n }) => ({ name: t.name, color: this.actColor(t.slot), data: g.weekly[n].map(v => +v.toFixed(2)) })), "h", i => `Week from ${this.dmy(g.weeks[i])}`);
-        chart(`${kind}Month`, mLabels, shown.map(({ t, n }) => ({ name: t.name, color: this.actColor(t.slot), data: g.monthly[n].map(v => +v.toFixed(2)) })), "h", i => parseLocal(g.months[i]).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
+        chart(`${kind}Month`, mLabels, shown.map(({ t, n }) => ({ name: t.name, color: this.actColor(t.slot), data: g.monthly[n].map(v => +v.toFixed(2)) })), "h", i => parseLocal(g.months[i]).toLocaleDateString(this.loc(), { month: "long", year: "numeric" }));
         if (kind === "code") {
           const withGit = g.types.filter(t => t.git && !t.git.error);
           chart("codeCommits", wLabels, withGit.map(t => ({ name: t.name, color: this.actColor(t.slot), data: t.git.commits_week })), "n", i => `Commits, week from ${this.dmy(g.weeks[i])}`);
@@ -827,7 +827,7 @@ function chrono() {
       const f = this.sleepForm; if (!f || f.kind !== "night") return null;
       const pc = m => Math.max(0, Math.min(100, (m / this.NS_LEN) * 100));
       const b = this.nsMin(f, "bed"), w = this.nsMin(f, "wake");
-      const day = iso => new Date(iso + "T12:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+      const day = iso => new Date(iso + "T12:00").toLocaleDateString(this.loc(), { weekday: "short", day: "numeric", month: "short" });
       const ticks = [];
       for (let k = 0; k <= 22; k++) {
         const h = (18 + k) % 24;
@@ -906,7 +906,7 @@ function chrono() {
       }));
     },
     sleepTicks() { return [["18:00", 0], ["21:00", 15], ["00:00", 30], ["03:00", 45], ["06:00", 60], ["09:00", 75], ["12:00", 90]]; },   // 18:00-14:00 = 20 h
-    sleepDayLabel(iso) { const d = new Date(iso + "T12:00"); return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); },
+    sleepDayLabel(iso) { const d = new Date(iso + "T12:00"); return d.toLocaleDateString(this.loc(), { weekday: "short", day: "numeric", month: "short" }); },
     /* ---------------- teach: lesson calendar + live lesson plan (nothing here touches the study logs) */
     // views: "cal" (school year), "day" (timetables of one day), "run" (live), "edit" (editor)
     acadYear(iso) { const [y, m] = iso.split("-").map(Number); return m >= 8 ? y : y - 1; },
@@ -938,7 +938,7 @@ function chrono() {
           const wd = new Date(yy, m0, d).getDay();
           cells.push({ key: iso, iso, d, n: count[iso] || 0, today: iso === today, weekend: wd === 0 || wd === 6, sel: iso === this.teachDay });
         }
-        out.push({ key: `${yy}-${m0}`, label: first.toLocaleDateString("en-GB", { month: "long" }), year: yy, cells });
+        out.push({ key: `${yy}-${m0}`, label: first.toLocaleDateString(this.loc(), { month: "long" }), year: yy, cells });
       }
       return out;
     },
@@ -1237,6 +1237,17 @@ function chrono() {
       const root = document.documentElement;
       if (this.theme === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", this.theme);
     },
+    tt(s) { this.lang; return window.I18N ? I18N.t(s) : s; },
+    loc() { this.lang; return window.I18N ? I18N.locale() : "en-GB"; },   // reading lang makes dates re-render on a switch
+    // Week starts Sunday in echarts' nameMap order
+    dayLetters() { return [0, 1, 2, 3, 4, 5, 6].map(i => new Date(2026, 1, i + 1).toLocaleDateString(this.loc(), { weekday: "narrow" })); },
+    monthShort() { return [...Array(12).keys()].map(m => new Date(2026, m, 15).toLocaleDateString(this.loc(), { month: "short" })); },
+    async setLang(l) {
+      await I18N.set(l); this.lang = l;
+      // Server texts (sleep advice) and the charts are made in the language: fetch and draw again.
+      if (this.sleepSt) this.sleepInit();
+      this.$nextTick(() => { this.renderCharts(); this.renderActCharts(); });
+    },
     toggleTheme() {
       this.theme = { system: "light", light: "dark", dark: "system" }[this.theme];
       store.set("chrono-theme", this.theme); this.applyTheme(); this.$nextTick(() => { this.renderCharts(); this.renderActCharts(); });
@@ -1256,7 +1267,7 @@ function chrono() {
     hoursFmt(h) { return this.dur(h * 3600); },
     hm(ts) { return ts ? ts.slice(11, 16) : ""; },
     dmy(ts) { if (!ts) return ""; const [y, m, d] = ts.slice(0, 10).split("-"); return `${d}.${m}.${y}`; },
-    longDate(ts) { return parseLocal(ts.slice(0, 10)).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); },
+    longDate(ts) { return parseLocal(ts.slice(0, 10)).toLocaleDateString(this.loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" }); },
     toast(msg) { this.toastMsg = msg; clearTimeout(this._t); this._t = setTimeout(() => (this.toastMsg = ""), 2600); },
   };
 }

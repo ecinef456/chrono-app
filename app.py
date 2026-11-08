@@ -19,7 +19,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -1505,21 +1505,128 @@ SOURCES = {
 }
 
 
+# ---- translations: static/i18n.json, {"English": ["français", "Deutsch", "italiano"]}, shared with the page
+_I18N = None
+
+
+def _i18n():
+    global _I18N
+    if _I18N is None:
+        try:
+            _I18N = json.loads((STATIC_DIR / "i18n.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _I18N = {}
+    return _I18N
+
+
+def T(lang, en, **kw):
+    """Translate an English text (with {a} {b} ... placeholders) and fill it in."""
+    i = {"fr": 0, "de": 1, "it": 2}.get(lang)
+    tr = _i18n().get(en) if i is not None else None
+    text = tr[i] if tr and len(tr) > i and tr[i] else en
+    return text.format(**kw) if kw else text
+
+
 def _tip(level, title, text, *src):
     return {"level": level, "title": title, "text": text,
             "sources": [{"label": SOURCES[s][0], "url": SOURCES[s][1]} for s in src]}
 
 
-def sleep_advice(st, sched):
+def sleep_advice(st, sched, lang="en"):
     """Rules on the statistics, each tied to a published finding. Not medical advice."""
+    t = lambda en, **kw: T(lang, en, **kw)
     out = []
     n = st["nights"]
     if n < 7:
-        out.append(_tip("info", "Log a week or two first",
-                        f"{n} night{'s' if n != 1 else ''} so far. Averages and regularity get meaningful after about 7 nights, "
-                        "and the free-day comparison needs a few free days too."))
+        out.append(_tip("info", t("Log a week or two first"),
+                        t("{a} night(s) so far. Averages and regularity get meaningful after about 7 nights, "
+                          "and the free-day comparison needs a few free days too.", a=n)))
         if n == 0:
             return out
+    avg = st["asleep_avg"]
+    if avg is not None:
+        if avg < 7 * 60:
+            out.append(_tip("warn", t("You sleep less than 7 hours on average"),
+                            t("Average {a} of sleep; {b} of {c} nights were under 7 h. "
+                              "The AASM and the Sleep Research Society recommend 7 or more hours per night on a regular basis for adults; "
+                              "less is associated with impaired performance, more errors, weight gain and other health risks. "
+                              "With your usual time to fall asleep, being in bed by {d} on work nights would give you {e} h.",
+                              a=_hm_dur(avg), b=st["short_nights"], c=n,
+                              d=st["suggested_bed"] or t("an earlier time"), e=f"{sched['need_h']:g}"),
+                            "aasm"))
+        elif avg > 9 * 60:
+            out.append(_tip("info", t("You sleep more than 9 hours on average"),
+                            t("Average {a}. The consensus statement says regularly sleeping more than 9 hours may be appropriate for young adults "
+                              "and people recovering from sleep debt. If you still feel sleepy during the day, talk to a doctor.", a=_hm_dur(avg)),
+                            "aasm"))
+        else:
+            text = t("Average {a}, within the recommended 7 hours or more.", a=_hm_dur(avg))
+            if st["short_nights"] >= max(2, n // 4):
+                text += " " + t("Still, {a} of {b} nights were under 7 h; the recommendation is about most nights, not the average.",
+                                a=st["short_nights"], b=n)
+            out.append(_tip("good", t("Enough sleep on average"), text, "aasm"))
+    sri = st["sri"]
+    if sri is not None:
+        if sri < 72:
+            out.append(_tip("warn", t("Your sleep times vary a lot"),
+                            t("Sleep Regularity Index {a} (100 = same times every day). In a UK Biobank study (accelerometers, median 81), "
+                              "people in the least regular fifth (below about 72) had a higher risk of death than the other four fifths, and regularity "
+                              "predicted it better than duration. In Harvard students, irregular sleepers had a body clock shifted about 2.5 h later and lower grades. "
+                              "The single most effective step: get up at the same time every day, weekends included (±30 min), and get daylight soon after waking. "
+                              "Note: a diary misses awakenings at night, so diary values come out somewhat higher than accelerometer values.",
+                              a=f"{sri:.0f}"),
+                            "windred", "phillips"))
+        else:
+            out.append(_tip("good", t("Regular sleep times"),
+                            t("Sleep Regularity Index {a}. In the UK Biobank study the median was 81; regularity predicted mortality better than duration did. Keep it up.",
+                              a=f"{sri:.0f}"),
+                            "windred"))
+    elif st["wake_sd"] is not None and st["wake_sd"] > 60:
+        out.append(_tip("warn", t("Your wake-up time moves a lot"),
+                        t("Your wake-up time varies by ±{a} min. Getting up at the same time every day anchors the body clock.",
+                          a=f"{st['wake_sd']:.0f}"),
+                        "phillips"))
+    sjl = st["social_jetlag"]
+    if sjl is not None:
+        if sjl >= 60:
+            out.append(_tip("warn", t("Social jet lag of {a}", a=_hm_dur(sjl)),
+                            t("The middle of your sleep shifts this much between work days and free days, as if you flew across time zones every weekend. "
+                              "In a study of about 65 000 people, each hour of social jet lag went with roughly 33 % higher odds of being overweight (an association, not proof of cause). "
+                              "Keep free-day wake-up within about an hour of work days, and go outside in the morning on free days too."),
+                            "roenneberg"))
+        else:
+            out.append(_tip("good", t("Little social jet lag"),
+                            t("Your mid-sleep moves only {a} between work and free days.", a=_hm_dur(sjl)), "roenneberg"))
+    if st["catch_up"] is not None and st["catch_up"] >= 60:
+        out.append(_tip("tip", t("You catch up on free days"),
+                        t("You sleep {a} more on free days than on work days: a sign of sleep debt during the week. "
+                          "In a controlled study, sleeping in at the weekend did not undo the metabolic effects of too little sleep during the week. "
+                          "Shift some of that sleep to work nights instead.", a=_hm_dur(st["catch_up"])), "depner"))
+    lat_bad = st["long_latency_nights"]
+    eff = st["efficiency"]
+    if (st["latency_avg"] is not None and st["latency_avg"] > 30) or (lat_bad and lat_bad >= max(3, st["latency_n"] * 0.4)) or (eff is not None and eff < 0.85):
+        parts = []
+        if st["latency_avg"] is not None:
+            parts.append(t("you take {a} min on average to fall asleep ({b} nights over 30 min)", a=f"{st['latency_avg']:.0f}", b=lat_bad))
+        if eff is not None:
+            parts.append(t("you sleep {a} % of the time in bed", a=f"{eff * 100:.0f}"))
+        out.append(_tip("warn", t("Trouble falling or staying asleep"),
+                        t("In your diary, {a}.", a=t(" and ").join(parts)) + " "
+                        + t("What helps most, per the AASM guideline, is cognitive behavioural therapy for insomnia (CBT-I); "
+                            "one part you can start now is stimulus control: go to bed only when sleepy, get up if you can't sleep after about 20 minutes, "
+                            "and get up at the same time every morning. Sleep hygiene tips alone are not recommended as a treatment. "
+                            "If this happens three or more nights a week for three months and affects your days, see a doctor: that matches the definition of chronic insomnia."),
+                        "edinger"))
+    chrono = st["chronotype"]
+    if chrono is not None and chrono >= 17 * 60 and sjl is not None and sjl >= 60:   # MSFsc at 5:00 or later
+        out.append(_tip("tip", t("You are a late type"),
+                        t("Your sleep-corrected mid-sleep on free days is {a}, which counts as late. Late types carry the most sleep debt into the work week. "
+                          "Morning daylight and dim light in the evening move the body clock earlier.", a=_clock(chrono)), "mctq", "phillips"))
+    if st["bed_dev"] is not None and st["bed_dev"] > 45:
+        out.append(_tip("tip", t("Your plan and your nights differ"),
+                        t("You go to bed {a} away from your planned time on average. A plan you keep beats an ideal one: "
+                          "set the planned wake-up time you can hold every day, then count back the sleep you need.", a=_hm_dur(st["bed_dev"]))))
+    return out
     need = sched["need_h"] * 60
     avg = st["asleep_avg"]
     if avg is not None:
@@ -1600,7 +1707,7 @@ def sleep_advice(st, sched):
 
 
 @app.get("/api/sleep/stats")
-def sleep_stats(days: int = 28):
+def sleep_stats(request: Request, days: int = 28):
     days = max(7, min(days, 365))
     end = date.today()
     start = end - timedelta(days=days)
@@ -1662,7 +1769,7 @@ def sleep_stats(days: int = 28):
         "suggested_bed": f"{int(sugg // 60) % 24:02d}:{int(sugg % 60):02d}",
     }
     plain = [{k: v for k, v in x.items() if not k.startswith("_")} for x in f]
-    return {"stats": st, "advice": sleep_advice(st, sched), "nights": plain, "schedule": sched,
+    return {"stats": st, "advice": sleep_advice(st, sched, request.headers.get("x-lang", "en")), "nights": plain, "schedule": sched,
             "naps": [{"night": e["night"], "bed": e["bed"], "wake": e["wake"]} for e in naps]}
 
 

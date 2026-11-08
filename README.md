@@ -160,6 +160,12 @@ Run this once:
 
 It sets up a small background service that starts Chrono every time you log in. You never touch the terminal again: open the installed app icon, or http://127.0.0.1:8765. To turn autostart off, run `systemctl --user disable --now chrono`.
 
+## Languages
+
+Chrono speaks English, French, German and Italian. Switch with the translate icon at the top (文A); the choice is remembered. On the first start it follows the language of your system.
+
+The texts live in `i18n_source.py` (English → French, German, Italian; German in Swiss spelling). After editing it, run `python3 i18n_source.py` to rebuild `static/i18n.json`. The page is written in English and translated as it is drawn, so a new English text simply shows in English until it gets an entry. Your own names (courses, sports, notes) are never translated. Text exports (.txt) stay in English.
+
 ## Your data
 
 - `data/chrono.db` is the real data store, a single SQLite file. To back it up, copy it somewhere safe.

@@ -7,9 +7,10 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=22">
+<link rel="stylesheet" href="/static/style.css?v=23">
+<script defer src="/static/i18n.js?v=2"></script>
 <script defer src="/static/teach.js?v=2"></script>
-<script defer src="/static/app.js?v=21"></script>
+<script defer src="/static/app.js?v=23"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -52,6 +53,22 @@
     <button class="icon-btn" @click="openFeatures()" title="Features" aria-label="Choose features">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
     </button>
+    <div class="lang-menu" @click.outside="langOpen = false" @keydown.escape="langOpen = false">
+      <button class="icon-btn" @click="langOpen = !langOpen" :aria-expanded="langOpen" title="Language" aria-label="Language">
+        <!-- translate: a character with its strokes on the left, an A on the right -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 5h9M7.5 3v2M10 5c-.8 3.6-3.4 6.6-6.5 8.2M5.6 8.5c1.2 2 3.1 3.6 5.4 4.6"/>
+          <path d="M12.5 21l4-10 4 10M14 17.5h5"/>
+        </svg>
+      </button>
+      <div class="lang-pop" translate="no" x-show="langOpen" x-cloak x-transition.opacity role="menu">
+        <template x-for="(name, k) in langs" :key="k">
+          <button role="menuitemradio" :aria-checked="k === lang" @click="langOpen = false; setLang(k)">
+            <span class="lang-code" x-text="k.toUpperCase()"></span><span x-text="name"></span>
+          </button>
+        </template>
+      </div>
+    </div>
     <button class="icon-btn" @click="toggleTheme()" :title="'Theme: ' + theme" aria-label="Switch theme">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
     </button>
@@ -872,7 +889,7 @@
           <div class="sleep-row">
             <span class="d" x-text="sleepDayLabel(e.night) + (e.kind === 'nap' ? ' · nap' : '')"></span>
             <span class="t" x-text="e.bed.slice(11, 16) + '–' + e.wake.slice(11, 16)"></span>
-            <span class="m muted" x-text="[e.latency_min != null ? e.latency_min + ' min to fall asleep' : '', e.awake_min ? e.awake_min + ' min awake' : '', e.quality ? 'rested ' + e.quality + '/5' : '', e.free && e.kind === 'night' ? 'free day' : '', e.notes].filter(Boolean).join(' · ')"></span>
+            <span class="m muted" x-text="[e.latency_min != null ? tt(e.latency_min + ' min to fall asleep') : '', e.awake_min ? tt(e.awake_min + ' min awake') : '', e.quality ? tt('rested ' + e.quality + '/5') : '', e.free && e.kind === 'night' ? tt('free day') : '', e.notes].filter(Boolean).join(' · ')"></span>
             <span class="actions">
               <button class="btn small ghost" @click="sleepEdit(e)">Edit</button>
               <button class="btn small ghost danger" @click="sleepDelete(e)">Delete</button>
