@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/static/style.css?v=17">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=2"></script>
-<script src="/static/app.js?v=16"></script>
+<script src="/static/app.js?v=17"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -38,7 +38,8 @@
       <button role="tab" :aria-selected="tab==='dash'" @click="tab='dash'">Dashboard</button>
       <button role="tab" :aria-selected="tab==='log'" @click="tab='log'">Log</button>
       <button role="tab" :aria-selected="tab==='courses'" @click="tab='courses'">Courses</button>
-      <button role="tab" :aria-selected="tab==='act'" @click="tab='act'" x-show="feat('sport_code')">Sport &amp; Code</button>
+      <button role="tab" :aria-selected="tab==='sport'" @click="tab='sport'" x-show="feat('sport')">Sport</button>
+      <button role="tab" :aria-selected="tab==='code'" @click="tab='code'" x-show="feat('code')">Code</button>
       <button role="tab" :aria-selected="tab==='teach'" @click="tab='teach'" x-show="feat('teach')">Teach</button>
       <button role="tab" :aria-selected="tab==='sleep'" @click="tab='sleep'" x-show="feat('sleep')">Sleep</button>
     </nav>
@@ -308,9 +309,9 @@
 
   <!-- ===================== COURSES ===================== -->
   <!-- ===================== SPORT & CODE (never study time) ===================== -->
-  <main x-show="tab==='act'" class="stack" x-cloak>
+  <main x-show="tab==='sport' || tab==='code'" class="stack" x-cloak>
     <template x-if="!act"><section class="panel"><div class="panel-body empty">Loading…</div></section></template>
-    <template x-for="kind in ['sport', 'code']" :key="kind">
+    <template x-for="kind in ['sport', 'code'].filter(k => k === tab)" :key="kind">
       <section class="panel" x-show="act && act[kind]">
         <div class="panel-head">
           <h2 x-text="act?.[kind]?.label"></h2>

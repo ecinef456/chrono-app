@@ -1079,7 +1079,8 @@ def activities(weeks: int = 16, months: int = 12):
 # nothing is deleted when a feature is switched off, it is only hidden.
 
 FEATURES = {
-    "sport_code": "Sport & Code: track sport and coding time (with git commit stats), never counted as study time",
+    "sport": "Sport: track your sport time, never counted as study time",
+    "code": "Code: track coding time on your projects, with commit stats from your local git folders",
     "teach": "Teach: lesson calendar and live lesson timetables from Typst notes",
     "sleep": "Sleep: sleep diary, schedule, statistics and evidence-based advice",
 }
@@ -1088,7 +1089,8 @@ FEATURES = {
 def _feature_guess(con):
     """What an existing installation already uses, to pre-tick the first-launch choice."""
     return {
-        "sport_code": bool(con.execute("SELECT 1 FROM courses WHERE kind IN ('sport','code')").fetchone()) or LOCAL_FILE.exists(),
+        "sport": bool(con.execute("SELECT 1 FROM courses WHERE kind='sport'").fetchone()) or LOCAL_FILE.exists(),
+        "code": bool(con.execute("SELECT 1 FROM courses WHERE kind='code'").fetchone()) or LOCAL_FILE.exists(),
         "teach": bool(con.execute("SELECT 1 FROM lessons").fetchone()),
         "sleep": bool(con.execute("SELECT 1 FROM sleep").fetchone()),
     }
@@ -1099,6 +1101,10 @@ def get_features():
     with db() as con:
         r = con.execute("SELECT value FROM settings WHERE key='features'").fetchone()
         chosen = json.loads(r["value"]) if r else None
+        if chosen and "sport_code" in chosen:            # before Sport and Code were separate
+            both = chosen.pop("sport_code")
+            chosen.setdefault("sport", both)
+            chosen.setdefault("code", both)
         return {"available": FEATURES, "chosen": chosen, "suggested": _feature_guess(con)}
 
 

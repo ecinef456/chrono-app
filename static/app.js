@@ -69,8 +69,9 @@ function chrono() {
       // Dropping a .typ file anywhere opens it in Teach.
       window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
       window.addEventListener("drop", e => { if (e.dataTransfer?.files?.length && this.tab !== "teach") { e.preventDefault(); this.tab = "teach"; this.teachFiles(e.dataTransfer.files); } });
-      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "act") this.loadActivities(); if (v === "teach") this.teachInit(); if (v === "sleep") this.sleepInit(); });
-      if (this.tab === "act") this.loadActivities();
+      this.$watch("tab", v => { store.set("chrono-tab", v); if (v === "dash") this.$nextTick(() => this.renderCharts()); if (v === "sport" || v === "code") this.loadActivities(); if (v === "teach") this.teachInit(); if (v === "sleep") this.sleepInit(); });
+      if (this.tab === "act") this.tab = "sport";          // the old combined tab
+      if (this.tab === "sport" || this.tab === "code") this.loadActivities();
       if (this.teachView === "run" && !this.teach || this.teachView === "edit") this.teachView = "cal";
       if (this.tab === "teach") this.teachInit();
       if (this.tab === "sleep") this.sleepInit();
@@ -112,7 +113,7 @@ function chrono() {
     /* ---------------- derived */
     get currentSemester() { return this.semesters.find(s => s.id === this.semesterId); },
     get studyCourses() { return this.courses.filter(c => (c.kind || "course") === "course"); },
-    get activityChips() { return this.features?.chosen && !this.feat("sport_code") ? [] : this.courses.filter(c => (c.kind === "sport" || c.kind === "code") && !c.finished); },
+    get activityChips() { return this.courses.filter(c => (c.kind === "sport" || c.kind === "code") && !c.finished && (!this.features?.chosen || this.feat(c.kind))); },
     courseGroups() {
       // Course list for the entry form and the Log filter, grouped
       const g = [{ label: "Courses", items: this.studyCourses }];
@@ -549,7 +550,7 @@ function chrono() {
     /* ---------------- sport & code (never study time) */
     async loadActivities() {
       this.act = await api("/api/activities");
-      if (this.tab === "act") this.$nextTick(() => this.renderActCharts());
+      if (this.tab === "sport" || this.tab === "code") this.$nextTick(() => this.renderActCharts());
     },
     actColor(slot) {
       const dark = cssVar("color-scheme") === "dark";
@@ -578,7 +579,7 @@ function chrono() {
     },
     actMonthLabel(iso) { return parseLocal(iso).toLocaleDateString("en-GB", { month: "short" }) + (iso.slice(5, 7) === "01" ? " " + iso.slice(2, 4) : ""); },
     renderActCharts() {
-      if (!this.act || this.tab !== "act" || !window.echarts) return;
+      if (!this.act || !["sport", "code"].includes(this.tab) || !window.echarts) return;
       const ink = cssVar("--ink"), ink2 = cssVar("--ink-2"), ink3 = cssVar("--ink-3"), rule = cssVar("--rule"), panel = cssVar("--panel");
       const font = { fontFamily: "Atkinson Hyperlegible Next, Hanken Grotesk, system-ui, sans-serif" };
       const tip = { backgroundColor: panel, borderColor: rule, textStyle: { color: ink, ...font, fontSize: 13 }, extraCssText: "border-radius:10px;box-shadow:0 8px 24px -12px rgba(0,0,0,.35);" };
@@ -660,7 +661,7 @@ function chrono() {
       this.fixTab();
     },
     fixTab() {
-      const need = { act: "sport_code", teach: "teach", sleep: "sleep" }[this.tab];
+      const need = { sport: "sport", code: "code", teach: "teach", sleep: "sleep" }[this.tab];
       if (need && this.features?.chosen && !this.feat(need)) this.tab = "dash";
     },
 
