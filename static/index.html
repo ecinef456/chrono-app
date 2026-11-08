@@ -7,13 +7,14 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=19">
-<script defer src="/static/vendor/echarts.min.js"></script>
+<link rel="stylesheet" href="/static/style.css?v=20">
 <script defer src="/static/teach.js?v=2"></script>
-<script defer src="/static/app.js?v=19"></script>
+<script defer src="/static/app.js?v=20"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
+<div class="splash" aria-label="Loading Chrono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4M12 2v3"/></svg></div>
+<script>setTimeout(() => document.body.classList.add("ready"), 5000);  /* never stay hidden, even if something fails */</script>
 <!-- desktop app on Linux: no title bar from the desktop, so these edges resize the window -->
 <template x-if="frameless">
   <div class="win-edges" aria-hidden="true">
@@ -1063,6 +1064,7 @@
     <template x-for="(desc, k) in features?.available || {}" :key="k">
       <label class="feat-row"><input type="checkbox" x-model="featPick[k]"><span><b x-text="desc.split(':')[0]"></b><span class="muted" x-text="':' + desc.split(':').slice(1).join(':')"></span></span></label>
     </template>
+    <p class="muted small" x-show="startMs" x-text="'Started in ' + (startMs / 1000).toFixed(1) + ' s.'"></p>
     <p class="muted coffee-note" x-show="meta.support?.length">Chrono is free. If it helps you, you can <a href="#" @click.prevent="$el.closest('dialog').close(); openSupport()">buy me a coffee</a>.</p>
     <div class="actions">
       <button type="button" class="btn ghost" x-show="features?.chosen" @click="$el.closest('dialog').close()">Cancel</button>

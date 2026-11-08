@@ -42,6 +42,10 @@ const clockHours = d => {
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 
+function loadScript(src) {
+  return new Promise((ok, fail) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = fail; document.head.appendChild(el); });
+}
+
 function chrono() {
   return {
     meta: { categories: [], break_types: [] },
@@ -50,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     wl: { course_id: null, day: 0, plan: [], logs: {} }, wo: {}, woNew: {},
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -68,7 +72,12 @@ function chrono() {
       const current = this.semesters.find(s => s.start_date && s.start_date <= today && (!s.end_date || today <= s.end_date));
       const saved = store.get("chrono-semester", null);
       this.semesterId = (this.semesters.find(s => s.id === saved) || current || this.semesters.filter(s => s.course_count).pop() || this.semesters[0] || {}).id ?? null;
-      await this.loadSemester();
+      try { await this.loadSemester(); }
+      finally {
+        // The first screen is filled: show it. Charts come a moment later (the chart library is big).
+        this.$nextTick(() => { document.body.classList.add("ready"); this.startMs = Math.round(performance.now()); });
+        loadScript("/static/vendor/echarts.min.js").then(() => { this.renderCharts(); this.renderActCharts(); }).catch(() => {});
+      }
       // Dropping a .typ file anywhere opens it in Teach.
       window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
       window.addEventListener("drop", e => { if (e.dataTransfer?.files?.length && this.tab !== "teach") { e.preventDefault(); this.tab = "teach"; this.teachFiles(e.dataTransfer.files); } });
