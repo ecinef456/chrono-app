@@ -2664,6 +2664,16 @@
 "Läuft von {a} bis {b}. Zählt in {c}; {d} in diesem Semester.",
 "Dal {a} al {b}. Conta in {c}; {d} in questo semestre."
 ],
+"Saved to {a}": [
+"Enregistré dans {a}",
+"Gespeichert unter {a}",
+"Salvato in {a}"
+],
+"Could not save: {a}": [
+"Impossible d'enregistrer : {a}",
+"Speichern nicht möglich: {a}",
+"Impossibile salvare: {a}"
+],
 "Mathematics": [
 "Mathématiques",
 "Mathematik",

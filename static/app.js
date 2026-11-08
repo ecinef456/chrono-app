@@ -1022,10 +1022,22 @@ function chrono() {
       if (this.teach && this.teach.id === l.id) { this.teach = null; this.teachSave(); }
       await this.loadLessons();
     },
-    downloadText(name, text) {
+    async downloadText(name, text) {
+      // In the Chrono window: a save dialog from the app itself (the web view's downloads can crash on Linux).
+      const api = window.pywebview?.api;
+      if (api?.save_text) {
+        try { const path = await api.save_text(name, text); if (path) this.toast(`Saved to ${path}`); }
+        catch (e) { this.toast("Could not save: " + (e?.message || e)); }
+        return;
+      }
       const a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-      a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    },
+    async copyText(text) {
+      const api = window.pywebview?.api;
+      if (api?.copy_text) { try { if (await api.copy_text(text)) return true; } catch { /* fall back below */ } }
+      try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
     },
     lessonTypst(l) { return l.source && /hour1\s*:/.test(l.source) ? l.source : ChronoTeach.toTypst(ChronoTeach.toModel(l.plan)); },
     fileNameOf(title) { return (title || "timetable").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s*·\s*/g, " ") + ".typ"; },
@@ -1247,7 +1259,7 @@ function chrono() {
       } catch (e) { this.edErr = e.message; }
     },
     edRun() { try { this.runParsed(this.edParsed(), this.edTitle()); } catch (e) { this.edErr = e.message; } },
-    async edCopy() { try { await navigator.clipboard.writeText(this.edTypst()); this.toast("Typst copied"); } catch { this.toast("Copy failed: select the text below"); } },
+    async edCopy() { this.toast(await this.copyText(this.edTypst()) ? "Typst copied" : "Copy failed: select the text below"); },
 
     typst(t) { return ChronoTeach.typstHtml(t); },
     clockOf(sec) { sec = ((Math.round(sec) % 86400) + 86400) % 86400; return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec % 3600 / 60))}`; },

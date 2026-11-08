@@ -107,20 +107,27 @@ def qt_setup(webview):
     qt_app.setWindowIcon(QIcon(ICON))
 
     # pywebview's own download handler targets Qt5 and proposes the URL path as file name.
+    # The page saves files through WindowApi.save_text; this only catches other downloads.
+    # Never let an error escape a Qt slot: PyQt then aborts the whole app.
     def on_download_requested(view, download):
-        name = download.downloadFileName() or "chrono-export.txt"
-        downloads = Path.home() / "Downloads"
-        start_dir = downloads if downloads.is_dir() else Path.home()
-        path, _ = QFileDialog.getSaveFileName(view, "Save export", str(start_dir / name),
-                                              "Text files (*.txt);;All files (*)")
-        if not path:
-            download.cancel()
-            return
-        download.setDownloadDirectory(str(Path(path).parent))
-        download.setDownloadFileName(Path(path).name)
-        download.accept()
+        try:
+            name = download.downloadFileName() or "chrono-export.txt"
+            path, _ = QFileDialog.getSaveFileName(view, "Save", str(_start_dir() / name), "All files (*)")
+            if not path:
+                download.cancel()
+                return
+            download.setDownloadDirectory(str(Path(path).parent))
+            download.setDownloadFileName(Path(path).name)
+            download.accept()
+        except Exception as e:      # noqa: BLE001
+            print("download failed:", e, file=sys.stderr)
 
     webview_qt.BrowserView.on_download_requested = on_download_requested
+
+
+def _start_dir() -> Path:
+    downloads = Path.home() / "Downloads"
+    return downloads if downloads.is_dir() else Path.home()
 
 
 class WindowApi:
@@ -134,6 +141,52 @@ class WindowApi:
 
     def frameless(self):
         return LINUX
+
+    def _on_gui(self, fn, timeout=600):
+        """Run fn on Qt's main thread and wait for its result (page calls come from other threads).
+        Errors are returned, never raised inside Qt (an error in a Qt slot aborts the app)."""
+        import threading
+        done, box = threading.Event(), {}
+
+        def run():
+            try:
+                box["value"] = fn()
+            except Exception as e:  # noqa: BLE001
+                box["error"] = str(e)
+            finally:
+                done.set()
+        self._gui(run)
+        done.wait(timeout)
+        if "error" in box:
+            raise RuntimeError(box["error"])
+        return box.get("value")
+
+    def copy_text(self, text):
+        """Copy to the clipboard through Qt (the web view's own clipboard access is unreliable)."""
+        if not self._gui:
+            return False
+
+        def run():
+            from qtpy.QtWidgets import QApplication
+            QApplication.clipboard().setText(text)
+            return True
+        return self._on_gui(run)
+
+    def save_text(self, name, text):
+        """Ask where to save, then write the file. Returns the path, or None when cancelled."""
+        if not self._gui:
+            return None
+
+        def ask():
+            from qtpy.QtWidgets import QFileDialog
+            ext = Path(name).suffix.lstrip(".")
+            filters = (f"{ext.upper()} (*.{ext});;" if ext else "") + "All files (*)"
+            path, _ = QFileDialog.getSaveFileName(self.window.native, "Save", str(_start_dir() / name), filters)
+            return path or None
+        path = self._on_gui(ask)
+        if path:
+            Path(path).write_text(text, encoding="utf-8")
+        return path
 
     def has_badge(self):
         return LINUX

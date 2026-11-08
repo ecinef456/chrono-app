@@ -653,6 +653,8 @@ T = {
     "Counts in": ("Compte dans", "Zählt in", "Conta in"),
     "Runs {a} to {b}. Counts in {c}.": ("Du {a} au {b}. Compte dans {c}.", "Läuft von {a} bis {b}. Zählt in {c}.", "Dal {a} al {b}. Conta in {c}."),
     "Runs {a} to {b}. Counts in {c}; {d} in this semester.": ("Du {a} au {b}. Compte dans {c} ; {d} dans ce semestre.", "Läuft von {a} bis {b}. Zählt in {c}; {d} in diesem Semester.", "Dal {a} al {b}. Conta in {c}; {d} in questo semestre."),
+    "Saved to {a}": ("Enregistré dans {a}", "Gespeichert unter {a}", "Salvato in {a}"),
+    "Could not save: {a}": ("Impossible d'enregistrer : {a}", "Speichern nicht möglich: {a}", "Impossibile salvare: {a}"),
     "Mathematics": ("Mathématiques", "Mathematik", "Matematica"),
     "Unknown counting.": ("Mode de comptage inconnu.", "Unbekannte Zählweise.", "Modo di conteggio sconosciuto."),
 
