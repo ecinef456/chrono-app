@@ -690,3 +690,4 @@ body.frameless .top { position: sticky; top: 0; z-index: 30; background: var(--b
 .wl-sr input { width: 52px; }
 .wl input[type=number]::-webkit-inner-spin-button, .wo-edit input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .wl input[type=number], .wo-edit input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.more-row { display: flex; justify-content: center; padding: 14px 0 4px; }

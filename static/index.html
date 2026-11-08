@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=18">
-<script src="/static/vendor/echarts.min.js"></script>
-<script src="/static/teach.js?v=2"></script>
-<script src="/static/app.js?v=18"></script>
+<link rel="stylesheet" href="/static/style.css?v=19">
+<script defer src="/static/vendor/echarts.min.js"></script>
+<script defer src="/static/teach.js?v=2"></script>
+<script defer src="/static/app.js?v=19"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
-<body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
+<body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
 <!-- desktop app on Linux: no title bar from the desktop, so these edges resize the window -->
 <template x-if="frameless">
   <div class="win-edges" aria-hidden="true">
@@ -284,7 +284,7 @@
         <template x-if="!filteredSessions().length">
           <div class="empty">Nothing logged here yet. Start the timer, or add a past entry for a day you missed.</div>
         </template>
-        <template x-for="g in groupedSessions()" :key="g.date">
+        <template x-for="g in (tab === 'log' ? groupedSessions().slice(0, logDays) : [])" :key="g.date">
           <div class="day-group">
             <h3><span x-text="longDate(g.date)"></span><span class="muted" x-text="g.total ? hoursFmt(g.total) : 'no study time'"></span></h3>
             <template x-for="s in g.items" :key="s.id">
@@ -303,6 +303,9 @@
             </template>
           </div>
         </template>
+        <div class="more-row" x-show="tab === 'log' && groupedSessions().length > logDays">
+          <button class="btn small ghost" @click="logDays += 60" x-text="'Show older days (' + (groupedSessions().length - logDays) + ' more)'"></button>
+        </div>
       </div>
     </section>
   </main>

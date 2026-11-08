@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     wl: { course_id: null, day: 0, plan: [], logs: {} }, wo: {}, woNew: {},
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -58,14 +58,16 @@ function chrono() {
 
     /* ---------------- lifecycle */
     async init() {
+      // Alpine calls init() by itself; never also put x-init="init()" on the body, or everything loads twice.
+      if (this._started) return; this._started = true;
       this.applyTheme();
-      this.meta = await api("/api/meta");
-      this.semesters = await api("/api/semesters");
+      // The dashboard first, with the requests in parallel; the other tabs load afterwards, in the background.
+      const [meta, semesters] = await Promise.all([api("/api/meta"), api("/api/semesters"), this.refreshTimer()]);
+      this.meta = meta; this.semesters = semesters;
       const today = this.meta.today;
       const current = this.semesters.find(s => s.start_date && s.start_date <= today && (!s.end_date || today <= s.end_date));
       const saved = store.get("chrono-semester", null);
       this.semesterId = (this.semesters.find(s => s.id === saved) || current || this.semesters.filter(s => s.course_count).pop() || this.semesters[0] || {}).id ?? null;
-      await this.refreshTimer();
       await this.loadSemester();
       // Dropping a .typ file anywhere opens it in Teach.
       window.addEventListener("dragover", e => { if (e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
@@ -76,8 +78,8 @@ function chrono() {
       if (this.teachView === "run" && !this.teach || this.teachView === "edit") this.teachView = "cal";
       if (this.tab === "teach") this.teachInit();
       if (this.tab === "sleep") this.sleepInit();
-      this.loadFeatures();
       this.winInit();
+      this.loadFeatures().then(() => this.preload());
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
       setInterval(() => { if (this.timer.state === "running") this.loadStats(); }, 60000);
@@ -89,16 +91,33 @@ function chrono() {
 
     async loadSemester() {
       if (!this.semesterId) return;
-      const [courses, sessions, recent] = await Promise.all([
-        api(`/api/courses?semester_id=${this.semesterId}`),
-        api(`/api/sessions?semester_id=${this.semesterId}`),
+      const sid = this.semesterId;
+      const [courses, sessions, recent, stats] = await Promise.all([
+        api(`/api/courses?semester_id=${sid}`),
+        api(`/api/sessions?semester_id=${sid}`),
         api(`/api/sessions?limit=80`),
+        api(`/api/stats?semester_id=${sid}`),
       ]);
+      if (sid !== this.semesterId) return;      // the semester was switched meanwhile
       this.courses = courses; this.sessions = sessions; this.recent = recent;
       const sem = this.currentSemester;
       this.semForm = { start_date: sem?.start_date || "", end_date: sem?.end_date || "" };
       if (!this.openCourses.some(c => c.id === this.selectedId)) this.selectedId = this.openCourses[0]?.id ?? null;
-      await this.loadStats();
+      this.stats = stats;
+      if (this.tab === "dash") this.$nextTick(() => this.renderCharts());
+    },
+    // After the first screen is up: fetch the data of the other tabs one after the other, when the
+    // browser is idle, so switching tabs shows them at once. Each tab still refreshes when you open it.
+    async preload() {
+      const idle = () => new Promise(r => (window.requestIdleCallback || (f => setTimeout(f, 50)))(() => r(), { timeout: 1500 }));
+      const jobs = [];
+      if (this.feat("sport") || this.feat("code") || !this.features?.chosen) jobs.push(() => this.act || this.loadActivities());
+      if (this.feat("sleep")) jobs.push(() => this.sleepList.length || this.sleepInit());
+      if (this.feat("teach")) jobs.push(() => this.lessons.length || this.teachInit());
+      for (const job of jobs) {
+        await idle();
+        try { await job(); } catch { /* the tab loads again when opened */ }
+      }
     },
     async loadStats() {
       if (!this.semesterId) return;
@@ -614,9 +633,10 @@ function chrono() {
     // Sport tab: plan editor and statistics per sport type
     async loadWorkouts() {
       const types = (this.act?.sport?.types || []).filter(t => !t.archived);
-      for (const t of types) {
+      const all = await Promise.all(types.map(t => api(`/api/workouts/stats?course_id=${t.id}`).catch(() => null)));
+      for (const [i, t] of types.entries()) {
         try {
-          const st = await api(`/api/workouts/stats?course_id=${t.id}`);
+          const st = all[i]; if (!st) continue;
           const prev = this.wo[t.id];
           const days = [...new Set(st.exercises.filter(e => !e.archived).map(e => e.weekday))].sort();
           const today = (new Date().getDay() + 6) % 7;
