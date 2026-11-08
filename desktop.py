@@ -111,6 +111,9 @@ class WindowApi:
     def frameless(self):
         return LINUX
 
+    def has_badge(self):
+        return LINUX
+
     def minimize(self):
         self.window.minimize()
 
@@ -121,7 +124,28 @@ class WindowApi:
         self._gui(run)
 
     def close(self):
+        self.set_badge(None, None)
         self.window.destroy()
+
+    def set_badge(self, minutes, progress):
+        """Taskbar icon while the timer runs (KDE, GNOME's Dash to Dock, ...): a number badge
+        and a progress bar, via the Unity LauncherEntry D-Bus signal. minutes=None clears it."""
+        if not LINUX:
+            return
+
+        def run():
+            try:
+                from qtpy.QtDBus import QDBusConnection, QDBusMessage
+            except ImportError:
+                return
+            on = minutes is not None
+            props = {"count": int(minutes or 0), "count-visible": on,
+                     "progress": float(progress or 0), "progress-visible": on and progress is not None}
+            msg = QDBusMessage.createSignal("/com/canonical/unity/launcherentry/chrono",
+                                            "com.canonical.Unity.LauncherEntry", "Update")
+            msg.setArguments(["application://chrono.desktop", props])
+            QDBusConnection.sessionBus().send(msg)
+        self._gui(run)
 
     def start_move(self):
         self._gui(lambda: self.window.native.windowHandle().startSystemMove())

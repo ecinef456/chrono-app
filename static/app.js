@@ -183,6 +183,7 @@ function chrono() {
         document.title = (left === null ? "" : this.mmss(left) + " ") + this.tHeader().replace(/<[^>]+>/g, "");
         return;
       }
+      this.winBadge();
       if (this.timer.state === "idle") document.title = "Chrono";
       else document.title = `${this.timer.state === "paused" ? "❚❚ " : ""}${this.hms(this.elapsedNow)} ${this.timer.course?.code.toUpperCase() || ""}`;
     },
@@ -624,6 +625,16 @@ function chrono() {
     },
     winDblclick(ev) { if (this.frameless && !ev.target.closest("button, a, select, input, nav, label")) this.winApi("toggle_maximize"); },
     winResize(edge) { this.winApi("start_resize", edge); },
+    /** Desktop app: the taskbar icon shows the minutes of the running timer, and a bar that fills over each hour. */
+    winBadge() {
+      if (!this.frameless) return;
+      const on = this.timer.state !== "idle";
+      const sec = on ? this.elapsedNow : 0;
+      const key = on ? `${Math.floor(sec / 60)}|${this.timer.state}` : "off";
+      if (key === this._badge) return;
+      this._badge = key;
+      this.winApi("set_badge", on ? Math.floor(sec / 60) : null, on ? (sec % 3600) / 3600 : null);
+    },
 
     /* ---------------- tips: one option opens directly, several open a short choice */
     openSupport() {
