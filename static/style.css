@@ -622,3 +622,27 @@ label.f textarea { min-height: 84px; resize: vertical; }
 .ns-scale span.mid { color: var(--ink); font-weight: 750; font-size: 12.5px; }
 .ns-sum { font-size: 17px; font-weight: 650; padding-top: 6px; }
 @media (max-width: 620px) { .ns-scale span.odd { display: none; } }
+
+/* ---------- scrollbar: thin, in the page's colours (also replaces the window's own) */
+html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink-3) 55%, transparent) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-3) 55%, transparent); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+/* ---------- desktop window without title bar (Linux app) */
+body.frameless .top { position: sticky; top: 0; z-index: 30; background: var(--bg); cursor: default; user-select: none; }
+.win-btns { display: flex; gap: 4px; margin-left: 4px; }
+.win-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: transparent; color: var(--ink-2);
+  display: grid; place-items: center; cursor: pointer; padding: 0; }
+.win-btn svg { width: 17px; height: 17px; }
+.win-btn:hover { background: var(--sunk); color: var(--ink); }
+.win-btn.close:hover { background: #d55e00; color: #fff; }
+.win-edges .edge { position: fixed; z-index: 100; }
+.win-edges .e-top, .win-edges .e-bottom { left: 10px; right: 10px; height: 5px; cursor: ns-resize; }
+.win-edges .e-top { top: 0; } .win-edges .e-bottom { bottom: 0; }
+.win-edges .e-left, .win-edges .e-right { top: 10px; bottom: 10px; width: 5px; cursor: ew-resize; }
+.win-edges .e-left { left: 0; } .win-edges .e-right { right: 0; }
+.win-edges .e-top-left, .win-edges .e-top-right, .win-edges .e-bottom-left, .win-edges .e-bottom-right { width: 10px; height: 10px; }
+.win-edges .e-top-left { top: 0; left: 0; cursor: nwse-resize; } .win-edges .e-bottom-right { bottom: 0; right: 0; cursor: nwse-resize; }
+.win-edges .e-top-right { top: 0; right: 0; cursor: nesw-resize; } .win-edges .e-bottom-left { bottom: 0; left: 0; cursor: nesw-resize; }

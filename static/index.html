@@ -7,16 +7,24 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=16">
+<link rel="stylesheet" href="/static/style.css?v=17">
 <script src="/static/vendor/echarts.min.js"></script>
 <script src="/static/teach.js?v=2"></script>
-<script src="/static/app.js?v=15"></script>
+<script src="/static/app.js?v=16"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
-<body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)">
+<body x-data="chrono()" x-init="init()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
+<!-- desktop app on Linux: no title bar from the desktop, so these edges resize the window -->
+<template x-if="frameless">
+  <div class="win-edges" aria-hidden="true">
+    <template x-for="e in ['top','bottom','left','right','top-left','top-right','bottom-left','bottom-right']" :key="e">
+      <i :class="'edge e-' + e" @pointerdown.prevent="winResize(e)"></i>
+    </template>
+  </div>
+</template>
 <div class="wrap">
 
-  <header class="top">
+  <header class="top" @pointerdown="winDrag($event)" @dblclick="winDblclick($event)">
     <div class="brand">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4M12 2v3"/></svg>
       Chrono
@@ -44,6 +52,17 @@
     <button class="icon-btn" @click="toggleTheme()" :title="'Theme: ' + theme" aria-label="Switch theme">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
     </button>
+    <div class="win-btns" x-show="frameless">
+      <button class="win-btn" @click="winApi('minimize')" title="Minimize" aria-label="Minimize">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg>
+      </button>
+      <button class="win-btn" @click="winApi('toggle_maximize')" title="Maximize / restore" aria-label="Maximize or restore">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+      <button class="win-btn close" @click="winApi('close')" title="Close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>
+      </button>
+    </div>
   </header>
 
   <!-- ===================== TIMER (always visible) ===================== -->

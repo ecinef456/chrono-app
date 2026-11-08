@@ -142,6 +142,8 @@ The downloads above are the easy way. From the git folder, run this once to get 
 
 Chrono then appears in your app menu (search for "Chrono") with its own window, icon and taskbar entry. Right-click it to pin it. If the background service from `./install.sh` is running, the window connects to it. Otherwise the window starts the server itself and stops it when you close the window. The first run downloads the Qt window toolkit (about 150 MB). Re-run the script if you move the folder.
 
+On Linux the window has no title bar from the desktop: Chrono's own header is the title bar. Drag an empty part of it to move the window, double-click it to maximize, use the three buttons on the right to minimize, maximize and close, and drag the window's edges to resize it. (KDE's shortcuts work too: Meta+drag moves, Meta+right-drag resizes.)
+
 You can still open http://127.0.0.1:8765 in any browser at the same time; both show the same data.
 
 ## Start automatically (Linux, recommended)

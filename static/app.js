@@ -50,7 +50,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
     charts: {},
@@ -75,6 +75,7 @@ function chrono() {
       if (this.tab === "teach") this.teachInit();
       if (this.tab === "sleep") this.sleepInit();
       this.loadFeatures();
+      this.winInit();
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
       setInterval(() => { if (this.timer.state === "running") this.loadStats(); }, 60000);
@@ -609,6 +610,20 @@ function chrono() {
         }
       }
     },
+
+    /* ---------------- desktop window (Linux app without a title bar): buttons, move, resize */
+    async winInit() {
+      const ready = async () => { try { this.frameless = !!(await window.pywebview.api.frameless()); } catch { this.frameless = false; } };
+      if (window.pywebview?.api) await ready(); else window.addEventListener("pywebviewready", ready, { once: true });
+    },
+    winApi(name, ...args) { try { window.pywebview?.api?.[name](...args); } catch { /* not in the app */ } },
+    /** Pressing on an empty part of the header moves the window (not on buttons, the tabs or the semester menu). */
+    winDrag(ev) {
+      if (!this.frameless || ev.button !== 0 || ev.target.closest("button, a, select, input, nav, label")) return;
+      ev.preventDefault(); this.winApi("start_move");
+    },
+    winDblclick(ev) { if (this.frameless && !ev.target.closest("button, a, select, input, nav, label")) this.winApi("toggle_maximize"); },
+    winResize(edge) { this.winApi("start_resize", edge); },
 
     /* ---------------- tips: one option opens directly, several open a short choice */
     openSupport() {

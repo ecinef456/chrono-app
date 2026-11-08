@@ -99,11 +99,62 @@ def qt_setup(webview):
     webview_qt.BrowserView.on_download_requested = on_download_requested
 
 
+class WindowApi:
+    """Window buttons and moving/resizing for the frameless Linux window, called from the page
+    (window.pywebview.api.*). Moving and resizing go through the desktop itself
+    (startSystemMove/-Resize), which also works on Wayland, where apps may not place windows."""
+
+    def __init__(self):
+        self.window = None
+        self._gui = None           # runs a function on Qt's main thread
+
+    def frameless(self):
+        return LINUX
+
+    def minimize(self):
+        self.window.minimize()
+
+    def toggle_maximize(self):
+        def run():
+            w = self.window.native
+            w.showNormal() if w.isMaximized() else w.showMaximized()
+        self._gui(run)
+
+    def close(self):
+        self.window.destroy()
+
+    def start_move(self):
+        self._gui(lambda: self.window.native.windowHandle().startSystemMove())
+
+    def start_resize(self, edge):
+        from qtpy.QtCore import Qt
+        edges = {"left": Qt.LeftEdge, "right": Qt.RightEdge, "top": Qt.TopEdge, "bottom": Qt.BottomEdge,
+                 "top-left": Qt.TopEdge | Qt.LeftEdge, "top-right": Qt.TopEdge | Qt.RightEdge,
+                 "bottom-left": Qt.BottomEdge | Qt.LeftEdge, "bottom-right": Qt.BottomEdge | Qt.RightEdge}
+        if edge in edges:
+            self._gui(lambda: self.window.native.windowHandle().startSystemResize(edges[edge]))
+
+
+def gui_runner():
+    """A function that runs callables on the Qt main thread (page calls arrive on other threads)."""
+    from qtpy.QtCore import QObject, Signal
+
+    class Bridge(QObject):
+        call = Signal(object)
+
+    bridge = Bridge()
+    bridge.call.connect(lambda f: f())
+    gui_runner.keep = bridge          # keep it alive
+    return bridge.call.emit
+
+
 def main():
     import webview
 
+    api = WindowApi()
     if LINUX:
         qt_setup(webview)
+        api._gui = gui_runner()
     webview.settings["ALLOW_DOWNLOADS"] = True
 
     port = PORT
@@ -115,9 +166,11 @@ def main():
     storage = storage_dir()
     storage.mkdir(parents=True, exist_ok=True)
     # The ?launch= value is new on every start, so the window never reuses an old cached page.
-    webview.create_window("Chrono", f"http://127.0.0.1:{port}/?launch={int(time.time())}",
-                          width=1280, height=900, min_size=(380, 500),
-                          background_color="#e8ecf0", text_select=True)
+    # Linux: no title bar from the desktop; Chrono's header has the window buttons and moves the window.
+    api.window = webview.create_window("Chrono", f"http://127.0.0.1:{port}/?launch={int(time.time())}",
+                                       width=1280, height=900, min_size=(380, 500),
+                                       background_color="#e8ecf0", text_select=True,
+                                       frameless=LINUX, easy_drag=False, js_api=api)
     # private_mode=False keeps the small per-window settings between launches.
     webview.start(gui="qt" if LINUX else None, private_mode=False, storage_path=str(storage), icon=ICON)
 
