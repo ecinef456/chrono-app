@@ -1,0 +1,81 @@
+/* Chrono "Teach", live view for the phone (static/live.html).
+   Loaded after style.css: same colours, fonts and live-view parts, laid out for a phone held
+   upright in one hand, or lying sideways on the desk. */
+
+body.live { min-height: 100dvh; -webkit-text-size-adjust: 100%; overscroll-behavior-y: contain; }
+.live-wrap {
+  max-width: 900px; margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(88px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+.live .stack { gap: 12px; margin-top: 0; }
+
+.live-empty { padding: 28px 22px; }
+.live-empty h1 { margin: 0 0 14px; font-size: 26px; letter-spacing: -.02em; }
+.live-empty p { margin: 0 0 10px; font-size: 17px; }
+
+/* clock and title */
+.live .run-top { flex-direction: column; align-items: flex-start; gap: 6px; padding: 2px 6px 0; }
+.live .run-clock { font-size: clamp(44px, 15vw, 76px); flex: none; }
+.live .run-title { font-size: 14px; text-align: left; line-height: 1.3; min-width: 0; overflow-wrap: anywhere; }
+
+/* the hero: sized from the width, not from the height of a laptop screen */
+.live .teach-hero { padding: 16px 16px 14px; }
+.live .teach-status, .live .win-status { font-size: 17px; flex-wrap: wrap; gap: 2px 14px; }
+.live .teach-main { flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 10px; }
+.live .teach-h { font-size: clamp(34px, 10.5vw, 64px); overflow-wrap: anywhere; }
+.live .teach-h2 { margin: 0; font-size: clamp(22px, 6.4vw, 36px); line-height: 1.15; overflow-wrap: anywhere; }
+.live .teach-left { flex-direction: row; align-items: baseline; gap: 10px; text-align: left; }
+.live .teach-left .v { font-size: clamp(54px, 19vw, 110px); }
+.live .teach-left.small .v { font-size: clamp(34px, 11vw, 60px); }
+.live .teach-left .k { font-size: 15px; margin-top: 0; }
+.live .teach-next { font-size: 19px; margin-top: 16px; }
+.live .teach-sub { margin-top: 16px; padding-top: 14px; }
+.live .lesson-scale { font-size: 13px; }
+
+/* buffer mode: the strip is an overview, the list under it is what you read */
+.live .win-strip { height: 64px; margin-top: 12px; }
+.live .win-seg span { display: none; }   /* too narrow for names in portrait */
+.live .win-now { width: 6px; margin-left: -3px; }
+.live .win-items { gap: 10px; margin-top: 14px; }
+.live .win-item { font-size: clamp(21px, 6.2vw, 30px); flex-direction: column; gap: 0; line-height: 1.2; }
+.live .win-item .t { font-size: 14px; font-weight: 500; }
+.live .win-item .n { gap: 2px 12px; }
+.live .win-item .d { font-size: .7em; }
+
+/* shifting the plan: big targets for a thumb */
+.live-shift { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px; }
+.live-shift .btn { padding: 12px 16px; font-size: 16px; min-height: 48px; }
+.live-shift .btn.primary { flex: 1 1 auto; justify-content: center; }
+.live-shift .shift-chip { flex: 1 1 auto; padding: 0 4px; font-size: 14px; }
+
+/* plan */
+.live .panel-head { padding: 14px 16px 0; flex-wrap: wrap; gap: 2px 12px; }
+.live .panel-body { padding: 10px 10px 14px; }
+.live .plan-row { grid-template-columns: 82px 1fr auto; gap: 8px; padding: 11px 6px; font-size: 16px; }
+.live .plan-row.detail { font-size: 14.5px; padding-top: 8px; padding-bottom: 8px; }
+.live .plan-row.detail .t { padding-left: 8px; }
+.live .plan-row:hover { background: none; }
+.live .plan-row:active { background: var(--sunk); }
+
+/* settings */
+.live-settings summary { padding: 14px 16px; font-weight: 700; font-size: 16px; cursor: pointer; }
+.live-settings .teach-controls { padding: 4px 16px 12px; display: grid; grid-template-columns: 1fr 1fr; }
+.live-settings .teach-controls .f input { width: 100%; font-size: 16px; }   /* 16 px: no zoom on focus */
+.live-check { display: flex; align-items: center; gap: 10px; padding: 4px 16px 10px; font-weight: 600; }
+.live-check input { width: 20px; height: 20px; }
+.live-settings .hint { margin: 0; padding: 0 16px 16px; }
+
+.live-toast { display: flex; align-items: center; justify-content: space-between; gap: 12px; left: 12px; right: 12px; transform: none; bottom: max(20px, env(safe-area-inset-bottom)); }
+.live-toast .btn { color: var(--ink); }
+
+/* sideways on the desk, or a tablet: the strip is wide enough to carry the names again */
+@media (min-width: 620px) {
+  .live .run-top { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 14px; }
+  .live .run-title { text-align: right; }
+  .live .win-strip { height: clamp(84px, 24vh, 150px); }
+  .live .win-seg span { display: block; }
+  .live .teach-main { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+  .live .teach-left { flex-direction: column; align-items: flex-end; gap: 0; text-align: right; }
+  .live .teach-left .v { font-size: clamp(54px, 12vw, 110px); }
+  .live .win-item { flex-direction: row; gap: 14px; }
+}

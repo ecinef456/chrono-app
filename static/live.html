@@ -1,0 +1,180 @@
+<!doctype html>
+<!--
+  Chrono "Teach", live view for the phone.
+
+  Opened by the QR code of "Show on phone" in Chrono: the timetable arrives in the part of the
+  link after "#" (see static/teach-live.js), is kept in this browser, and runs from the phone's
+  own clock. No server is involved, so the page works anywhere and, once opened, offline.
+  All addresses here are relative: the page runs both from the app (/static/live.html) and from
+  GitHub Pages (.github/workflows/pages.yml).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chrono Live</title>
+<meta name="theme-color" content="#13223a">
+<link rel="manifest" href="live.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css?v=25">
+<link rel="stylesheet" href="live.css?v=1">
+<script defer src="i18n.js?v=3"></script>
+<script defer src="teach.js?v=2"></script>
+<script defer src="teach-live.js?v=1"></script>
+<script defer src="live.js?v=1"></script>
+<script defer src="vendor/alpine.min.js"></script>
+</head>
+<body class="live" x-data="chronoLivePage()">
+
+<main class="live-wrap" x-cloak>
+
+  <!-- nothing to show yet -->
+  <template x-if="!teach">
+    <section class="panel live-empty">
+      <h1>Chrono Live</h1>
+      <p class="error" x-show="err" x-text="err"></p>
+      <p>No timetable yet.</p>
+      <p class="muted">In Chrono on your laptop, open a timetable in the Teach tab, press Show on phone and scan the code with this phone.</p>
+    </section>
+  </template>
+
+  <template x-if="teach">
+    <div class="stack">
+      <div class="run-top">
+        <div class="run-clock" x-text="tClock()"></div>
+        <div class="run-title" x-text="teach.title"></div>
+      </div>
+      <p class="error" x-show="err" x-text="err"></p>
+
+      <!-- with a buffer: the whole lesson as one strip, a window of allowed zones around now -->
+      <template x-if="tBuffered()">
+        <section class="panel teach-hero win-hero" :class="'phase-' + tState().phase">
+          <div class="win-status">
+            <span x-text="tStatus()"></span>
+            <span class="muted" x-show="tWin()?.endsIn" x-text="'lesson ends in ' + mmss(tWin()?.endsIn || 0)"></span>
+          </div>
+          <div class="win-strip">
+            <template x-for="s in tWin().segs" :key="s.key">
+              <div class="win-seg" :class="s.cls" :style="s.style"><span x-html="s.label"></span></div>
+            </template>
+            <template x-for="d in tWin().details" :key="d.key"><div class="win-detail" :style="d.style"></div></template>
+            <template x-if="tWin().win">
+              <div>
+                <div class="win-dim left" :style="'width:' + tWin().win.left + '%'"></div>
+                <div class="win-dim right" :style="'left:' + (tWin().win.left + tWin().win.width) + '%'"></div>
+                <div class="win-frame" :style="'left:' + tWin().win.left + '%;width:' + tWin().win.width + '%'"></div>
+              </div>
+            </template>
+            <div class="win-now" x-show="tWin().now !== null" :style="'left:' + tWin().now + '%'"></div>
+          </div>
+          <div class="lesson-scale win-scale"><template x-for="t in tWin().ticks.filter(t => t.key[0] !== 'e' || t.key === 'end')" :key="t.key"><span :style="'left:' + t.left + '%'" x-text="t.label"></span></template></div>
+          <div class="win-items">
+            <template x-for="it in tWin().items" :key="it.key">
+              <div class="win-item" :class="{cur: it.cur, brk: it.brk}">
+                <span class="t" x-text="it.span"></span>
+                <span class="n"><span x-html="it.title"></span><template x-for="d in it.details" :key="d.key"><span class="d" :class="{cur: d.cur}" x-html="d.title"></span></template></span>
+              </div>
+            </template>
+          </div>
+        </section>
+      </template>
+
+      <!-- without a buffer: the current part in large type, time left, what comes next -->
+      <template x-if="!tBuffered()">
+        <section class="panel teach-hero" :class="'phase-' + tState().phase">
+          <div class="teach-status" x-text="tStatus()"></div>
+          <div class="teach-main">
+            <h1 class="teach-h" x-html="tHeader()"></h1>
+            <div class="teach-left" x-show="tLeft(1) !== null">
+              <span class="v" x-text="tLeft(1) === null ? '' : mmss(tLeft(1))"></span><span class="k" x-text="tLeftLabel(1)"></span>
+            </div>
+          </div>
+          <div class="teach-bar" x-show="tProgress(1) !== null"><i :style="'width:' + (tProgress(1) * 100) + '%'"></i></div>
+          <div class="teach-sub" x-show="tSubHeader()">
+            <div class="teach-main">
+              <h2 class="teach-h2" x-html="tSubHeader()"></h2>
+              <div class="teach-left small" x-show="tLeft(2) !== null">
+                <span class="v" x-text="tLeft(2) === null ? '' : mmss(tLeft(2))"></span><span class="k" x-text="tLeftLabel(2)"></span>
+              </div>
+            </div>
+            <div class="teach-bar thin" x-show="tProgress(2) !== null"><i :style="'width:' + (tProgress(2) * 100) + '%'"></i></div>
+          </div>
+          <div class="teach-next" x-show="tNext()"><span class="k">Next:</span> <span x-html="tNext()"></span></div>
+          <div class="lesson-strip" aria-hidden="true">
+            <div class="lesson-track">
+              <template x-for="seg in tStrip().segs" :key="seg.key">
+                <div class="lesson-seg" :class="seg.cls" :style="seg.style"></div>
+              </template>
+              <div class="lesson-now" x-show="tStrip().now !== null" :style="'left:' + tStrip().now + '%'"></div>
+            </div>
+            <div class="lesson-scale"><template x-for="t in tStrip().ticks" :key="t.key"><span :style="'left:' + t.left + '%'" x-text="t.label"></span></template></div>
+          </div>
+        </section>
+      </template>
+
+      <div class="teach-note" x-show="teach.date && teach.date !== today()" x-text="'This timetable is dated ' + longDate(teach.date || today()) + '. Times are shown for today.'"></div>
+
+      <section class="panel live-shift">
+        <button class="btn primary" @click="tStartNow()">Start now</button>
+        <button class="btn" @click="tShift(-60)" title="Everything one minute earlier">−1 min</button>
+        <button class="btn" @click="tShift(60)" title="Everything one minute later">+1 min</button>
+        <span class="shift-chip" x-show="tShiftSec()" x-text="tShiftLabel()"></span>
+        <button class="btn ghost" x-show="tShiftSec()" @click="tShift(null)">Back to plan</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Plan</h2><span class="sub">Tap a row to start it now</span></div>
+        <div class="panel-body plan">
+          <template x-for="h in tSchedule()" :key="h.name">
+            <div>
+              <div class="plan-hour">
+                <b x-text="h.name"></b> <span class="muted" x-text="clockOf(h.start) + '–' + clockOf(h.end)"></span>
+              </div>
+              <template x-for="a in h.activities" :key="a.key">
+                <div class="plan-act" :class="tRowClass(a)">
+                  <button class="plan-row" @click="jump(a)">
+                    <span class="t" x-text="clockOf(a.start) + '–' + clockOf(a.end)"></span>
+                    <span class="n" x-html="typst(a.title)"></span>
+                    <span class="m" x-text="a.minutes + ' min' + (tBuffered() ? ' (' + a.planned + ')' : '')"></span>
+                  </button>
+                  <template x-for="d in a.details" :key="d.key">
+                    <button class="plan-row detail" :class="tRowClass(d)" @click="jump(d)">
+                      <span class="t" x-text="clockOf(d.start)"></span>
+                      <span class="n" x-html="typst(d.title)"></span>
+                      <span class="m" x-text="d.minutes + ' min'"></span>
+                    </button>
+                  </template>
+                </div>
+              </template>
+              <div class="plan-break" x-show="h.breakAfter" :class="tRowClass(h.breakAfter || {})">
+                <span x-text="h.breakAfter ? 'Break ' + clockOf(h.breakAfter.start) + '–' + clockOf(h.breakAfter.end) : ''"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <details class="panel live-settings">
+        <summary>Settings</summary>
+        <div class="teach-controls">
+          <label class="f">Start<input type="time" :value="teach.settings.start1" @change="tSet('start1', $event.target.value || teach.settings.start1)"></label>
+          <label class="f" x-show="teach.hours.length > 1">Hour 2<input type="time" :value="teach.settings.start2 || ''" @change="tSet('start2', $event.target.value || null)"></label>
+          <label class="f">Hour (min)<input type="number" inputmode="numeric" min="5" max="180" :value="teach.settings.hourLength" @change="tSet('hourLength', +$event.target.value || 45)"></label>
+          <label class="f" x-show="teach.hours.length > 1">Break (min)<input type="number" inputmode="numeric" min="0" max="120" :value="teach.settings.breakLength" @change="tSet('breakLength', +$event.target.value || 0)"></label>
+          <label class="f">Buffer (%)<input type="number" inputmode="numeric" min="0" max="60" :value="teach.settings.buffer || 0" @change="tSet('buffer', +$event.target.value || 0)"></label>
+        </div>
+        <label class="live-check" x-show="canWake"><input type="checkbox" :checked="keepOn" @change="setKeepOn($event.target.checked)"> <span>Keep the screen on</span></label>
+        <p class="hint">Changes here stay on this phone. To load another timetable, scan its code in Chrono on the laptop.</p>
+      </details>
+    </div>
+  </template>
+</main>
+
+<div class="toast live-toast" x-show="toastMsg" x-transition.opacity role="status">
+  <span x-text="toastMsg"></span>
+  <button class="btn small" x-show="undo" @click="undoJump()">Undo</button>
+</div>
+
+</body>
+</html>

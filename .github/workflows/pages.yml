@@ -1,0 +1,47 @@
+# Publishes the phone live page (static/live.html, "Show on phone" in the Teach tab) with
+# GitHub Pages, at https://<user>.github.io/<repo>/live.html. Only that page and the files it
+# loads are published: no data, and nothing of the app itself.
+#
+# Once, on GitHub: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+# If the address differs from PHONE_LIVE_URL in app.py (a fork, another repo name), change it there.
+name: Publish phone live page
+
+on:
+  push:
+    branches: [main]
+    paths: ["static/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}live.html
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect the page
+        run: |
+          # the same files as FILES in static/live-sw.js, plus that file: keep the two in step
+          mkdir -p _site/vendor _site/fonts
+          cd static
+          cp live.html live.css live.js live-sw.js live.webmanifest style.css i18n.js i18n.json teach.js teach-live.js icon.svg icon-192.png icon-512.png ../_site/
+          cp vendor/alpine.min.js ../_site/vendor/
+          cp fonts/*.ttf fonts/*.woff2 fonts/OFL-atkinson-hyperlegible-next.txt ../_site/fonts/
+          # the bare address leads to the page too
+          printf '<!doctype html><meta charset="utf-8"><title>Chrono Live</title><link rel="icon" href="icon.svg"><meta http-equiv="refresh" content="0; url=live.html"><a href="live.html">Chrono Live</a>\n' > ../_site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -420,6 +420,9 @@ details.types summary { cursor: pointer; font-weight: 600; color: var(--ink-2); 
 .type-row .field-inline { min-width: 160px; }
 .type-row .repo { flex: 1; min-width: 200px; font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 13px; }
 .type-row.archived { opacity: .5; }
+dialog.phone-dlg { width: min(540px, calc(100vw - 32px)); }
+.phone-qr { background: #fff; border-radius: 14px; padding: 6px; line-height: 0; }   /* always dark on white: cameras need the contrast */
+.phone-qr svg { display: block; width: 100%; height: auto; max-height: 62vh; shape-rendering: crispEdges; }
 dialog.ask { width: min(420px, calc(100vw - 32px)); }
 .ask-msg { margin: 0; font-size: 16px; font-weight: 550; line-height: 1.45; }
 .btn.danger-fill { background: var(--bad); border-color: var(--bad); color: #fff; }

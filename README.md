@@ -92,6 +92,19 @@ The *Teach* tab keeps your lesson timetables in a calendar and shows, live, wher
 - **Live, without a buffer** (`buffer: 0` or none): the classic view with the current part in large type, the current step, time left and what comes next.
 - **Settings come from the timetable** (`start`, `hour-length`, `break-length`, `buffer`, optional `hour-2-start`). You can change them while it runs; for a saved timetable the change is saved too. *Start now* moves the whole plan so it starts this minute; *−1 / +1 min* nudge it; clicking a row in the plan makes that step start now. *Back to plan* undoes the shift.
 - Space does nothing in this tab, so it can't start the study timer by accident.
+- **Show on phone.** In the live view, *Show on phone* draws a QR code. Scan it with the phone's camera and the same live view runs in the phone's browser (see below).
+
+### The live view on your phone
+
+The QR code is not a connection to the laptop: it holds the timetable itself (with its settings and the current shift), packed into a link. The phone opens a small page, reads the timetable from the link, keeps it, and runs it from its own clock. So it works on any network, including school Wi-Fi where devices cannot see each other, and without any network once the page has been opened one time.
+
+- **On the phone:** the clock, the same strip or large-type view as on the laptop, *Start now*, *−1 / +1 min*, *Back to plan*, and the plan; tapping a row starts it now (with *Undo*, because a tap happens by accident). *Settings* at the bottom changes start, hour length, break and buffer, and keeps the screen on.
+- **Laptop and phone do not talk to each other.** What you change on one after scanning does not reach the other. In class, treat the phone as the one that counts; to bring a changed timetable over, scan again.
+- **As an app:** in the phone's browser menu, *Add to Home screen* (Android: *Install app*). It then opens full screen from its own icon and shows the last timetable you scanned.
+- **Privacy:** the timetable sits in the part of the link after `#`, which a browser never sends to a server, and then in the phone browser's storage. The page is static; it receives nothing.
+- **Too long for a code:** a very long timetable gets *Copy link* instead; send the link to your phone.
+
+**Set-up, once** (for the maintainer, or for a fork): the page is `static/live.html`, published by `.github/workflows/pages.yml`. On GitHub, open *Settings → Pages* and set *Source* to **GitHub Actions**; the next push to `main` publishes it at `https://<user>.github.io/<repo>/live.html`. That address is `PHONE_LIVE_URL` in `app.py`. To try it without GitHub, the same page is at http://127.0.0.1:8765/static/live.html on the laptop.
 
 The timetable format (the same block works in your Typst notes with `unified-preamble.typ`):
 

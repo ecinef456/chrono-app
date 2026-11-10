@@ -7,10 +7,11 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=24">
-<script defer src="/static/i18n.js?v=2"></script>
+<link rel="stylesheet" href="/static/style.css?v=25">
+<script defer src="/static/i18n.js?v=3"></script>
 <script defer src="/static/teach.js?v=2"></script>
-<script defer src="/static/app.js?v=26"></script>
+<script defer src="/static/teach-live.js?v=1"></script>
+<script defer src="/static/app.js?v=27"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -594,6 +595,7 @@
           <div class="run-side">
             <div class="run-title" x-text="teach.title"></div>
             <div class="run-btns">
+              <button class="btn" @click="phoneShow()" title="Shows a QR code: scan it and this live view runs on your phone">Show on phone</button>
               <button class="btn" @click="teachGo('day')" x-show="teach.id">Day</button>
               <button class="btn" @click="teachGo('cal')">Calendar</button>
               <button class="btn" x-show="teach.id" @click="edOpen(lessons.find(l => l.id === teach.id))" :disabled="!lessons.find(l => l.id === teach.id)">Edit</button>
@@ -1048,6 +1050,19 @@
       </template>
     </div>
     <div class="actions"><button class="btn ghost">Close</button></div>
+  </form>
+</dialog>
+
+<dialog id="phoneDlg" class="phone-dlg">
+  <form method="dialog">
+    <h2>Show on phone</h2>
+    <div class="phone-qr" x-show="phone.svg" x-html="phone.svg"></div>
+    <p class="hint" x-show="phone.svg">Scan the code with your phone's camera. The timetable is inside the code, so the phone needs no connection to this laptop. Changes you make here afterwards do not reach the phone: use its own Start now and ±1 min buttons.</p>
+    <p class="error" x-show="phone.err" x-text="phone.err"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" x-show="phone.link" @click="phoneCopy()">Copy link</button>
+      <button class="btn primary">Close</button>
+    </div>
   </form>
 </dialog>
 

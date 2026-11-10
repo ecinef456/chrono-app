@@ -68,6 +68,11 @@ CATEGORIES = [
 ]
 CATEGORY_KEYS = [c["key"] for c in CATEGORIES]
 
+# The Teach live view for the phone ("Show on phone"): the page static/live.html, published
+# with GitHub Pages (.github/workflows/pages.yml). The QR code is this address plus the
+# timetable itself after a "#", so the page is the same for everyone and receives no data.
+PHONE_LIVE_URL = "https://ecinef456.github.io/chrono-app/live.html"
+
 # Tips. Fill in your usernames; whatever stays empty is not shown. Both empty: no button.
 KOFI_USER = "ecinef456"             # the end of your Ko-fi page address: ko-fi.com/<this>
 GITHUB_SPONSORS_USER = "ecinef456"  # your GitHub username, once GitHub Sponsors has approved you
@@ -360,7 +365,7 @@ def _code_stale() -> bool:
 def meta():
     return {"categories": CATEGORIES, "break_types": BREAK_TYPES, "ects_hours": ECTS_HOURS,
             "today": date.today().isoformat(), "support": [x for x in SUPPORT if x["url"]],
-            "stale": _code_stale()}
+            "stale": _code_stale(), "phone_url": PHONE_LIVE_URL}
 
 
 # ---------------------------------------------------------------- semesters

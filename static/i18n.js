@@ -10,6 +10,8 @@
 // when it is itself an exact key.
 "use strict";
 
+// next to this file, wherever the page is served from (the app, or the phone page on GitHub Pages)
+const I18N_JSON = new URL("i18n.json?v=2", document.currentScript.src).href;
 const LANGS = { en: "English", fr: "Français", de: "Deutsch", it: "Italiano" };
 const LANG_INDEX = { fr: 0, de: 1, it: 2 };
 
@@ -38,7 +40,7 @@ const I18N = {
     document.documentElement.lang = lang;
     this.exact.clear(); this.patterns = []; this.cache.clear();
     if (lang !== "en") {
-      const dict = await (await fetch("/static/i18n.json?v=1")).json();
+      const dict = await (await fetch(I18N_JSON)).json();
       const i = LANG_INDEX[lang];
       for (const [en, tr] of Object.entries(dict)) {
         if (en.startsWith("//") || !tr || !tr[i]) continue;

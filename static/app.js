@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -1068,145 +1068,27 @@ function chrono() {
         }, 600);
       }
     },
-    tShiftSec() { return this.teach && this.teach.shiftDay === this.today() ? this.teach.shiftSec : 0; },
-    tShift(delta) {
-      this.teach.shiftSec = delta === null ? 0 : this.tShiftSec() + delta;
-      this.teach.shiftDay = this.today(); this.teachSave();
+    // ---- the live view on the phone: a QR code that holds the timetable itself (see static/teach-live.js)
+    async phoneShow() {
+      this.phone = { svg: "", link: "", err: "" };
+      document.getElementById("phoneDlg").showModal();
+      try {
+        const base = this.meta.phone_url || new URL("/static/live.html", location.href).href;
+        const link = base + "#" + await ChronoShare.pack(this.teach, this.tShiftSec(), this.lang);
+        this.phone.link = link;
+        if (link.length > ChronoShare.QR_MAX) { this.phone.err = "This timetable is too long for a QR code. Copy the link and send it to your phone."; return; }
+        if (!window.qrcode) await loadScript("/static/vendor/qrcode.min.js");
+        const q = qrcode(0, "L");
+        q.addData(link, "Byte"); q.make();
+        this.phone.svg = q.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
+      } catch (e) { this.phone.err = e.message || String(e); }
     },
-    tNowSec() { this.tick; const d = wallNow(); return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); },
-    tStartNow() { this.tShift(this.tNowSec() - ChronoTeach.hmToSec(this.teach.settings.start1) - this.tShiftSec()); },
-    tJump(item) { this.tShift(this.tNowSec() - item.start); },
-    tShiftLabel() {
-      const m = Math.round(this.tShiftSec() / 60), a = Math.abs(m);
-      if (m === 0) return "shifted < 1 min";
-      return `${a >= 60 ? Math.floor(a / 60) + " h " + (a % 60) + " min" : a + " min"} ${m > 0 ? "later" : "earlier"} than planned`;
-    },
-    today() { return isoDate(wallNow()); },
-    tBuffered() { return !!(this.teach && this.teach.settings.buffer > 0); },
-    tSchedule() {
-      if (!this.teach) return [];
-      const s = this.teach.settings;
-      const hours = s.buffer > 0 ? ChronoTeach.stretchHours(this.teach.hours, s.hourLength) : this.teach.hours;
-      return ChronoTeach.buildSchedule(hours, { ...s, shiftSec: this.tShiftSec() });
-    },
-    tState() { return this.teach ? ChronoTeach.locate(this.tSchedule(), this.tNowSec()) : { phase: "empty" }; },
-    tClock() { this.tick; const d = wallNow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; },
-    tStatus() {
-      const s = this.tState();
-      if (s.phase === "before") return `starts at ${this.clockOf(s.until)}`;
-      if (s.phase === "after") return `ended at ${this.clockOf(s.ended)}`;
-      if (s.phase === "break") return `break until ${this.clockOf(s.until)}`;
-      if (s.hour) return `${s.hour.name} ends in ${this.mmss(s.hour.end - this.tNowSec())}`;
-      return "";
-    },
-    tHeader() {
-      const s = this.tState();
-      return { before: "Starts soon", after: "Lesson over", break: "Break", buffer: "Spare time", activity: this.typst(s.act?.title || ""), empty: "" }[s.phase];
-    },
-    tSubHeader() {
-      const s = this.tState();
-      if (s.phase === "activity") return s.detail ? this.typst(s.detail.title) : (s.wrapUp ? "Wrap up" : "");
-      if (s.phase === "before" && s.next) return "First: " + this.typst(s.next.item.title);
-      if (s.phase === "break" && s.nextHour) return `${s.nextHour.name} starts at ${this.clockOf(s.nextHour.start)}`;
-      return "";
-    },
-    tLeft(level) {
-      const s = this.tState(), now = this.tNowSec();
-      if (level === 1) {
-        if (s.phase === "activity") return s.act.end - now;
-        if (["before", "break", "buffer"].includes(s.phase)) return s.until - now;
-        return null;
-      }
-      if (s.phase === "activity" && s.detail) return Math.min(s.detail.end, s.act.end) - now;
-      return null;
-    },
-    tLeftLabel(level) {
-      const s = this.tState();
-      if (level === 1) return s.phase === "activity" ? `of ${s.act.minutes} min` : s.phase === "before" ? "until start" : "left";
-      return s.detail ? `of ${s.detail.minutes} min` : "";
-    },
-    tProgress(level) {
-      const s = this.tState(), now = this.tNowSec();
-      const p = (a, b) => Math.max(0, Math.min(1, (now - a) / Math.max(1, b - a)));
-      if (level === 1 && s.phase === "activity") return p(s.act.start, s.act.end);
-      if (level === 1 && s.phase === "break") return p(s.hour.breakAfter.start, s.hour.breakAfter.end);
-      if (level === 2 && s.phase === "activity" && s.detail) return p(s.detail.start, Math.min(s.detail.end, s.act.end));
-      return null;
-    },
-    tNext() {
-      const n = this.tState().next;
-      if (!n || this.tState().phase === "before") return "";
-      return `${this.typst(n.item.title)} <span class="muted">(${n.item.minutes} min)</span>`;
-    },
-    tRowClass(item) {
-      const now = this.tNowSec();
-      if (item.start == null) return "";
-      return now >= item.end ? "past" : now >= item.start ? "current" : "";
-    },
-    tStrip() {
-      const sch = this.tSchedule();
-      if (!sch.length) return { segs: [], ticks: [], now: null };
-      const a = sch[0].start, b = Math.max(...sch.map(h => Math.max(h.end, h.activitiesEnd)));
-      const pc = t => ((t - a) / (b - a)) * 100;
-      const segs = [], ticks = [];
-      sch.forEach((h, hi) => {
-        h.activities.forEach((x, i) => segs.push({ key: x.key, cls: (i % 2 ? "odd " : "") + this.tRowClass(x), style: `left:${pc(x.start)}%;width:${pc(x.end) - pc(x.start)}%`, title: `${x.title.replace(/[$*]/g, "")} (${x.minutes} min)` }));
-        if (h.breakAfter) segs.push({ key: "b" + hi, cls: "brk " + this.tRowClass(h.breakAfter), style: `left:${pc(h.breakAfter.start)}%;width:${pc(h.breakAfter.end) - pc(h.breakAfter.start)}%`, title: "Break" });
-        ticks.push({ key: "s" + hi, left: pc(h.start), label: this.clockOf(h.start) });
-      });
-      ticks.push({ key: "end", left: 100, label: this.clockOf(b) });
-      const now = this.tNowSec();
-      return { segs, ticks, now: now >= a && now <= b ? pc(now) : null };
-    },
+    async phoneCopy() { this.toast(await this.copyText(this.phone.link) ? "Link copied" : "Could not copy the link"); },
 
-    // ---- buffer mode: the whole lesson as one wide strip, a window of +-10 % of an hour around now
-    // Okabe & Ito (colour-blind safe), with a readable label colour each; green stays for breaks
-    tPalette: [["#0072b2", "#fff"], ["#e69f00", "#13223a"], ["#cc79a7", "#13223a"], ["#56b4e9", "#13223a"], ["#d55e00", "#fff"], ["#f0e442", "#13223a"], ["#5b6b82", "#fff"]],
-    tWin() {
-      const sch = this.tSchedule();
-      if (!sch.length) return null;
-      const a = sch[0].start, b = Math.max(...sch.map(h => Math.max(h.end, h.activitiesEnd)));
-      const pc = t => ((t - a) / (b - a)) * 100;
-      const isBreak = t => /^\s*(break|pause|znüni|zvieri)\b/i.test(t.replace(/[*_]/g, ""));
-      const segs = [], ticks = [], details = [];
-      let ci = 0;
-      sch.forEach((h, hi) => {
-        h.activities.forEach(x => {
-          const brk = isBreak(x.title);
-          const [color, fg] = brk ? ["var(--live)", "#fff"] : this.tPalette[ci++ % this.tPalette.length];
-          segs.push({ key: x.key, item: x, label: this.typst(x.title), cls: this.tRowClass(x) + (brk ? " brk" : ""), style: `left:${pc(x.start)}%;width:${pc(x.end) - pc(x.start)}%;--seg:${color};--seg-fg:${fg}` });
-          x.details.forEach((d, di) => { if (di > 0 && d.start < x.end) details.push({ key: d.key, style: `left:${pc(d.start)}%` }); });
-        });
-        if (h.breakAfter) segs.push({ key: "b" + hi, item: h.breakAfter, label: "Break", cls: "brk " + this.tRowClass(h.breakAfter), style: `left:${pc(h.breakAfter.start)}%;width:${pc(h.breakAfter.end) - pc(h.breakAfter.start)}%;--seg:var(--live);--seg-fg:#fff` });
-        ticks.push({ key: "s" + hi, left: pc(h.start), label: this.clockOf(h.start) });
-        if (h.breakAfter) ticks.push({ key: "e" + hi, left: pc(h.end), label: this.clockOf(h.end) });
-      });
-      ticks.push({ key: "end", left: 100, label: this.clockOf(b) });
-      const now = this.tNowSec();
-      const half = 0.1 * this.teach.settings.hourLength * 60;
-      let lo = now - half, hi = now + half;
-      if (lo < a) { lo = a; hi = a + 2 * half; }
-      if (hi > b) { hi = b; lo = b - 2 * half; }
-      lo = Math.max(a, lo);
-      const inside = now >= a && now <= b;
-      // what lies inside the window: the parts you may be at right now
-      const items = [];
-      if (now <= b) sch.forEach(h => {
-        h.activities.forEach(x => {
-          if (x.end <= lo || x.start >= hi) return;
-          const ds = x.details.filter(d => d.end > lo && d.start < hi && d.start < x.end);
-          items.push({ key: x.key, title: this.typst(x.title), span: `${this.clockOf(x.start)}–${this.clockOf(x.end)}`, cur: now >= x.start && now < x.end,
-                       details: ds.map(d => ({ key: d.key, title: this.typst(d.title), cur: now >= d.start && now < d.end })) });
-        });
-        if (h.breakAfter && h.breakAfter.end > lo && h.breakAfter.start < hi) items.push({ key: "b" + h.name, title: "Break", span: `${this.clockOf(h.breakAfter.start)}–${this.clockOf(h.breakAfter.end)}`, cur: now >= h.breakAfter.start && now < h.breakAfter.end, details: [], brk: true });
-      });
-      return {
-        segs, ticks, details, items,
-        now: inside ? pc(now) : null,
-        win: now <= b ? { left: pc(lo), width: pc(hi) - pc(lo) } : null,
-        endsIn: inside ? b - now : null,
-      };
-    },
+    // ---- live view: static/teach-live.js (shared with the phone page, static/live.html)
+    ...ChronoLive,
+    tWallNow() { return wallNow(); },
+    today() { return isoDate(wallNow()); },
 
     // ---- editor
     edNew(date) {

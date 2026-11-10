@@ -423,6 +423,47 @@ T = {
     "Mo": ("Lu", "Mo", "Lu"), "Tu": ("Ma", "Di", "Ma"), "We": ("Me", "Mi", "Me"), "Th": ("Je", "Do", "Gi"),
     "Fr": ("Ve", "Fr", "Ve"), "Sa": ("Sa", "Sa", "Sa"), "Su": ("Di", "So", "Do"),
 
+    # teach on the phone: "Show on phone" in the app, and the phone page (static/live.html)
+    "Show on phone": ("Afficher sur le téléphone", "Auf dem Handy zeigen", "Mostra sul telefono"),
+    "Shows a QR code: scan it and this live view runs on your phone": (
+        "Affiche un code QR : scanne-le et cette vue en direct tourne sur ton téléphone",
+        "Zeigt einen QR-Code: Scanne ihn, und diese Live-Ansicht läuft auf deinem Handy",
+        "Mostra un codice QR: scansionalo e questa vista dal vivo gira sul tuo telefono"),
+    "Scan the code with your phone's camera. The timetable is inside the code, so the phone needs no connection to this laptop. Changes you make here afterwards do not reach the phone: use its own Start now and ±1 min buttons.": (
+        "Scanne le code avec l'appareil photo de ton téléphone. Le déroulement est dans le code : le téléphone n'a besoin d'aucune connexion avec cet ordinateur. Ce que tu changes ici ensuite n'arrive pas sur le téléphone : utilise ses propres boutons Commencer maintenant et ±1 min.",
+        "Scanne den Code mit der Kamera deines Handys. Der Ablaufplan steckt im Code, das Handy braucht also keine Verbindung zu diesem Laptop. Was du hier danach änderst, kommt nicht auf dem Handy an: Nutze dort die Knöpfe Jetzt beginnen und ±1 min.",
+        "Scansiona il codice con la fotocamera del telefono. La scaletta è dentro il codice, quindi il telefono non ha bisogno di alcuna connessione con questo portatile. Le modifiche che fai qui dopo non arrivano al telefono: usa i suoi pulsanti Inizia ora e ±1 min."),
+    "This timetable is too long for a QR code. Copy the link and send it to your phone.": (
+        "Ce déroulement est trop long pour un code QR. Copie le lien et envoie-le sur ton téléphone.",
+        "Dieser Ablaufplan ist zu lang für einen QR-Code. Kopiere den Link und schick ihn auf dein Handy.",
+        "Questa scaletta è troppo lunga per un codice QR. Copia il link e invialo al tuo telefono."),
+    "Copy link": ("Copier le lien", "Link kopieren", "Copia il link"),
+    "Link copied": ("Lien copié", "Link kopiert", "Link copiato"),
+    "Could not copy the link": ("Impossible de copier le lien", "Der Link konnte nicht kopiert werden", "Impossibile copiare il link"),
+    "No timetable yet.": ("Pas encore de déroulement.", "Noch kein Ablaufplan.", "Ancora nessuna scaletta."),
+    "In Chrono on your laptop, open a timetable in the Teach tab, press Show on phone and scan the code with this phone.": (
+        "Dans Chrono sur ton ordinateur, ouvre un déroulement dans l'onglet Enseigner, appuie sur Afficher sur le téléphone et scanne le code avec ce téléphone.",
+        "Öffne in Chrono auf deinem Laptop einen Ablaufplan im Reiter Unterrichten, drücke Auf dem Handy zeigen und scanne den Code mit diesem Handy.",
+        "In Chrono sul tuo portatile, apri una scaletta nella scheda Insegnare, premi Mostra sul telefono e scansiona il codice con questo telefono."),
+    "This link does not hold a timetable. Scan the code again.": (
+        "Ce lien ne contient pas de déroulement. Scanne le code à nouveau.",
+        "Dieser Link enthält keinen Ablaufplan. Scanne den Code noch einmal.",
+        "Questo link non contiene una scaletta. Scansiona di nuovo il codice."),
+    "This browser is too old to read the link. Update it, or open the link in Chrome or Firefox.": (
+        "Ce navigateur est trop ancien pour lire le lien. Mets-le à jour, ou ouvre le lien dans Chrome ou Firefox.",
+        "Dieser Browser ist zu alt, um den Link zu lesen. Aktualisiere ihn oder öffne den Link in Chrome oder Firefox.",
+        "Questo browser è troppo vecchio per leggere il link. Aggiornalo, oppure apri il link in Chrome o Firefox."),
+    "Tap a row to start it now": ("Touche une ligne pour la commencer maintenant", "Tippe auf eine Zeile, um sie jetzt zu beginnen", "Tocca una riga per iniziarla ora"),
+    "Plan moved: this part starts now": ("Plan déplacé : cette partie commence maintenant", "Plan verschoben: Dieser Teil beginnt jetzt", "Piano spostato: questa parte inizia ora"),
+    "Undo": ("Annuler", "Rückgängig", "Annulla"),
+    "Back where it was": ("Remis comme avant", "Wieder wie vorher", "Di nuovo com'era"),
+    "Settings": ("Réglages", "Einstellungen", "Impostazioni"),
+    "Keep the screen on": ("Garder l'écran allumé", "Bildschirm eingeschaltet lassen", "Tieni lo schermo acceso"),
+    "Changes here stay on this phone. To load another timetable, scan its code in Chrono on the laptop.": (
+        "Les changements faits ici restent sur ce téléphone. Pour charger un autre déroulement, scanne son code dans Chrono sur l'ordinateur.",
+        "Änderungen hier bleiben auf diesem Handy. Um einen anderen Ablaufplan zu laden, scanne dessen Code in Chrono auf dem Laptop.",
+        "Le modifiche qui restano su questo telefono. Per caricare un'altra scaletta, scansiona il suo codice in Chrono sul portatile."),
+
     # ---------------------------------------------------------------- sleep
     "a nap instead": ("plutôt une sieste", "stattdessen ein Mittagsschlaf", "invece un pisolino"),
     "a night instead": ("plutôt une nuit", "stattdessen eine Nacht", "invece una notte"),
