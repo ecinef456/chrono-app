@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -65,6 +65,7 @@ function chrono() {
       // Alpine calls init() by itself; never also put x-init="init()" on the body, or everything loads twice.
       if (this._started) return; this._started = true;
       this.applyTheme();
+      this.headerFitWatch();
       // The dashboard first, with the requests in parallel; the other tabs load afterwards, in the background.
       const [meta, semesters] = await Promise.all([api("/api/meta"), api("/api/semesters"), this.refreshTimer()]);
       this.meta = meta; this.semesters = semesters;
@@ -700,6 +701,39 @@ function chrono() {
           chart("codeCommits", wLabels, withGit.map(t => ({ name: t.name, color: this.actColor(t.slot), data: t.git.commits_week })), "n", i => `Commits, week from ${this.dmy(g.weeks[i])}`);
         }
       }
+    },
+
+    /* ---------------- header: always on screen, whatever the window width
+     * Steps, the first that fits is used (data-fit on the header, see style.css):
+     *   0  one row
+     *   1  one row, tabs and gaps tighter
+     *   2  as 1, the coffee button as an icon only
+     *   3  tabs on a row of their own below, breaking into more lines if they must (never scrolling)
+     *   4  as 3, and the first row compact: logo without the name, no coffee button, small gaps
+     * "Fits" means every visible item of the first row sits on that one line, so the window
+     * buttons are never pushed off to the side. It is measured again whenever the width or the
+     * header's content changes (language, features shown, semester names). */
+    headerFitWatch() {
+      const top = this.$refs.top;
+      if (!top || !window.ResizeObserver) return;
+      let width = 0, queued = false;
+      const later = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; this.headerFitNow(); }); } };
+      new ResizeObserver(() => { if (top.clientWidth !== width) { width = top.clientWidth; later(); } }).observe(top);
+      new MutationObserver(later).observe(top, { subtree: true, childList: true, characterData: true, attributeFilter: ["style", "hidden"] });
+      document.fonts?.ready.then(later);
+    },
+    headerFitNow() {
+      const top = this.$refs.top, nav = top.querySelector(".tabs");
+      const fits = () => {
+        const items = [...top.children].filter(el => el.getClientRects().length && (top.dataset.fit < 3 || el !== nav));
+        const bottom = Math.min(...items.map(el => el.getBoundingClientRect().bottom));
+        return items.every(el => el.getBoundingClientRect().top < bottom - 1) && top.scrollWidth <= top.clientWidth + 1;
+      };
+      let fit = 0;
+      // set directly, not through Alpine, so each step is laid out and measured at once
+      for (; fit < 4; fit++) { top.dataset.fit = fit; if (fits()) break; }
+      top.dataset.fit = fit;
+      this.headerFit = fit;
     },
 
     /* ---------------- desktop window (Linux app without a title bar): buttons, move, resize */

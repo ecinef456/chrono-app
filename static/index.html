@@ -7,11 +7,11 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=25">
+<link rel="stylesheet" href="/static/style.css?v=26">
 <script defer src="/static/i18n.js?v=3"></script>
 <script defer src="/static/teach.js?v=2"></script>
 <script defer src="/static/teach-live.js?v=1"></script>
-<script defer src="/static/app.js?v=27"></script>
+<script defer src="/static/app.js?v=28"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -28,10 +28,10 @@
 </template>
 <div class="wrap">
 
-  <header class="top" @pointerdown="winDrag($event)" @dblclick="winDblclick($event)">
+  <header class="top" x-ref="top" :data-fit="headerFit" @pointerdown="winDrag($event)" @dblclick="winDblclick($event)">
     <div class="brand">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4M12 2v3"/></svg>
-      Chrono
+      <span class="brand-name">Chrono</span>
     </div>
     <select class="sem-select" aria-label="Semester" x-model.number="semesterId" @change="changeSemester()">
       <template x-for="s in semesters" :key="s.id">
