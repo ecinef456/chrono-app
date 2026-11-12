@@ -302,14 +302,21 @@ function chrono() {
       const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
       this.logFrom = isoDate(mon); this.logTo = isoDate(sun);
     },
-    exportTxt() {
+    async exportTxt() {
       // Exports exactly what the Log shows: the selected course (or all) between the two dates, both included.
       const oldest = this.sessions.length ? this.sessions[this.sessions.length - 1].start.slice(0, 10) : null;
       const from = this.logFrom || this.currentSemester?.start_date || oldest || isoDate(wallNow());
       const to = this.logTo || isoDate(wallNow());
       if (to < from) { this.toast("The end date is before the start date"); return; }
       const q = new URLSearchParams({ start: from, end: to, course_id: this.logCourse || 0, semester_id: this.semesterId });
-      window.location.href = `/api/export?${q}`;
+      // Fetch the text and save it like the Typst files: in the Chrono window through the app's own
+      // save dialog (letting the web view download it crashed the window on Linux).
+      try {
+        const r = await fetch(`/api/export?${q}`);
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || `Request failed (${r.status})`);
+        const name = (r.headers.get("Content-Disposition") || "").match(/filename="([^"]+)"/)?.[1] || `chrono_${from}_to_${to}.txt`;
+        await this.downloadText(name, await r.text());
+      } catch (e) { this.toast(e.message); }
     },
     groupedSessions() {
       const groups = [];
