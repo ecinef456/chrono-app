@@ -6,6 +6,7 @@ Run:  python app.py            (opens http://127.0.0.1:8765 in your browser)
 """
 import argparse
 import json
+import re
 import os
 import subprocess
 import time
@@ -1981,6 +1982,29 @@ def session_blocks(sess, with_course=False, day_totals=False):
         lines += [f"  - {n}" for n in (s["notes"] or "").splitlines() if n.strip()]
         lines += ["--- SESSION END ---" if kind == "course" else "--- END ---"]
     return lines
+
+
+class SaveFileIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    text: str = Field(max_length=5_000_000)
+
+
+@app.post("/api/save-file")
+def save_file(body: SaveFileIn, request: Request):
+    """Save a text export straight into ~/Downloads (used by the Chrono window, whose web view
+    crashes on downloads on Linux). Never overwrites: adds (2), (3), ... to the name."""
+    if request.headers.get("x-chrono") != "1":      # only Chrono's own page (a custom header can't come cross-site)
+        raise HTTPException(403, "Not allowed.")
+    name = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "-", body.name).strip(" .") or "chrono-export.txt"
+    folder = Path.home() / "Downloads"
+    if not folder.is_dir():
+        folder = Path.home()
+    stem, suffix = Path(name).stem, Path(name).suffix
+    path, n = folder / name, 2
+    while path.exists():
+        path, n = folder / f"{stem} ({n}){suffix}", n + 1
+    path.write_text(body.text, encoding="utf-8")
+    return {"path": str(path)}
 
 
 @app.get("/api/export")

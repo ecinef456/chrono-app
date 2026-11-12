@@ -1064,11 +1064,15 @@ function chrono() {
       await this.loadLessons();
     },
     async downloadText(name, text) {
-      // In the Chrono window: a save dialog from the app itself (the web view's downloads can crash on Linux).
-      const api = window.pywebview?.api;
-      if (api?.save_text) {
-        try { const path = await api.save_text(name, text); if (path) this.toast(`Saved to ${path}`); }
-        catch (e) { this.toast("Could not save: " + (e?.message || e)); }
+      // In the Chrono window the web view must never download (that crashes it on Linux): Chrono's
+      // server writes the file straight into Downloads instead. In a normal browser: a normal download.
+      if (window.pywebview) {
+        try {
+          const r = await fetch("/api/save-file", { method: "POST", headers: { "Content-Type": "application/json", "X-Chrono": "1" }, body: JSON.stringify({ name, text }) });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(j.detail || `Request failed (${r.status})`);
+          this.toast(`Saved to ${j.path}`);
+        } catch (e) { this.toast("Could not save: " + (e?.message || e)); }
         return;
       }
       const a = document.createElement("a");
