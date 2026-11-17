@@ -209,6 +209,7 @@ def init_db():
         )""")
         ensure_other(con)
         seed_activities(con)
+        seed_sport_plan(con)
         _sport_fields_setup(con, fresh)
 
 
@@ -237,6 +238,25 @@ def seed_activities(con):
             con.execute("INSERT INTO courses (semester_id,code,name,ects,category,sort,kind,repo_path)"
                         " VALUES (?,?,?,0,?,?,?,?)", (anchor[0], _slug(name), name, kind, 1000 + i, kind, repo))
     con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('activities_seeded','1')")
+
+
+def seed_sport_plan(con):
+    """Import the weekly sport plan from chrono.local.json ("sport_plan"), once. Later changes happen in the app."""
+    if con.execute("SELECT 1 FROM settings WHERE key='sport_plan'").fetchone():
+        return
+    items = load_local().get("sport_plan")
+    if not items:
+        return
+    days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    plan = []
+    for it in items:
+        row = con.execute("SELECT id FROM courses WHERE kind='sport' AND lower(name)=lower(?)", (str(it.get("sport", "")),)).fetchone()
+        day = str(it.get("day", "")).lower()[:3]
+        if not row or day not in days:
+            continue  # unknown sport or day: skip it, the rest still gets imported
+        plan.append({"wd": days.index(day), "course_id": row[0], "from": it.get("from"), "to": it.get("to")})
+    if plan:
+        con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('sport_plan',?)", (json.dumps(_check_plan(plan)),))
 
 
 def _slug(name):
@@ -407,6 +427,7 @@ def create_semester(body: SemesterIn):
         )""")
         ensure_other(con)
         seed_activities(con)
+        seed_sport_plan(con)
         _sport_fields_setup(con, fresh)
         return {"id": cur.lastrowid}
 
@@ -1257,6 +1278,108 @@ def put_fields(course_id: int, body: FieldsIn):
             else:
                 con.execute("INSERT INTO sport_fields (course_id,name,unit,sort) VALUES (?,?,?,?)", (course_id, n, u, i))
         return _fields(con, course_id)
+
+
+# ---------------------------------------------------------------- weekly sport plan
+# The usual trainings (weekday, sport, from, to). Planned sessions are never logged on their own:
+# past ones that are neither logged nor skipped are listed "to confirm", and a past entry for a
+# planned sport and weekday is prefilled with the planned times.
+
+class PlanItem(BaseModel):
+    wd: int = Field(ge=0, le=6)          # 0 = Monday
+    course_id: int
+    from_: str = Field(alias="from")
+    to: str
+
+    model_config = {"populate_by_name": True}
+
+
+class SkipIn(BaseModel):
+    day: str
+    course_id: int
+
+
+def _check_plan(items):
+    out = []
+    for it in items:
+        try:
+            a = datetime.strptime(str(it["from"]), "%H:%M")
+            b = datetime.strptime(str(it["to"]), "%H:%M")
+        except (KeyError, ValueError):
+            raise HTTPException(400, "Times look like 20:05.")
+        if b <= a:
+            raise HTTPException(400, "The end time must come after the start time.")
+        out.append({"wd": int(it["wd"]), "course_id": int(it["course_id"]), "from": a.strftime("%H:%M"), "to": b.strftime("%H:%M")})
+    return sorted(out, key=lambda x: (x["wd"], x["from"]))
+
+
+def sport_plan(con):
+    r = con.execute("SELECT value FROM settings WHERE key='sport_plan'").fetchone()
+    try:
+        plan = json.loads(r["value"]) if r else []
+    except ValueError:
+        plan = []
+    alive = {x[0] for x in con.execute("SELECT id FROM courses WHERE kind='sport' AND finished=0")}
+    return [p for p in plan if p["course_id"] in alive]
+
+
+def _skipped(con):
+    r = con.execute("SELECT value FROM settings WHERE key='sport_plan_skipped'").fetchone()
+    try:
+        return set(json.loads(r["value"])) if r else set()
+    except ValueError:
+        return set()
+
+
+@app.get("/api/sport/plan")
+def get_sport_plan(days: int = 7):
+    """The weekly plan, and the planned sessions of the last `days` days (up to now) not logged and not skipped."""
+    now_ = now()
+    today = now_.date()
+    with db() as con:
+        plan = sport_plan(con)
+        names = {r[0]: r[1] for r in con.execute("SELECT id, name FROM courses WHERE kind='sport'")}
+        since = today - timedelta(days=days - 1)
+        logged = {(r[0], r[1]) for r in con.execute(
+            "SELECT substr(s.start, 1, 10), s.course_id FROM sessions s JOIN courses c ON c.id = s.course_id"
+            " WHERE c.kind='sport' AND s.start >= ?", (since.isoformat(),))}
+        skipped = _skipped(con)
+    pending = []
+    for i in range(days):
+        d = since + timedelta(days=i)
+        for p in plan:
+            if p["wd"] != d.weekday():
+                continue
+            end = datetime.combine(d, datetime.strptime(p["to"], "%H:%M").time())
+            if end > now_ or (d.isoformat(), p["course_id"]) in logged or f"{d.isoformat()}|{p['course_id']}" in skipped:
+                continue
+            pending.append({**p, "day": d.isoformat(), "name": names.get(p["course_id"], "?")})
+    pending.sort(key=lambda x: (x["day"], x["from"]), reverse=True)
+    return {"plan": [{**p, "name": names.get(p["course_id"], "?")} for p in plan], "pending": pending}
+
+
+@app.put("/api/sport/plan")
+def put_sport_plan(items: list[PlanItem]):
+    plan = _check_plan([{"wd": i.wd, "course_id": i.course_id, "from": i.from_, "to": i.to} for i in items])
+    with db() as con:
+        known = {x[0] for x in con.execute("SELECT id FROM courses WHERE kind='sport'")}
+        if any(p["course_id"] not in known for p in plan):
+            raise HTTPException(400, "Unknown sport in the plan.")
+        con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('sport_plan',?)", (json.dumps(plan),))
+    return get_sport_plan()
+
+
+@app.post("/api/sport/plan/skip")
+def skip_planned(body: SkipIn):
+    try:
+        d = date.fromisoformat(body.day)
+    except ValueError:
+        raise HTTPException(400, "Dates look like 2026-11-16.")
+    with db() as con:
+        keep = {k for k in _skipped(con) if k[:10] >= (date.today() - timedelta(days=60)).isoformat()}  # forget old ones
+        keep.add(f"{d.isoformat()}|{body.course_id}")
+        con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('sport_plan_skipped',?)", (json.dumps(sorted(keep)),))
+    return get_sport_plan()
 
 
 @app.get("/api/sport/entry")

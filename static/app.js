@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", splan: null, splanEdit: null, splanErr: "", toastMsg: "",
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -632,6 +632,7 @@ function chrono() {
     entryChanged() {
       // Course or date changed in the entry dialog: load that sport's measures for that weekday.
       if (this.entryKind !== "sport") { this.smClear(); return; }
+      this.planPrefill();
       if (this.entry.id && this.sm.session === this.entry.id && this.sm.course_id === this.entry.course_id) return;
       this.smLoad(this.entry.course_id, this.entry.date, this.entry.id || null);
     },
@@ -644,9 +645,56 @@ function chrono() {
     kg(v) { return v == null ? "–" : (Math.round(v * 10) / 10).toLocaleString(this.loc()) ; },
     signed(v, d = 1) { if (v == null) return "–"; const r = Math.round(v * 10 ** d) / 10 ** d; return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toLocaleString(this.loc()); },
 
+    /* ---------------- weekly sport plan: suggested, never logged on its own */
+    async loadPlan() {
+      try { this.splan = await api("/api/sport/plan"); } catch (e) { /* older server: no plan */ }
+    },
+    // A new sport entry for a weekday with a planned training of that sport gets the planned times.
+    planPrefill() {
+      if (this.entry.id || !this.splan || !this.entry.date) return;
+      const p = this.splan.plan.find(x => x.course_id === this.entry.course_id && x.wd === this.weekdayOf(this.entry.date));
+      if (!p) return;
+      this.entry.from = p.from; this.entry.to = p.to; this.entry.breaks = 0; this.syncLength();
+    },
+    planLog(p) {
+      // "Log it": the entry form with sport, day and planned times filled in, for weights and rating
+      this.openEntry();
+      Object.assign(this.entry, { course_id: p.course_id, date: p.day, from: p.from, to: p.to, breaks: 0, wholeDay: false });
+      this.syncLength(); this.entryChanged();
+    },
+    async planSkip(p) {
+      try { this.splan = await api("/api/sport/plan/skip", { method: "POST", body: { day: p.day, course_id: p.course_id } }); this.toast("Marked as skipped"); }
+      catch (e) { this.toast(e.message); }
+    },
+    planOpen() {
+      this.splanErr = "";
+      this.splanEdit = this.splan.plan.map(p => ({ wd: p.wd, course_id: p.course_id, from: p.from, to: p.to }));
+    },
+    planAdd() {
+      const first = (this.act?.sport?.types || []).find(t => !t.archived);
+      this.splanEdit.push({ wd: 0, course_id: first?.id, from: "18:00", to: "19:00" });
+    },
+    async planSave() {
+      try {
+        this.splan = await api("/api/sport/plan", { method: "PUT", body: this.splanEdit.map(p => ({ ...p, wd: Number(p.wd), course_id: Number(p.course_id) })) });
+        this.splanEdit = null; this.toast("Plan saved");
+      } catch (e) { this.splanErr = e.message; }
+    },
+    planTodayWd() { this.tick; return (wallNow().getDay() + 6) % 7; },
+    planDay(iso) {
+      const today = isoDate(wallNow());
+      const y = new Date(wallNow()); y.setDate(y.getDate() - 1);
+      if (iso === today) return "Today";
+      if (iso === isoDate(y)) return "Yesterday";
+      return this.sleepDayLabel(iso);
+    },
+    // weekday names in the app's language (16.11.2026 was a Monday)
+    wdName(wd, style = "long") { return new Date(2026, 10, 16 + wd, 12).toLocaleDateString(this.loc(), { weekday: style }); },
+
     /* ---------------- sport & code (never study time) */
     async loadActivities() {
       this.act = await api("/api/activities");
+      this.loadPlan();   // cheap; the Sport tab and its badge only show when Sport is on
       if (this.tab === "sport" || this.tab === "code") this.$nextTick(() => this.renderActCharts());
     },
     actColor(slot) {

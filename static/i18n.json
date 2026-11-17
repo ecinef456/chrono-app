@@ -2773,5 +2773,90 @@
 "Mode de comptage inconnu.",
 "Unbekannte Zählweise.",
 "Modo di conteggio sconosciuto."
+],
+"Weekly plan": [
+"Programme de la semaine",
+"Wochenplan",
+"Piano settimanale"
+],
+"Planned trainings are not logged on their own: confirm the ones you did": [
+"Les entraînements prévus ne sont pas enregistrés tout seuls : confirme ceux que tu as faits",
+"Geplante Trainings werden nicht von selbst erfasst: Bestätige die, die du gemacht hast",
+"Gli allenamenti previsti non vengono registrati da soli: conferma quelli che hai fatto"
+],
+"Edit plan": [
+"Modifier le programme",
+"Plan bearbeiten",
+"Modifica il piano"
+],
+"No usual trainings yet. Click Edit plan to add them.": [
+"Pas encore d'entraînements habituels. Clique sur Modifier le programme pour les ajouter.",
+"Noch keine üblichen Trainings. Klicke auf Plan bearbeiten, um sie hinzuzufügen.",
+"Ancora nessun allenamento abituale. Clicca su Modifica il piano per aggiungerli."
+],
+"To confirm": [
+"À confirmer",
+"Zu bestätigen",
+"Da confermare"
+],
+"Log it": [
+"Enregistrer",
+"Erfassen",
+"Registra"
+],
+"Skipped": [
+"Pas fait",
+"Ausgelassen",
+"Saltato"
+],
+"Add a training": [
+"Ajouter un entraînement",
+"Training hinzufügen",
+"Aggiungi un allenamento"
+],
+"Save plan": [
+"Enregistrer le programme",
+"Plan speichern",
+"Salva il piano"
+],
+"Plan saved": [
+"Programme enregistré",
+"Plan gespeichert",
+"Piano salvato"
+],
+"Marked as skipped": [
+"Marqué comme pas fait",
+"Als ausgelassen markiert",
+"Segnato come saltato"
+],
+"Yesterday": [
+"Hier",
+"Gestern",
+"Ieri"
+],
+"{a} planned trainings to confirm": [
+"{a} entraînements prévus à confirmer",
+"{a} geplante Trainings zu bestätigen",
+"{a} allenamenti previsti da confermare"
+],
+"Times look like 20:05.": [
+"Les heures s'écrivent comme 20:05.",
+"Zeiten sehen so aus: 20:05.",
+"Gli orari si scrivono come 20:05."
+],
+"The end time must come after the start time.": [
+"L'heure de fin doit venir après l'heure de début.",
+"Das Ende muss nach dem Beginn liegen.",
+"L'ora di fine deve venire dopo l'ora di inizio."
+],
+"Unknown sport in the plan.": [
+"Sport inconnu dans le programme.",
+"Unbekannte Sportart im Plan.",
+"Sport sconosciuto nel piano."
+],
+"Dates look like 2026-11-16.": [
+"Les dates s'écrivent comme 2026-11-16.",
+"Daten sehen so aus: 2026-11-16.",
+"Le date si scrivono come 2026-11-16."
 ]
 }

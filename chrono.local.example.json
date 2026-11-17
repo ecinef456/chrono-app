@@ -1,7 +1,27 @@
 {
   "github_user": "your-github-username",
-  "sport": ["Running", "Climbing"],
+  "sport": [
+    "Running",
+    "Climbing"
+  ],
   "code": [
-    { "name": "my-project", "repo": "~/git/my-project" }
+    {
+      "name": "my-project",
+      "repo": "~/git/my-project"
+    }
+  ],
+  "sport_plan": [
+    {
+      "day": "Mon",
+      "sport": "Running",
+      "from": "18:00",
+      "to": "19:00"
+    },
+    {
+      "day": "Thu",
+      "sport": "Climbing",
+      "from": "19:30",
+      "to": "21:00"
+    }
   ]
 }

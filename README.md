@@ -79,6 +79,14 @@ Sport and coding are tracked like courses, in every semester, but **never count 
 
 Your starting types and GitHub user live in `chrono.local.json`, which is gitignored (see `chrono.local.example.json`). It is read once, the first time the server starts with it; after that, change types in the app.
 
+### Weekly sport plan
+
+In the Sport tab, *Weekly plan* holds your usual trainings (day, sport, from, to). They are only a suggestion: nothing is logged on its own, so a skipped training never shows up as hours.
+
+- **To confirm** lists the planned trainings of the last 7 days that are over and neither logged nor skipped. *Log it* opens the entry form with sport, day and times filled in (add weights or a rating, then save); *Skipped* dismisses it. The Sport tab shows how many are waiting.
+- A new past sport entry gets the planned times when its sport and weekday match the plan.
+- Edit the plan with *Edit plan*. To start with a plan, add `"sport_plan"` to `chrono.local.json` (see the example file); it is read once, the first time the server starts with it.
+
 ## Teach (lesson calendar and live lesson plan)
 
 The *Teach* tab keeps your lesson timetables in a calendar and shows, live, where you should be in a lesson. It is completely separate from the study timer and saves nothing in your study logs.

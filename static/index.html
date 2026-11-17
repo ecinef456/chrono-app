@@ -7,11 +7,11 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=26">
+<link rel="stylesheet" href="/static/style.css?v=27">
 <script defer src="/static/i18n.js?v=3"></script>
 <script defer src="/static/teach.js?v=2"></script>
 <script defer src="/static/teach-live.js?v=1"></script>
-<script defer src="/static/app.js?v=30"></script>
+<script defer src="/static/app.js?v=31"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -42,7 +42,7 @@
       <button role="tab" :aria-selected="tab==='dash'" @click="tab='dash'">Dashboard</button>
       <button role="tab" :aria-selected="tab==='log'" @click="tab='log'">Log</button>
       <button role="tab" :aria-selected="tab==='courses'" @click="tab='courses'">Courses</button>
-      <button role="tab" :aria-selected="tab==='sport'" @click="tab='sport'" x-show="feat('sport')">Sport</button>
+      <button role="tab" :aria-selected="tab==='sport'" @click="tab='sport'" x-show="feat('sport')">Sport<span class="tab-badge" x-show="splan?.pending?.length" x-text="splan?.pending?.length" :title="splan?.pending?.length + ' planned trainings to confirm'"></span></button>
       <button role="tab" :aria-selected="tab==='code'" @click="tab='code'" x-show="feat('code')">Code</button>
       <button role="tab" :aria-selected="tab==='teach'" @click="tab='teach'" x-show="feat('teach')">Teach</button>
       <button role="tab" :aria-selected="tab==='sleep'" @click="tab='sleep'" x-show="feat('sleep')">Sleep</button>
@@ -342,6 +342,65 @@
   <!-- ===================== SPORT & CODE (never study time) ===================== -->
   <main x-show="tab==='sport' || tab==='code'" class="stack" x-cloak>
     <template x-if="!act"><section class="panel"><div class="panel-body empty">Loading…</div></section></template>
+
+    <!-- weekly plan: planned trainings are only suggested, never logged on their own -->
+    <section class="panel plan-panel" x-show="tab==='sport' && splan">
+      <div class="panel-head">
+        <h2>Weekly plan</h2>
+        <span class="sub">Planned trainings are not logged on their own: confirm the ones you did</span>
+        <div class="right"><button class="btn small ghost" x-show="!splanEdit" @click="planOpen()">Edit plan</button></div>
+      </div>
+      <div class="panel-body">
+        <template x-if="!splanEdit">
+          <div>
+            <div class="plan-week">
+              <template x-for="(d, wd) in weekdays" :key="wd">
+                <div class="plan-day" :class="{ today: wd === planTodayWd() }">
+                  <div class="plan-dname" x-text="wdName(wd)"></div>
+                  <template x-for="p in (splan?.plan || []).filter(p => p.wd === wd)" :key="p.course_id + p.from">
+                    <div class="plan-item"><b x-text="p.name"></b><span x-text="p.from + '–' + p.to"></span></div>
+                  </template>
+                </div>
+              </template>
+            </div>
+            <div class="empty" x-show="!splan?.plan?.length">No usual trainings yet. Click Edit plan to add them.</div>
+            <div class="plan-pending" x-show="splan?.pending?.length">
+              <h3 class="chart-title">To confirm</h3>
+              <template x-for="p in (splan?.pending || [])" :key="p.day + p.course_id">
+                <div class="pending-row">
+                  <span class="when" x-text="planDay(p.day)"></span>
+                  <b x-text="p.name"></b>
+                  <span class="muted" x-text="p.from + '–' + p.to"></span>
+                  <span class="acts">
+                    <button class="btn small primary" @click="planLog(p)">Log it</button>
+                    <button class="btn small ghost" @click="planSkip(p)">Skipped</button>
+                  </span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+        <template x-if="splanEdit">
+          <div class="plan-edit">
+            <template x-for="(p, i) in splanEdit" :key="i">
+              <div class="type-row">
+                <select class="field-inline" x-model.number="p.wd" aria-label="Day"><template x-for="(d, wd) in weekdays" :key="wd"><option :value="wd" x-text="wdName(wd)" :selected="wd === p.wd"></option></template></select>
+                <select class="field-inline" x-model.number="p.course_id" aria-label="Sport"><template x-for="t in (act?.sport?.types || []).filter(t => !t.archived)" :key="t.id"><option :value="t.id" x-text="t.name" :selected="t.id === p.course_id"></option></template></select>
+                <input type="time" class="field-inline" x-model="p.from" aria-label="From">
+                <input type="time" class="field-inline" x-model="p.to" aria-label="To">
+                <button class="btn small ghost danger" @click="splanEdit.splice(i, 1)">Remove</button>
+              </div>
+            </template>
+            <div class="error" x-show="splanErr" x-text="splanErr"></div>
+            <div class="actions">
+              <button class="btn small ghost left" @click="planAdd()">Add a training</button>
+              <button class="btn ghost" @click="splanEdit = null">Cancel</button>
+              <button class="btn primary" @click="planSave()">Save plan</button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
     <template x-for="kind in ['sport', 'code'].filter(k => k === tab)" :key="kind">
       <section class="panel" x-show="act && act[kind]">
         <div class="panel-head">
