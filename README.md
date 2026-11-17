@@ -79,13 +79,15 @@ Sport and coding are tracked like courses, in every semester, but **never count 
 
 Your starting types and GitHub user live in `chrono.local.json`, which is gitignored (see `chrono.local.example.json`). It is read once, the first time the server starts with it; after that, change types in the app.
 
-### Weekly sport plan
+### Weekly plan
 
-In the Sport tab, *Weekly plan* holds your usual trainings (day, sport, from, to). They are only a suggestion: nothing is logged on its own, so a skipped training never shows up as hours.
+Each semester has a weekly plan of your usual sessions: lectures, TA hours and trainings (day, course or sport, from, to). It is only a suggestion: nothing is logged on its own, so a skipped session never shows up as hours.
 
-- **To confirm** lists the planned trainings of the last 7 days that are over and neither logged nor skipped. *Log it* opens the entry form with sport, day and times filled in (add weights or a rating, then save); *Skipped* dismisses it. The Sport tab shows how many are waiting.
-- A new past sport entry gets the planned times when its sport and weekday match the plan.
-- Edit the plan with *Edit plan*. To start with a plan, add `"sport_plan"` to `chrono.local.json` (see the example file); it is read once, the first time the server starts with it.
+- **Where:** the Dashboard shows the whole plan, the Sport tab only the trainings. Both tabs show how many sessions wait to be confirmed.
+- **To confirm** lists the planned sessions of the last 7 days that are over and neither logged nor skipped. *Log it* opens the entry form with course, day and times filled in; *Skipped* dismisses it.
+- **Past entries** get the planned times when their course and weekday match the plan of that day's semester.
+- **Per semester:** a day belongs to the last semester that started on or before it, so each semester needs a start date (Courses tab). For a new semester, *Edit plan* → *Copy from ...* takes over what still exists there (sports, a thesis across semesters); add the new courses.
+- **Start from a file:** list sessions under `"plan"` in `chrono.local.json` (semester code, day, course initials or sport name, from, to; see the example file). Each semester's list is read once, the first time the server starts with it; after that, edit the plan in the app.
 
 ## Teach (lesson calendar and live lesson plan)
 

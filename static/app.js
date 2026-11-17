@@ -114,6 +114,7 @@ function chrono() {
       this.semForm = { start_date: sem?.start_date || "", end_date: sem?.end_date || "" };
       if (!this.openCourses.some(c => c.id === this.selectedId)) this.selectedId = this.openCourses[0]?.id ?? null;
       this.stats = stats;
+      this.loadPlan();
       if (this.tab === "dash") this.$nextTick(() => this.renderCharts());
     },
     // After the first screen is up: fetch the data of the other tabs one after the other, when the
@@ -631,8 +632,8 @@ function chrono() {
     },
     entryChanged() {
       // Course or date changed in the entry dialog: load that sport's measures for that weekday.
-      if (this.entryKind !== "sport") { this.smClear(); return; }
       this.planPrefill();
+      if (this.entryKind !== "sport") { this.smClear(); return; }
       if (this.entry.id && this.sm.session === this.entry.id && this.sm.course_id === this.entry.course_id) return;
       this.smLoad(this.entry.course_id, this.entry.date, this.entry.id || null);
     },
@@ -645,38 +646,63 @@ function chrono() {
     kg(v) { return v == null ? "–" : (Math.round(v * 10) / 10).toLocaleString(this.loc()) ; },
     signed(v, d = 1) { if (v == null) return "–"; const r = Math.round(v * 10 ** d) / 10 ** d; return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toLocaleString(this.loc()); },
 
-    /* ---------------- weekly sport plan: suggested, never logged on its own */
+    /* ---------------- weekly plan (per semester): suggested, never logged on its own */
+    // The Dashboard shows the whole plan, the Sport tab only the sport part.
+    get planScope() { return this.tab === "sport" ? "sport" : "all"; },
+    courseKind(id) { return this.courses.find(c => c.id === id)?.kind; },
+    inScope(p) { return this.planScope === "all" || (p.kind || this.courseKind(p.course_id)) === "sport"; },
+    planItems() { return (this.splan?.plan || []).filter(p => this.inScope(p)); },
+    planPending(scope = this.planScope) { return (this.splan?.pending || []).filter(p => scope === "all" || p.kind === "sport"); },
+    planLabel(p) { return p.kind === "sport" ? p.name : (p.code || "").toUpperCase(); },
+    planSwatch(p) { return p.kind === "sport" || p.kind === "code" ? this.dots(p.kind) : this.sw(p.category); },
     async loadPlan() {
-      try { this.splan = await api("/api/sport/plan"); } catch (e) { /* older server: no plan */ }
+      try { this.splan = await api("/api/plan" + (this.semesterId ? `?semester_id=${this.semesterId}` : "")); } catch (e) { /* older server: no plan */ }
     },
-    // A new sport entry for a weekday with a planned training of that sport gets the planned times.
-    planPrefill() {
-      if (this.entry.id || !this.splan || !this.entry.date) return;
-      const p = this.splan.plan.find(x => x.course_id === this.entry.course_id && x.wd === this.weekdayOf(this.entry.date));
-      if (!p) return;
-      this.entry.from = p.from; this.entry.to = p.to; this.entry.breaks = 0; this.syncLength();
+    // A new past entry for a course with a planned session on that weekday gets the planned times.
+    async planPrefill() {
+      if (this.entry.id || !this.entry.date || !this.entry.course_id) return;
+      const key = `${this.entry.course_id}|${this.entry.date}`; this._planKey = key;
+      try {
+        const day = await api(`/api/plan/day?day=${this.entry.date}`);
+        if (this._planKey !== key || this.entry.id) return;   // the form changed meanwhile
+        const p = day.find(x => x.course_id === this.entry.course_id);
+        if (!p) return;
+        this.entry.from = p.from; this.entry.to = p.to; this.entry.breaks = 0; this.syncLength();
+      } catch (e) { /* no plan: keep the times */ }
     },
     planLog(p) {
-      // "Log it": the entry form with sport, day and planned times filled in, for weights and rating
+      // "Log it": the entry form with course, day and planned times filled in (add notes, weights, rating)
       this.openEntry();
       Object.assign(this.entry, { course_id: p.course_id, date: p.day, from: p.from, to: p.to, breaks: 0, wholeDay: false });
       this.syncLength(); this.entryChanged();
     },
     async planSkip(p) {
-      try { this.splan = await api("/api/sport/plan/skip", { method: "POST", body: { day: p.day, course_id: p.course_id } }); this.toast("Marked as skipped"); }
+      try { this.splan = await api(`/api/plan/skip?semester_id=${this.semesterId}`, { method: "POST", body: { day: p.day, course_id: p.course_id } }); this.toast("Marked as skipped"); }
       catch (e) { this.toast(e.message); }
     },
     planOpen() {
       this.splanErr = "";
-      this.splanEdit = this.splan.plan.map(p => ({ wd: p.wd, course_id: p.course_id, from: p.from, to: p.to }));
+      this.splanEdit = (this.splan?.plan || []).map(p => ({ wd: p.wd, course_id: p.course_id, from: p.from, to: p.to }));
     },
+    planChoices() { return this.courseGroups().filter(g => g.items.length && !g.items.every(c => c.kind === "other")); },
     planAdd() {
-      const first = (this.act?.sport?.types || []).find(t => !t.archived);
-      this.splanEdit.push({ wd: 0, course_id: first?.id, from: "18:00", to: "19:00" });
+      const pool = this.planScope === "sport" ? this.courses.filter(c => c.kind === "sport" && !c.finished) : this.openCourses;
+      this.splanEdit.push({ wd: 0, course_id: (pool[0] || this.courses[0])?.id, from: "08:00", to: "09:00" });
+    },
+    planCopyPrev() {
+      // the previous semester's sessions whose course still exists here (sports, a thesis across semesters)
+      const here = new Set(this.courses.map(c => c.id));
+      const have = new Set(this.splanEdit.map(p => `${p.wd}|${p.course_id}|${p.from}`));
+      let n = 0;
+      for (const p of this.splan?.prev?.plan || []) {
+        if (!here.has(p.course_id) || have.has(`${p.wd}|${p.course_id}|${p.from}`)) continue;
+        this.splanEdit.push({ wd: p.wd, course_id: p.course_id, from: p.from, to: p.to }); n++;
+      }
+      this.toast(n ? `${n} copied from ${this.splan.prev.code}` : `Nothing from ${this.splan.prev.code} applies here`);
     },
     async planSave() {
       try {
-        this.splan = await api("/api/sport/plan", { method: "PUT", body: this.splanEdit.map(p => ({ ...p, wd: Number(p.wd), course_id: Number(p.course_id) })) });
+        this.splan = await api(`/api/plan?semester_id=${this.semesterId}`, { method: "PUT", body: this.splanEdit.map(p => ({ ...p, wd: Number(p.wd), course_id: Number(p.course_id) })) });
         this.splanEdit = null; this.toast("Plan saved");
       } catch (e) { this.splanErr = e.message; }
     },

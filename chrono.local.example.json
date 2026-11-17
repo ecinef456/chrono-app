@@ -10,18 +10,20 @@
       "repo": "~/git/my-project"
     }
   ],
-  "sport_plan": [
+  "plan": [
     {
-      "day": "Mon",
-      "sport": "Running",
-      "from": "18:00",
-      "to": "19:00"
+      "semester": "HS26",
+      "day": "Tue",
+      "course": "ta",
+      "from": "08:00",
+      "to": "09:35"
     },
     {
-      "day": "Thu",
-      "sport": "Climbing",
-      "from": "19:30",
-      "to": "21:00"
+      "semester": "HS26",
+      "day": "Mon",
+      "course": "Running",
+      "from": "18:00",
+      "to": "19:00"
     }
   ]
 }

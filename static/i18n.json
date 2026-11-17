@@ -2858,5 +2858,55 @@
 "Les dates s'écrivent comme 2026-11-16.",
 "Daten sehen so aus: 2026-11-16.",
 "Le date si scrivono come 2026-11-16."
+],
+"Weekly plan, sport": [
+"Programme de la semaine, sport",
+"Wochenplan, Sport",
+"Piano settimanale, sport"
+],
+"{a}: planned sessions are not logged on their own, confirm the ones you did": [
+"{a} : les séances prévues ne sont pas enregistrées toutes seules, confirme celles que tu as faites",
+"{a}: Geplantes wird nicht von selbst erfasst, bestätige, was du gemacht hast",
+"{a}: le sessioni previste non vengono registrate da sole, conferma quelle che hai fatto"
+],
+"Set this semester's start date in the Courses tab, so the plan knows which days belong to it.": [
+"Indique la date de début de ce semestre dans l'onglet Cours, pour que le programme sache quels jours en font partie.",
+"Trage im Tab Kurse das Startdatum dieses Semesters ein, damit der Plan weiss, welche Tage dazugehören.",
+"Inserisci la data di inizio di questo semestre nella scheda Corsi, così il piano sa quali giorni ne fanno parte."
+],
+"No usual sessions yet. Click Edit plan to add your lectures, TA hours and trainings.": [
+"Pas encore de séances habituelles. Clique sur Modifier le programme pour ajouter tes cours, tes heures d'assistanat et tes entraînements.",
+"Noch keine üblichen Termine. Klicke auf Plan bearbeiten, um Vorlesungen, TA-Stunden und Trainings hinzuzufügen.",
+"Ancora nessuna sessione abituale. Clicca su Modifica il piano per aggiungere lezioni, ore da assistente e allenamenti."
+],
+"Add a session": [
+"Ajouter une séance",
+"Termin hinzufügen",
+"Aggiungi una sessione"
+],
+"Copy from {a}": [
+"Copier de {a}",
+"Aus {a} übernehmen",
+"Copia da {a}"
+],
+"{a} copied from {b}": [
+"{a} copiées de {b}",
+"{a} aus {b} übernommen",
+"{a} copiate da {b}"
+],
+"Nothing from {a} applies here": [
+"Rien de {a} ne s'applique ici",
+"Nichts aus {a} passt hierher",
+"Niente di {a} vale qui"
+],
+"{a} planned sessions to confirm": [
+"{a} séances prévues à confirmer",
+"{a} geplante Termine zu bestätigen",
+"{a} sessioni previste da confermare"
+],
+"Unknown course in the plan.": [
+"Cours inconnu dans le programme.",
+"Unbekannter Kurs im Plan.",
+"Corso sconosciuto nel piano."
 ]
 }
