@@ -11,7 +11,7 @@
 "use strict";
 
 // next to this file, wherever the page is served from (the app, or the phone page on GitHub Pages)
-const I18N_JSON = new URL("i18n.json?v=6", document.currentScript.src).href;
+const I18N_JSON = new URL("i18n.json?v=7", document.currentScript.src).href;
 const LANGS = { en: "English", fr: "Français", de: "Deutsch", it: "Italiano" };
 const LANG_INDEX = { fr: 0, de: 1, it: 2 };
 

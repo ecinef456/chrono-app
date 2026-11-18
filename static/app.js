@@ -488,6 +488,15 @@ function chrono() {
         const name = study ? s.course_code.toUpperCase() : this.kindLabel(s.course_kind) + (s.course_kind === "other" ? "" : " · " + s.course_name);
         return { key: "s" + s.id, live: false, act: !study, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;` + (study ? this.bg(s.category) : this.dots(s.course_kind)), title: `${name} ${this.hm(s.start)}–${this.hm(s.end)}, ${this.dur(s.duration_sec)}` };
       });
+      // sleep (nights and naps) underneath: a night over midnight shows on both days
+      const lo = this.stripBase(), hi = this.stripAt(24);
+      const sleep = (this.feat("sleep") ? this.sleepList : []).filter(e => parseLocal(e.bed) < hi && parseLocal(e.wake) > lo).map(e => {
+        const a = this.pct(parseLocal(e.bed)), b = this.pct(parseLocal(e.wake));
+        const sec = (parseLocal(e.wake) - parseLocal(e.bed)) / 1000;
+        return { key: "z" + e.id, live: false, act: false, sleep: true, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;`,
+                 title: `${this.tt(e.kind === "nap" ? "Nap" : "Sleep")} ${this.hm(e.bed)}–${this.hm(e.wake)}, ${this.dur(sec)}` };
+      });
+      segs.unshift(...sleep);
       const live = this.stripLive();
       if (live) {
         const a = this.pct(live[0]), b = this.pct(live[1]);

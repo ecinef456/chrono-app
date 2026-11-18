@@ -18,6 +18,7 @@ T = {
     "Code": ("Code", "Code", "Codice"),
     "Teach": ("Enseigner", "Unterrichten", "Insegnare"),
     "Sleep": ("Sommeil", "Schlaf", "Sonno"),
+    "Nap": ("Sieste", "Nickerchen", "Pisolino"),
     "Support Chrono": ("Soutenir Chrono", "Chrono unterstützen", "Sostieni Chrono"),
     "Buy me a coffee": ("Offre-moi un café", "Spendier mir einen Kaffee", "Offrimi un caffè"),
     "buy me a coffee": ("m'offrir un café", "mir einen Kaffee spendieren", "offrirmi un caffè"),
