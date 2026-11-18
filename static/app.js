@@ -89,11 +89,14 @@ function chrono() {
       if (this.tab === "teach") this.teachInit();
       if (this.tab === "sleep") this.sleepInit();
       this.winInit();
-      this.loadFeatures().then(() => this.preload());
+      this.loadFeatures().then(() => { this.preload(); this.seenPing(); });
+      // you are using Chrono: noted at most once a minute (first guess for last night's sleep)
+      for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, () => this.seenPing(), { capture: true, passive: true });
+      window.addEventListener("focus", () => this.seenPing());
       setInterval(() => { this.tick++; this.updateTitle(); }, 1000);
       setInterval(() => this.refreshTimer(), 30000);
       setInterval(() => { if (this.timer.state === "running") this.loadStats(); }, 60000);
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) { this.refreshTimer(); this.loadSemester(); } });
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { this.refreshTimer(); this.loadSemester(); this.seenPing(); } });
       window.addEventListener("resize", () => Object.values(this.charts).forEach(c => c.resize()));
       window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => this.renderCharts());
       if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -993,8 +996,49 @@ function chrono() {
       const free = this.sleepIsFreeMorning(iso), part = free ? sch.free : sch.work;
       this.sleepForm = kind === "nap"
         ? { id: null, kind, night: iso, bedT: "14:00", wakeT: "14:20", latency: null, awake: null, quality: null, free: null, alarm: false, notes: "" }
-        : { id: null, kind, night: iso, bedT: part.bed, wakeT: part.wake, latency: null, awake: null, quality: null, free, alarm: !free, notes: "" };
+        : { id: null, kind, night: iso, bedT: part.bed, wakeT: part.wake, latency: null, awake: null, quality: null, free, alarm: !free, notes: "", guess: null, sched: null };
       this.sleepErr = "";
+      if (kind === "night") this.sleepGuess(iso);
+    },
+    /* First guess for a night not logged yet: when the laptop (or Chrono) was last used that
+       evening, and when it was used again in the morning. Replaces the schedule times until you
+       change them; "Use my schedule instead" puts those back. */
+    async sleepGuess(iso) {
+      const f0 = this.sleepForm, sched = { bedT: f0.bedT, wakeT: f0.wakeT };
+      let g; try { g = await api(`/api/sleep/guess?night=${iso}`); } catch { return; }
+      const f = this.sleepForm;
+      if (!g || !f || f.id || f.kind !== "night" || f.night !== iso || f.bedT !== sched.bedT || f.wakeT !== sched.wakeT) return;
+      f.sched = sched;
+      f.bedT = g.bed.slice(11, 16); f.wakeT = g.wake.slice(11, 16);
+      f.guess = { kind: g.kind, bedT: f.bedT, wakeT: f.wakeT };
+    },
+    sleepGuessText() {
+      const g = this.sleepForm?.guess; if (!g) return "";
+      return g.kind === "laptop" ? `From your laptop: off at ${g.bedT}, on again at ${g.wakeT}.` : `From Chrono: last used at ${g.bedT}, opened at ${g.wakeT}.`;
+    },
+    sleepUseSchedule() { const f = this.sleepForm; if (!f?.sched) return; f.bedT = f.sched.bedT; f.wakeT = f.sched.wakeT; f.guess = null; },
+    async seenPing() {
+      if (Date.now() - (this._seenAt || 0) < 60000) return;
+      this._seenAt = Date.now();
+      try { await api("/api/seen", { method: "POST" }); } catch { return; }
+      this.maybeMorning();
+    },
+    /* The first time you use Chrono in a day (from 04:00 on), with last night not logged and no
+       timer running: open the Sleep tab on last night, with the first guess filled in. Once a day. */
+    async maybeMorning() {
+      if (!this.feat("sleep") || this._morningBusy) return;
+      const now = wallNow(), today = isoDate(now);
+      if (now.getHours() < 4 || store.get("chrono-morning", "") === today || this.timer.state !== "idle") return;
+      this._morningBusy = true;
+      try {
+        const night = this.sleepLastNight();
+        const list = await api(`/api/sleep?start=${night}&end=${night}`);
+        store.set("chrono-morning", today);
+        if (list.some(x => x.kind === "night")) return;
+        this.sleepForm = null;                                   // sleepInit opens last night
+        if (this.tab === "sleep") await this.sleepInit(); else this.tab = "sleep";
+        this.toast("Good morning. Check last night's times and save.");
+      } catch { /* try again on the next use */ } finally { this._morningBusy = false; }
     },
     sleepEdit(e, scroll = true) {
       const t = s => s.slice(11, 16);

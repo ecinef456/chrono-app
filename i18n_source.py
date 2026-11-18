@@ -722,6 +722,13 @@ T = {
     "Drag across the bar to add an entry": ("Glisse sur la barre pour ajouter une entrée", "Über den Balken ziehen, um einen Eintrag hinzuzufügen", "Trascina sulla barra per aggiungere una voce"),
     "next day": ("jour suivant", "nächster Tag", "giorno dopo"),
     "day before": ("veille", "Vortag", "giorno prima"),
+
+    # ---------------------------------------------------------------- sleep: first guess from laptop use
+    "From your laptop: off at {a}, on again at {b}.": ("D'après ton ordinateur : éteint à {a}, rallumé à {b}.", "Laut deinem Laptop: aus um {a}, wieder an um {b}.", "Dal tuo portatile: spento alle {a}, riacceso alle {b}."),
+    "From Chrono: last used at {a}, opened at {b}.": ("D'après Chrono : dernière utilisation à {a}, ouvert à {b}.", "Laut Chrono: zuletzt benutzt um {a}, geöffnet um {b}.", "Da Chrono: ultimo uso alle {a}, aperto alle {b}."),
+    "You probably went to bed a bit later and woke up a bit earlier: fix the times.": ("Tu t'es sans doute couché un peu plus tard et réveillé un peu plus tôt : corrige les heures.", "Wahrscheinlich bist du etwas später ins Bett und etwas früher aufgewacht: korrigiere die Zeiten.", "Probabilmente sei andato a letto un po' più tardi e ti sei svegliato un po' prima: correggi gli orari."),
+    "Use my schedule instead": ("Utiliser mon horaire", "Stattdessen meinen Plan verwenden", "Usa il mio orario"),
+    "Good morning. Check last night's times and save.": ("Bonjour. Vérifie les heures de la nuit dernière et enregistre.", "Guten Morgen. Prüf die Zeiten der letzten Nacht und speichere.", "Buongiorno. Controlla gli orari di stanotte e salva."),
     "{a} planned trainings to confirm": ("{a} entraînements prévus à confirmer", "{a} geplante Trainings zu bestätigen", "{a} allenamenti previsti da confermare"),
     "Times look like 20:05.": ("Les heures s'écrivent comme 20:05.", "Zeiten sehen so aus: 20:05.", "Gli orari si scrivono come 20:05."),
     "The end time must come after the start time.": ("L'heure de fin doit venir après l'heure de début.", "Das Ende muss nach dem Beginn liegen.", "L'ora di fine deve venire dopo l'ora di inizio."),

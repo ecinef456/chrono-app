@@ -15,7 +15,7 @@ import sys
 import threading
 import webbrowser
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -386,7 +386,14 @@ class StopIn(BaseModel):
     satisfaction: Optional[int] = Field(None, ge=0, le=10)
 
 
-app = FastAPI(title="Chrono")
+@asynccontextmanager
+async def lifespan(_app):
+    # the heartbeat runs while the server does (presence: first guess for last night's sleep)
+    threading.Thread(target=_heartbeat, daemon=True, name="chrono-heartbeat").start()
+    yield
+
+
+app = FastAPI(title="Chrono", lifespan=lifespan)
 
 
 def norm_ts(ts: str) -> str:
@@ -1687,6 +1694,71 @@ def delete_sleep(sid: int):
     with db() as con:
         con.execute("DELETE FROM sleep WHERE id=?", (sid,))
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- presence: a first guess for last night
+# The server notes every minute that the laptop is on ("laptop"), and the page notes when you use
+# Chrono ("active"). A pause of 3 h or more (lid closed, shut down, Chrono closed, or just not used)
+# is kept as a gap. The night's gap gives a first guess: bedtime = when it started, wake-up = when
+# it ended. The bedtime leans early (you were up at least until then), the wake-up late
+# (you woke before opening the laptop), so the guess overstates the sleep: it is only a prefill.
+GAP_MIN = timedelta(hours=3)
+_presence_lock = threading.Lock()
+
+
+def presence_beat(kind: str):
+    t = now()
+    with _presence_lock, db() as con:
+        r = con.execute("SELECT value FROM settings WHERE key=?", (f"seen:{kind}",)).fetchone()
+        if r:
+            last = parse(r["value"])
+            if t - last >= GAP_MIN:
+                g = con.execute("SELECT value FROM settings WHERE key='gaps'").fetchone()
+                gaps = json.loads(g["value"]) if g else []
+                gaps.append({"kind": kind, "start": fmt(last), "end": fmt(t)})
+                con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('gaps',?)", (json.dumps(gaps[-60:]),))
+        con.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (f"seen:{kind}", fmt(t)))
+
+
+def _heartbeat():
+    while True:
+        try:
+            presence_beat("laptop")
+        except Exception as e:   # never stop the server over this
+            print(f"Heartbeat failed: {e}")
+        time.sleep(60)
+
+
+@app.post("/api/seen")
+def seen():
+    """The page is in use (called at most once a minute)."""
+    presence_beat("laptop")   # after a resume the heartbeat thread may not have noticed yet
+    presence_beat("active")
+    return {"ok": True}
+
+
+@app.get("/api/sleep/guess")
+def sleep_guess(night: str):
+    """First guess for a night from the gaps: the laptop's own gap if there is one, else Chrono's."""
+    try:
+        n = date.fromisoformat(night)
+    except ValueError:
+        raise HTTPException(400, "Dates look like 2026-11-16.")
+    presence_beat("laptop")
+    lo = datetime.combine(n, datetime.min.time()) + timedelta(hours=16)        # evening of that date
+    morning = (lo + timedelta(hours=11), lo + timedelta(hours=23))            # 03:00 to 15:00 next day
+    with db() as con:
+        g = con.execute("SELECT value FROM settings WHERE key='gaps'").fetchone()
+    gaps = json.loads(g["value"]) if g else []
+    best = None
+    for kind in ("laptop", "active"):
+        fit = [x for x in gaps if x["kind"] == kind and parse(x["start"]) >= lo and morning[0] <= parse(x["end"]) <= morning[1]]
+        if fit:
+            best = max(fit, key=lambda x: parse(x["end"]) - parse(x["start"]))
+            break
+    if not best:
+        return None
+    return {"kind": best["kind"], "bed": best["start"], "wake": best["end"]}
 
 
 @app.get("/api/sleep/schedule")
