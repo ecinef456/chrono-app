@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", splan: null, splanEdit: null, splanErr: "", toastMsg: "",
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", splan: null, splanEdit: null, splanErr: "", toastMsg: "", stripOff: 0, stripSessions: [], stripSel: null,
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -114,7 +114,7 @@ function chrono() {
       this.semForm = { start_date: sem?.start_date || "", end_date: sem?.end_date || "" };
       if (!this.openCourses.some(c => c.id === this.selectedId)) this.selectedId = this.openCourses[0]?.id ?? null;
       this.stats = stats;
-      this.loadPlan();
+      this.loadPlan(); this.stripLoad();
       if (this.tab === "dash") this.$nextTick(() => this.renderCharts());
     },
     // After the first screen is up: fetch the data of the other tabs one after the other, when the
@@ -414,42 +414,68 @@ function chrono() {
       return h ? `${Math.round(b / h * 60)} min` : "–";
     },
 
-    /* today strip */
+    /* day strip: today by default, ← → for other days; drag across it to add a past entry */
+    // Midnight of the day the strip shows (stripOff days from today, on the wall clock).
+    stripBase() { const d = wallNow(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + this.stripOff); return d; },
+    stripDay() { return isoDate(this.stripBase()); },
+    // Clock time in hours from the strip day's midnight (the next day's 01:00 -> 25).
+    stripH(d) { return clockHours(d) - this.stripOff * 24; },
+    stripAt(h) { const b = this.stripBase(); return new Date(b.getFullYear(), b.getMonth(), b.getDate(), 0, Math.round(h * 60)); },
+    stripDayName() {
+      if (this.stripOff === 0) return "Today";
+      if (this.stripOff === -1) return "Yesterday";
+      if (this.stripOff === 1) return "Tomorrow";
+      return this.sleepDayLabel(this.stripDay());
+    },
+    async stripGo(off) {
+      this.stripOff = off; this.stripSel = null;
+      if (off === 0) { this.stripSessions = []; return; }
+      await this.stripLoad();
+    },
+    stripStep(d) { return this.stripGo(this.stripOff + d); },
+    async stripLoad() {
+      if (!this.stripOff) return;
+      const day = this.stripDay(), off = this.stripOff;
+      try {
+        const list = await api(`/api/sessions?day_from=${day}&day_to=${day}&limit=500`);
+        if (off === this.stripOff) this.stripSessions = list;
+      } catch (e) { this.toast(e.message); }
+    },
     todaySessions() {
-      const today = isoDate(wallNow());
-      // everything with a time span; whole-day Other notes have none
-      return this.recent.filter(s => !(s.course_kind === "other" && s.duration_sec === 0) && (s.start.slice(0, 10) === today || s.end.slice(0, 10) === today));
+      // everything with a time span that touches the strip day; whole-day Other notes have none
+      const day = this.stripDay(), lo = day + "T00:00:00", hi = isoDate(this.stripAt(24)) + "T00:00:00";
+      const pool = this.stripOff === 0 ? this.recent : this.stripSessions;
+      return pool.filter(s => !(s.course_kind === "other" && s.duration_sec === 0) && s.start < hi && s.end > lo);
+    },
+    // the running timer, as a span, when it touches the strip day
+    stripLive() {
+      if (this.timer.state === "idle" || !this.timer.session_start) return null;
+      const a = parseLocal(this.timer.session_start), b = this.timer.state === "running" ? wallNow() : parseLocal(this.timer.pause_start);
+      return this.stripH(b) < 0 || this.stripH(a) > 24 ? null : [a, b];
     },
     todayHours() {
       this.tick;
-      let sec = this.todaySessions().filter(s => this.isStudy(s.course_kind)).reduce((a, s) => a + s.duration_sec, 0);
-      if (this.timer.state !== "idle" && this.isStudy(this.timer.course?.kind) && this.timer.session_start?.slice(0, 10) === isoDate(wallNow())) sec += this.elapsedNow;
+      // a session over midnight counts on each day for the part that falls in it
+      const lo = this.stripBase(), hi = this.stripAt(24);
+      const part = s => { const a = parseLocal(s.start), b = parseLocal(s.end), span = b - a; return span > 0 ? (Math.min(b, hi) - Math.max(a, lo)) / span : 1; };
+      let sec = this.todaySessions().filter(s => this.isStudy(s.course_kind)).reduce((a, s) => a + s.duration_sec * part(s), 0);
+      if (this.stripOff === 0 && this.timer.state !== "idle" && this.isStudy(this.timer.course?.kind) && this.timer.session_start?.slice(0, 10) === isoDate(wallNow())) sec += this.elapsedNow;
       return sec / 3600;
     },
     dayStripRange() {
-      const DAY_START = 0, DAY_END = 24, STEP = 2;   // bar from 00:00 to 24:00, a label every 2 h
-      let lo = DAY_START, hi = DAY_END;
-      const hours = clockHours;
-      const times = this.todaySessions().flatMap(s => [parseLocal(s.start), parseLocal(s.end)]);
-      if (this.timer.session_start) times.push(parseLocal(this.timer.session_start), wallNow());
-      for (const t of times) {
-        const h = hours(t);
-        if (h < lo) lo = Math.max(0, Math.floor(h));
-        if (h > hi) hi = Math.min(24, Math.ceil(h));
-      }
-      lo -= lo % STEP;
-      hi = Math.min(24, lo + Math.ceil((hi - lo) / STEP) * STEP);
+      const STEP = 2;   // bar from 00:00 to 24:00, a label every 2 h
+      const lo = 0, hi = 24;
       const ticks = []; for (let h = lo; h <= hi; h += STEP) ticks.push(`${pad(h % 24)}:00`);
-      return { lo, hi, ticks, label: "" };
+      return { lo, hi, ticks };
     },
     hourTicks() {
-      this.tick;
       const { lo, hi } = this.dayStripRange();
       const out = [];
       for (let h = lo + 1; h < hi; h++) out.push({ h, left: (h - lo) / (hi - lo) * 100 });
       return out;
     },
-    pct(d) { const { lo, hi } = this.dayStripRange(); const h = clockHours(d); return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
+    pctH(h) { const { lo, hi } = this.dayStripRange(); return Math.max(0, Math.min(100, (h - lo) / (hi - lo) * 100)); },
+    pct(d) { return this.pctH(this.stripH(d)); },
     nowPct() { this.tick; return this.pct(wallNow()); },
     daySegments() {
       this.tick;
@@ -459,14 +485,58 @@ function chrono() {
         const name = study ? s.course_code.toUpperCase() : this.kindLabel(s.course_kind) + (s.course_kind === "other" ? "" : " · " + s.course_name);
         return { key: "s" + s.id, live: false, act: !study, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;` + (study ? this.bg(s.category) : this.dots(s.course_kind)), title: `${name} ${this.hm(s.start)}–${this.hm(s.end)}, ${this.dur(s.duration_sec)}` };
       });
-      if (this.timer.state !== "idle" && this.timer.session_start) {
-        const a = this.pct(parseLocal(this.timer.session_start));
-        const endT = this.timer.state === "running" ? wallNow() : parseLocal(this.timer.pause_start);
-        const b = this.pct(endT);
+      const live = this.stripLive();
+      if (live) {
+        const a = this.pct(live[0]), b = this.pct(live[1]);
         const study = this.isStudy(this.timer.course?.kind);
         segs.push({ key: "live", live: this.timer.state === "running", act: !study, style: `left:${a}%;width:${Math.max(b - a, 0.4)}%;` + (study ? this.bg(this.timer.course?.category) : this.dots(this.timer.course?.kind)), title: "Current session" });
       }
       return segs;
+    },
+    // Drag across the strip: on release, the entry dialog opens with that span and the chosen chip.
+    // Dragging past the right edge goes on into the next day (past the left edge, into the day before).
+    stripDown(ev) {
+      if (ev.button !== 0) return;
+      const track = this.$refs.strack; if (!track) return;
+      const r = track.getBoundingClientRect(), { lo, hi } = this.dayStripRange();
+      const MAX = 24 - 5 / 60;   // an entry is shorter than a day
+      const at = e => {
+        const h = lo + (e.clientX - r.left) / r.width * (hi - lo);    // goes on past the edges, same scale
+        return Math.round(Math.max(lo - 12, Math.min(hi + 12, h)) * 12) / 12;   // 5-minute steps
+      };
+      const x0 = ev.clientX, h0 = at(ev);
+      this.stripSel = { a: h0, b: h0, moved: false };
+      track.setPointerCapture?.(ev.pointerId);
+      const move = e => {
+        if (!this.stripSel) return;
+        const b = Math.max(h0 - MAX, Math.min(h0 + MAX, at(e)));
+        this.stripSel = { a: h0, b, moved: this.stripSel.moved || Math.abs(e.clientX - x0) > 4 };
+      };
+      const done = (e, ok) => {
+        track.removeEventListener("pointermove", move); track.removeEventListener("pointerup", up); track.removeEventListener("pointercancel", cancel);
+        const s = this.stripSel; this.stripSel = null;
+        if (ok && s && s.moved && s.a !== s.b) this.stripOpen(Math.min(s.a, s.b), Math.max(s.a, s.b));
+      };
+      const up = e => done(e, true), cancel = e => done(e, false);
+      track.addEventListener("pointermove", move); track.addEventListener("pointerup", up); track.addEventListener("pointercancel", cancel);
+    },
+    stripSelView() {
+      const s = this.stripSel; if (!s || !s.moved) return null;
+      const a = Math.min(s.a, s.b), b = Math.max(s.a, s.b);
+      const t = h => { const d = this.stripAt(h); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+      const side = h => h >= 24 ? ` (${this.tt("next day")})` : h < 0 ? ` (${this.tt("day before")})` : "";
+      return {
+        style: `left:${this.pctH(a)}%;width:${Math.max(this.pctH(b) - this.pctH(a), 0.3)}%`,
+        offL: a < 0, offR: b > 24,
+        label: `${t(a)}${side(a)} – ${t(b)}${side(b)}, ${this.dur(Math.round((b - a) * 60) * 60)}`,
+      };
+    },
+    stripOpen(a, b) {
+      const st = this.stripAt(a), en = this.stripAt(b);
+      this.openEntry();
+      // times from the selection; the plan must not replace them (course and date can still change)
+      Object.assign(this.entry, { date: isoDate(st), from: `${pad(st.getHours())}:${pad(st.getMinutes())}`, to: `${pad(en.getHours())}:${pad(en.getMinutes())}`, breaks: 0, wholeDay: false, fixed: true });
+      this.syncLength(); this.entryChanged();
     },
 
     /* ---------------- charts */
@@ -660,11 +730,11 @@ function chrono() {
     },
     // A new past entry for a course with a planned session on that weekday gets the planned times.
     async planPrefill() {
-      if (this.entry.id || !this.entry.date || !this.entry.course_id) return;
+      if (this.entry.id || this.entry.fixed || !this.entry.date || !this.entry.course_id) return;
       const key = `${this.entry.course_id}|${this.entry.date}`; this._planKey = key;
       try {
         const day = await api(`/api/plan/day?day=${this.entry.date}`);
-        if (this._planKey !== key || this.entry.id) return;   // the form changed meanwhile
+        if (this._planKey !== key || this.entry.id || this.entry.fixed) return;   // the form changed meanwhile
         const p = day.find(x => x.course_id === this.entry.course_id);
         if (!p) return;
         this.entry.from = p.from; this.entry.to = p.to; this.entry.breaks = 0; this.syncLength();

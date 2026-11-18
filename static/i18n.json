@@ -2834,6 +2834,46 @@
 "Gestern",
 "Ieri"
 ],
+"Yesterday,": [
+"Hier,",
+"Gestern",
+"Ieri,"
+],
+"Tomorrow,": [
+"Demain,",
+"Morgen",
+"Domani,"
+],
+"Previous day": [
+"Jour précédent",
+"Vorheriger Tag",
+"Giorno precedente"
+],
+"Next day": [
+"Jour suivant",
+"Nächster Tag",
+"Giorno successivo"
+],
+"Back to today": [
+"Revenir à aujourd'hui",
+"Zurück zu heute",
+"Torna a oggi"
+],
+"Drag across the bar to add an entry": [
+"Glisse sur la barre pour ajouter une entrée",
+"Über den Balken ziehen, um einen Eintrag hinzuzufügen",
+"Trascina sulla barra per aggiungere una voce"
+],
+"next day": [
+"jour suivant",
+"nächster Tag",
+"giorno dopo"
+],
+"day before": [
+"veille",
+"Vortag",
+"giorno prima"
+],
 "{a} planned trainings to confirm": [
 "{a} entraînements prévus à confirmer",
 "{a} geplante Trainings zu bestätigen",

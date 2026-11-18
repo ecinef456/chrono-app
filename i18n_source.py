@@ -712,6 +712,16 @@ T = {
     "Plan saved": ("Programme enregistré", "Plan gespeichert", "Piano salvato"),
     "Marked as skipped": ("Marqué comme pas fait", "Als ausgelassen markiert", "Segnato come saltato"),
     "Yesterday": ("Hier", "Gestern", "Ieri"),
+
+    # ---------------------------------------------------------------- day strip on the timer
+    "Yesterday,": ("Hier,", "Gestern", "Ieri,"),
+    "Tomorrow,": ("Demain,", "Morgen", "Domani,"),
+    "Previous day": ("Jour précédent", "Vorheriger Tag", "Giorno precedente"),
+    "Next day": ("Jour suivant", "Nächster Tag", "Giorno successivo"),
+    "Back to today": ("Revenir à aujourd'hui", "Zurück zu heute", "Torna a oggi"),
+    "Drag across the bar to add an entry": ("Glisse sur la barre pour ajouter une entrée", "Über den Balken ziehen, um einen Eintrag hinzuzufügen", "Trascina sulla barra per aggiungere una voce"),
+    "next day": ("jour suivant", "nächster Tag", "giorno dopo"),
+    "day before": ("veille", "Vortag", "giorno prima"),
     "{a} planned trainings to confirm": ("{a} entraînements prévus à confirmer", "{a} geplante Trainings zu bestätigen", "{a} allenamenti previsti da confermare"),
     "Times look like 20:05.": ("Les heures s'écrivent comme 20:05.", "Zeiten sehen so aus: 20:05.", "Gli orari si scrivono come 20:05."),
     "The end time must come after the start time.": ("L'heure de fin doit venir après l'heure de début.", "Das Ende muss nach dem Beginn liegen.", "L'ora di fine deve venire dopo l'ora di inizio."),

@@ -595,13 +595,23 @@ def delete_course(cid: int):
 # ---------------------------------------------------------------- sessions
 
 @app.get("/api/sessions")
-def list_sessions(semester_id: Optional[int] = None, course_id: Optional[int] = None, limit: int = 2000):
+def list_sessions(semester_id: Optional[int] = None, course_id: Optional[int] = None, limit: int = 2000,
+                  day_from: Optional[str] = None, day_to: Optional[str] = None):
     q = ("SELECT s.*, c.code AS course_code, c.name AS course_name, c.category, c.kind AS course_kind"
          " FROM sessions s JOIN courses c ON c.id = s.course_id WHERE 1=1")
     args = []
     if course_id:
         q += " AND s.course_id=?"
         args.append(course_id)
+    if day_from or day_to:
+        # sessions that overlap these days (the dashboard strip of another day)
+        try:
+            d0 = date.fromisoformat(day_from or day_to)
+            d1 = date.fromisoformat(day_to or day_from)
+        except ValueError:
+            raise HTTPException(400, "Dates look like 2026-11-16.")
+        q += " AND s.end > ? AND s.start < ?"
+        args += [f"{d0.isoformat()}T00:00:00", f"{(d1 + timedelta(days=1)).isoformat()}T00:00:00"]
     with db() as con:
         if not semester_id:
             return rows(con.execute(q + " ORDER BY s.start DESC LIMIT ?", args + [limit]))

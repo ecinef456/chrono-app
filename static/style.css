@@ -203,6 +203,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .daystrip-scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-3); margin-top: 5px; }
 .daystrip-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); margin-bottom: 7px; }
 .daystrip-meta b { color: var(--ink); font-weight: 650; }
+.daystrip-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start; }
+.daystrip-nav { height: 26px; padding: 0 9px; }
+.daystrip-mid { min-width: 0; }
+.daystrip-track { cursor: crosshair; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.daystrip-track.dragging .daystrip-seg { pointer-events: none; }
+.daystrip-pick {
+  position: absolute; top: 0; bottom: 0; z-index: 2; pointer-events: none; border-radius: 4px;
+  background: color-mix(in srgb, var(--ink) 22%, transparent); box-shadow: inset 0 0 0 2px var(--ink);
+}
+/* the selection goes on into the next day / the day before */
+.daystrip-pick.offr { border-top-right-radius: 0; border-bottom-right-radius: 0; box-shadow: inset 2px 0 0 var(--ink), inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+.daystrip-pick.offl { border-top-left-radius: 0; border-bottom-left-radius: 0; box-shadow: inset -2px 0 0 var(--ink), inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+.daystrip-pick.offl.offr { box-shadow: inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+.daystrip-sel { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.daystrip-hint { color: var(--ink-3); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 /* ---------- summary figures */
 .figures { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); border-top: 1px solid var(--rule); }
