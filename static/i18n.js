@@ -1,7 +1,7 @@
-// Chrono in English, French, German and Italian.
+// Chrono in English, French, German, Italian and Romansh (Rumantsch Grischun).
 //
-// The page is written in English. static/i18n.json maps each English text to its French, German
-// and Italian versions: {"English": ["français", "Deutsch", "italiano"]}. A key may hold
+// The page is written in English. static/i18n.json maps each English text to its French, German,
+// Italian and Romansh versions: {"English": ["français", "Deutsch", "italiano", "rumantsch"]}. A key may hold
 // placeholders, {a} {b} ..., for the parts that change (numbers, dates, names):
 //   "Week {a} of the semester, started {b}": ["Semaine {a} du semestre, commencée le {b}", ...]
 // The translator rewrites every text node and the placeholder / title / aria-label attributes,
@@ -11,9 +11,9 @@
 "use strict";
 
 // next to this file, wherever the page is served from (the app, or the phone page on GitHub Pages)
-const I18N_JSON = new URL("i18n.json?v=4", document.currentScript.src).href;
-const LANGS = { en: "English", fr: "Français", de: "Deutsch", it: "Italiano" };
-const LANG_INDEX = { fr: 0, de: 1, it: 2 };
+const I18N_JSON = new URL("i18n.json?v=5", document.currentScript.src).href;
+const LANGS = { en: "English", fr: "Français", de: "Deutsch", it: "Italiano", rm: "Rumantsch" };
+const LANG_INDEX = { fr: 0, de: 1, it: 2, rm: 3 };
 
 const I18N = {
   lang: "en",
@@ -167,8 +167,42 @@ const I18N = {
     await this.load(lang);
   },
 
-  locale() { return { en: "en-GB", fr: "fr-CH", de: "de-CH", it: "it-CH" }[this.lang] || "en-GB"; },
+  locale() { return { en: "en-GB", fr: "fr-CH", de: "de-CH", it: "it-CH", rm: "rm-CH" }[this.lang] || "en-GB"; },
 };
+
+// Romansh dates and numbers. Chrome, Brave and the Qt window carry no Romansh locale data, so
+// toLocaleDateString("rm-CH") would come out in English there. Calls with an "rm" locale are
+// answered here instead, in the CLDR forms ("mesemna, ils 18 da november 2026", "me, 18 nov.");
+// numbers use the Swiss form (1’234.5). Every other locale goes to the browser as before.
+(() => {
+  const WD = ["dumengia", "glindesdi", "mardi", "mesemna", "gievgia", "venderdi", "sonda"];
+  const WD_SHORT = ["du", "gli", "ma", "me", "gie", "ve", "so"];
+  const MON = ["schaner", "favrer", "mars", "avrigl", "matg", "zercladur", "fanadur", "avust", "settember", "october", "november", "december"];
+  const MON_SHORT = ["schan.", "favr.", "mars", "avr.", "matg", "zercl.", "fan.", "avust", "sett.", "oct.", "nov.", "dec."];
+  const isRm = loc => (Array.isArray(loc) ? loc[0] : loc)?.toLowerCase?.().startsWith("rm");
+  const da = m => (/^[aeiou]/.test(m) ? "d'" : "da ") + m;   // "da november", "d'avrigl"
+
+  function rmDate(d, o = {}) {
+    if (!o.weekday && !o.day && !o.month && !o.year) o = { day: "numeric", month: "numeric", year: "numeric" };
+    const w = d.getDay(), m = d.getMonth();
+    const wd = o.weekday === "long" ? WD[w] : o.weekday === "short" ? WD_SHORT[w] : o.weekday === "narrow" ? WD[w][0].toUpperCase() : "";
+    let date = "";
+    if (o.day && o.month === "long") date = `ils ${d.getDate()} ${da(MON[m])}`;
+    else if (o.day && (o.month === "short" || o.month === "narrow")) date = `${d.getDate()} ${MON_SHORT[m]}`;
+    else if (o.day && o.month) date = `${d.getDate()}.${m + 1}.`;
+    else if (o.month) date = o.month === "long" ? MON[m] : o.month === "numeric" || o.month === "2-digit" ? String(m + 1) : MON_SHORT[m];
+    else if (o.day) date = String(d.getDate());
+    if (o.year) date += (date.endsWith(".") && o.month !== "short" ? "" : " ") + (o.year === "2-digit" ? String(d.getFullYear()).slice(2) : d.getFullYear());
+    return [wd, date.trim()].filter(Boolean).join(", ");
+  }
+
+  const dateFn = Date.prototype.toLocaleDateString;
+  Date.prototype.toLocaleDateString = function (loc, o) {
+    return isRm(loc) && !isNaN(this) ? rmDate(this, o) : dateFn.call(this, loc, o);
+  };
+  const numFn = Number.prototype.toLocaleString;
+  Number.prototype.toLocaleString = function (loc, o) { return numFn.call(this, isRm(loc) ? "de-CH" : loc, o); };
+})();
 
 // Deferred script: the page is parsed, so start right away; the app waits for it before showing.
 I18N.ready = I18N.load(I18N.pick()).catch(() => {});
