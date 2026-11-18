@@ -205,7 +205,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .daystrip-meta b { color: var(--ink); font-weight: 650; }
 .daystrip-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start; }
 .daystrip-nav { height: 26px; padding: 0 9px; }
-.daystrip-mid { min-width: 0; }
+.daystrip-mid { min-width: 0; position: relative; }
+.daystrip-hover {
+  position: absolute; bottom: calc(100% + 3px); transform: translateX(-50%); z-index: 3; pointer-events: none;
+  padding: 1px 5px; border-radius: 5px; background: var(--ink); color: var(--panel);
+  font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.4; white-space: nowrap;
+}
 .daystrip-track { cursor: crosshair; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .daystrip-track.dragging .daystrip-seg { pointer-events: none; }
 .daystrip-pick {

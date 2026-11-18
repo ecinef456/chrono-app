@@ -54,7 +54,7 @@ function chrono() {
     selectedId: store.get("chrono-course", null),
     tab: store.get("chrono-tab", "dash"),
     theme: store.get("chrono-theme", "system"),
-    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", splan: null, splanEdit: null, splanErr: "", toastMsg: "", stripOff: 0, stripSessions: [], stripSel: null,
+    logCourse: 0, logFrom: "", logTo: "", logDays: 45, startMs: 0, lang: (window.I18N && I18N.lang) || "en", langOpen: false, headerFit: 0, langs: window.LANGS || { en: "English" }, tick: 0, teach: store.get("chrono-teach", null), teachPaste: "", teachErr: "", teachDrag: false, teachView: store.get("chrono-teach-view", "cal"), teachYear: null, teachDay: null, lessons: [], ed: null, edId: null, edErr: "", features: null, featPick: {}, featCount: { mode: "ects", ects_hours: 30, lesson_min: 30 }, frameless: false, sleepList: [], sleepSt: null, sleepDays: store.get("chrono-sleep-days", 28), sleepForm: null, sleepErr: "", sleepSched: null, sleepSchedOpen: false, askMsg: "", askOk: "Delete", phone: { svg: "", link: "", err: "" }, act: null, actNew: { sport: "", code: "" }, actErr: "", splan: null, splanEdit: null, splanErr: "", toastMsg: "", stripOff: 0, stripSessions: [], stripSel: null, stripHover: null,
     entry: {}, entryErr: "", stopNotes: "", stopRating: null,
     sm: { fields: [] },
     courseForm: {}, courseErr: "", semForm: {}, newSem: {}, semErr: "",
@@ -501,12 +501,9 @@ function chrono() {
     stripDown(ev) {
       if (ev.button !== 0) return;
       const track = this.$refs.strack; if (!track) return;
-      const r = track.getBoundingClientRect(), { lo, hi } = this.dayStripRange();
+      const r = track.getBoundingClientRect();
       const MAX = 24 - 5 / 60;   // an entry is shorter than a day
-      const at = e => {
-        const h = lo + (e.clientX - r.left) / r.width * (hi - lo);    // goes on past the edges, same scale
-        return Math.round(Math.max(lo - 12, Math.min(hi + 12, h)) * 12) / 12;   // 5-minute steps
-      };
+      const at = e => this.stripHAt(e.clientX, r);
       const x0 = ev.clientX, h0 = at(ev);
       this.stripSel = { a: h0, b: h0, moved: false };
       track.setPointerCapture?.(ev.pointerId);
@@ -522,6 +519,21 @@ function chrono() {
       };
       const up = e => done(e, true), cancel = e => done(e, false);
       track.addEventListener("pointermove", move); track.addEventListener("pointerup", up); track.addEventListener("pointercancel", cancel);
+    },
+    // the clock time under the pointer, in 5-minute steps; goes on past the edges at the same scale
+    stripHAt(x, r = this.$refs.strack.getBoundingClientRect()) {
+      const { lo, hi } = this.dayStripRange();
+      const h = lo + (x - r.left) / r.width * (hi - lo);
+      return Math.round(Math.max(lo - 12, Math.min(hi + 12, h)) * 12) / 12;
+    },
+    stripHoverMove(ev) { if (ev.pointerType !== "touch") this.stripHover = this.stripHAt(ev.clientX); },
+    // small time label above the pointer: where a click would start (while dragging: the end)
+    stripHoverView() {
+      const h = this.stripHover; if (h === null) return null;
+      const { lo, hi } = this.dayStripRange();
+      if (h < lo || h > hi) return null;   // past an edge: the label above the bar says it
+      const d = this.stripAt(h);
+      return { left: this.pctH(h), text: `${pad(d.getHours())}:${pad(d.getMinutes())}` };
     },
     stripSelView() {
       const s = this.stripSel; if (!s || !s.moved) return null;

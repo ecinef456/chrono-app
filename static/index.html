@@ -7,11 +7,11 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=30">
+<link rel="stylesheet" href="/static/style.css?v=31">
 <script defer src="/static/i18n.js?v=5"></script>
 <script defer src="/static/teach.js?v=2"></script>
 <script defer src="/static/teach-live.js?v=1"></script>
-<script defer src="/static/app.js?v=34"></script>
+<script defer src="/static/app.js?v=35"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -164,7 +164,7 @@
       <div class="daystrip-row">
         <button type="button" class="btn small daystrip-nav" @click="stripStep(-1)" title="Previous day" aria-label="Previous day">←</button>
         <div class="daystrip-mid">
-          <div class="daystrip-track" x-ref="strack" @pointerdown.prevent="stripDown($event)" :class="{dragging: stripSel}">
+          <div class="daystrip-track" x-ref="strack" @pointerdown.prevent="stripDown($event)" @pointermove="stripHoverMove($event)" @pointerleave="if (!stripSel) stripHover = null" @pointerup="if ($event.pointerType === 'touch') stripHover = null" :class="{dragging: stripSel}">
             <template x-for="seg in daySegments()" :key="seg.key">
               <div class="daystrip-seg" :class="{live: seg.live, act: seg.act}" :style="seg.style" :title="seg.title"></div>
             </template>
@@ -176,6 +176,9 @@
               <div class="daystrip-pick" :class="{offl: stripSelView().offL, offr: stripSelView().offR}" :style="stripSelView().style"></div>
             </template>
           </div>
+          <template x-if="stripHoverView()">
+            <div class="daystrip-hover" :style="'left:' + stripHoverView().left + '%'" x-text="stripHoverView().text" aria-hidden="true"></div>
+          </template>
           <div class="daystrip-scale"><template x-for="t in dayStripRange().ticks"><span x-text="t"></span></template></div>
         </div>
         <button type="button" class="btn small daystrip-nav" @click="stripStep(1)" title="Next day" aria-label="Next day">→</button>
