@@ -1782,7 +1782,7 @@ SOURCES = {
 }
 
 
-# ---- translations: static/i18n.json, {"English": ["français", "Deutsch", "italiano"]}, shared with the page
+# ---- translations: static/i18n.json, {"English": ["français", "Deutsch", "italiano", "rumantsch"]}, shared with the page
 _I18N = None
 
 
@@ -1798,7 +1798,7 @@ def _i18n():
 
 def T(lang, en, **kw):
     """Translate an English text (with {a} {b} ... placeholders) and fill it in."""
-    i = {"fr": 0, "de": 1, "it": 2}.get(lang)
+    i = {"fr": 0, "de": 1, "it": 2, "rm": 3}.get(lang)
     tr = _i18n().get(en) if i is not None else None
     text = tr[i] if tr and len(tr) > i and tr[i] else en
     return text.format(**kw) if kw else text

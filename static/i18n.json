@@ -2,29 +2,35 @@
 "// edit i18n_source.py, not this file": [
 "",
 "",
+"",
 ""
 ],
 "Semester": [
 "Semestre",
 "Semester",
-"Semestre"
+"Semestre",
+"Semester"
 ],
 "Dashboard": [
 "Aperçu",
 "Übersicht",
-"Panoramica"
+"Panoramica",
+"Survista"
 ],
 "Log": [
 "Journal",
 "Protokoll",
-"Registro"
+"Registro",
+"Protocol"
 ],
 "Courses": [
 "Cours",
 "Kurse",
-"Corsi"
+"Corsi",
+"Curs"
 ],
 "Sport": [
+"Sport",
 "Sport",
 "Sport",
 "Sport"
@@ -32,239 +38,287 @@
 "Code": [
 "Code",
 "Code",
-"Codice"
+"Codice",
+"Code"
 ],
 "Teach": [
 "Enseigner",
 "Unterrichten",
-"Insegnare"
+"Insegnare",
+"Instruir"
 ],
 "Sleep": [
 "Sommeil",
 "Schlaf",
-"Sonno"
+"Sonno",
+"Sien"
 ],
 "Support Chrono": [
 "Soutenir Chrono",
 "Chrono unterstützen",
-"Sostieni Chrono"
+"Sostieni Chrono",
+"Sustegnair Chrono"
 ],
 "Buy me a coffee": [
 "Offre-moi un café",
 "Spendier mir einen Kaffee",
-"Offrimi un caffè"
+"Offrimi un caffè",
+"Paja a mai in caffè"
 ],
 "buy me a coffee": [
 "m'offrir un café",
 "mir einen Kaffee spendieren",
-"offrirmi un caffè"
+"offrirmi un caffè",
+"ma pajar in caffè"
 ],
 "Features": [
 "Fonctions",
 "Funktionen",
-"Funzioni"
+"Funzioni",
+"Funcziuns"
 ],
 "Choose features": [
 "Choisir les fonctions",
 "Funktionen wählen",
-"Scegli le funzioni"
+"Scegli le funzioni",
+"Tscherner funcziuns"
 ],
 "Switch theme": [
 "Changer de thème",
 "Design wechseln",
-"Cambia tema"
+"Cambia tema",
+"Midar il design"
 ],
 "Theme: {a}": [
 "Thème : {a}",
 "Design: {a}",
-"Tema: {a}"
+"Tema: {a}",
+"Design: {a}"
 ],
 "system": [
 "système",
 "System",
-"sistema"
+"sistema",
+"sistem"
 ],
 "light": [
 "clair",
 "hell",
-"chiaro"
+"chiaro",
+"cler"
 ],
 "dark": [
 "sombre",
 "dunkel",
-"scuro"
+"scuro",
+"stgir"
 ],
 "Language": [
 "Langue",
 "Sprache",
+"Lingua",
 "Lingua"
 ],
 "Minimize": [
 "Réduire",
 "Minimieren",
-"Riduci a icona"
+"Riduci a icona",
+"Minimar"
 ],
 "Maximize / restore": [
 "Agrandir / restaurer",
 "Maximieren / wiederherstellen",
-"Ingrandisci / ripristina"
+"Ingrandisci / ripristina",
+"Maximar / restaurar"
 ],
 "Maximize or restore": [
 "Agrandir ou restaurer",
 "Maximieren oder wiederherstellen",
-"Ingrandisci o ripristina"
+"Ingrandisci o ripristina",
+"Maximar u restaurar"
 ],
 "Close": [
 "Fermer",
 "Schliessen",
-"Chiudi"
+"Chiudi",
+"Serrar"
 ],
 "Loading Chrono": [
 "Chargement de Chrono",
 "Chrono wird geladen",
-"Caricamento di Chrono"
+"Caricamento di Chrono",
+"Chrono vegn chargià"
 ],
 "Loading…": [
 "Chargement…",
 "Wird geladen…",
-"Caricamento…"
+"Caricamento…",
+"Chargiar…"
 ],
 "Chrono was updated, but the server still runs the old version. Close Chrono and open it again, or run": [
 "Chrono a été mis à jour, mais le serveur tourne encore avec l'ancienne version. Ferme Chrono et rouvre-le, ou lance",
 "Chrono wurde aktualisiert, aber der Server läuft noch mit der alten Version. Schliess Chrono und öffne es wieder, oder führe aus:",
-"Chrono è stato aggiornato, ma il server usa ancora la versione vecchia. Chiudi Chrono e riaprilo, oppure esegui"
+"Chrono è stato aggiornato, ma il server usa ancora la versione vecchia. Chiudi Chrono e riaprilo, oppure esegui",
+"Chrono è vegnì actualisà, ma il server funcziuna anc cun la versiun veglia. Serra Chrono ed avra el danovamain, u exequescha"
 ],
 "Timer": [
 "Minuteur",
 "Timer",
-"Timer"
+"Timer",
+"Cronometer"
 ],
 "Add past entry": [
 "Ajouter une entrée passée",
 "Vergangenen Eintrag hinzufügen",
-"Aggiungi una voce passata"
+"Aggiungi una voce passata",
+"Agiuntar ina inscripziun passada"
 ],
 "Start": [
 "Démarrer",
 "Start",
-"Avvia"
+"Avvia",
+"Cumenzar"
 ],
 "Stop": [
 "Arrêter",
 "Stopp",
-"Ferma"
+"Ferma",
+"Fermar"
 ],
 "Pause": [
 "Pause",
 "Pause",
+"Pausa",
 "Pausa"
 ],
 "Resume — the break was": [
 "Reprendre — la pause était",
 "Weiter — die Pause war",
-"Riprendi — la pausa era"
+"Riprendi — la pausa era",
+"Cuntinuar — la pausa era"
 ],
 "Necessary": [
 "Nécessaire",
 "Nötig",
+"Necessaria",
 "Necessaria"
 ],
 "Not necessary": [
 "Pas nécessaire",
 "Nicht nötig",
-"Non necessaria"
+"Non necessaria",
+"Betg necessaria"
 ],
 "necessary": [
 "nécessaire",
 "nötig",
+"necessaria",
 "necessaria"
 ],
 "not necessary": [
 "pas nécessaire",
 "nicht nötig",
-"non necessaria"
+"non necessaria",
+"betg necessaria"
 ],
 "Stop and save": [
 "Arrêter et enregistrer",
 "Stoppen und speichern",
-"Ferma e salva"
+"Ferma e salva",
+"Fermar e memorisar"
 ],
 "Course": [
 "Cours",
 "Kurs",
-"Corso"
+"Corso",
+"Curs"
 ],
 "Today,": [
 "Aujourd'hui,",
 "Heute",
-"Oggi,"
+"Oggi,",
+"Oz,"
 ],
 "studied": [
 "étudié",
 "gelernt",
-"di studio"
+"di studio",
+"studegià"
 ],
 "Ready: {a}": [
 "Prêt : {a}",
 "Bereit: {a}",
-"Pronto: {a}"
+"Pronto: {a}",
+"Pront: {a}"
 ],
 "Pick a course to start": [
 "Choisis un cours pour commencer",
 "Wähle einen Kurs, um zu starten",
-"Scegli un corso per iniziare"
+"Scegli un corso per iniziare",
+"Tscherna in curs per cumenzar"
 ],
 "Add a course in the Courses tab to start tracking": [
 "Ajoute un cours dans l'onglet Cours pour commencer",
 "Füge im Tab Kurse einen Kurs hinzu, um zu starten",
-"Aggiungi un corso nella scheda Corsi per iniziare"
+"Aggiungi un corso nella scheda Corsi per iniziare",
+"Agiunta in curs en il tab Curs per cumenzar"
 ],
 "Studying": [
 "En étude",
 "Am Lernen",
-"Studio in corso"
+"Studio in corso",
+"Studi en cursa"
 ],
 "On break": [
 "En pause",
 "In der Pause",
-"In pausa"
+"In pausa",
+"En pausa"
 ],
 "Break {a} — resume when you’re back": [
 "Pause {a} — reprends quand tu es de retour",
 "Pause {a} — weiter, wenn du zurück bist",
-"Pausa {a} — riprendi quando torni"
+"Pausa {a} — riprendi quando torni",
+"Pausa {a} — cuntinua cur che ti es enavos"
 ],
 "Started {a}": [
 "Commencé à {a}",
 "Begonnen um {a}",
-"Iniziato alle {a}"
+"Iniziato alle {a}",
+"Cumenzà a las {a}"
 ],
 "Started {a}, with breaks": [
 "Commencé à {a}, avec pauses",
 "Begonnen um {a}, mit Pausen",
-"Iniziato alle {a}, con pause"
+"Iniziato alle {a}, con pause",
+"Cumenzà a las {a}, cun pausas"
 ],
 "Started": [
 "Commencé",
 "Begonnen",
-"Iniziato"
+"Iniziato",
+"Cumenzà"
 ],
 "Current session": [
 "Session en cours",
 "Laufende Sitzung",
-"Sessione in corso"
+"Sessione in corso",
+"Sessiun actuala"
 ],
 "Sport: not study time": [
 "Sport : pas du temps d'étude",
 "Sport: keine Lernzeit",
-"Sport: non è tempo di studio"
+"Sport: non è tempo di studio",
+"Sport: betg temp da studi"
 ],
 "Code: not study time": [
 "Code : pas du temps d'étude",
 "Code: keine Lernzeit",
-"Codice: non è tempo di studio"
+"Codice: non è tempo di studio",
+"Code: betg temp da studi"
 ],
 "Sport · {a}": [
+"Sport · {a}",
 "Sport · {a}",
 "Sport · {a}",
 "Sport · {a}"
@@ -272,564 +326,677 @@
 "Code · {a}": [
 "Code · {a}",
 "Code · {a}",
-"Codice · {a}"
+"Codice · {a}",
+"Code · {a}"
 ],
 "Other": [
 "Autre",
 "Anderes",
-"Altro"
+"Altro",
+"Auter"
 ],
 "Other (not study time)": [
 "Autre (pas du temps d'étude)",
 "Anderes (keine Lernzeit)",
-"Altro (non è tempo di studio)"
+"Altro (non è tempo di studio)",
+"Auter (betg temp da studi)"
 ],
 "Not study time": [
 "Pas du temps d'étude",
 "Keine Lernzeit",
-"Non è tempo di studio"
+"Non è tempo di studio",
+"Betg temp da studi"
 ],
 "Saved {a}": [
 "{a} enregistré",
 "{a} gespeichert",
-"{a} salvato"
+"{a} salvato",
+"{a} memorisà"
 ],
 "Session discarded": [
 "Session supprimée",
 "Sitzung verworfen",
-"Sessione scartata"
+"Sessione scartata",
+"Sessiun rebattida"
 ],
 "{a} at a glance": [
 "{a} en un coup d'œil",
 "{a} auf einen Blick",
-"{a} in sintesi"
+"{a} in sintesi",
+"{a} en survista"
 ],
 "Week {a} of the semester, started {b}": [
 "Semaine {a} du semestre, commencé le {b}",
 "Woche {a} des Semesters, begonnen am {b}",
-"Settimana {a} del semestre, iniziato il {b}"
+"Settimana {a} del semestre, iniziato il {b}",
+"Emna {a} dal semester, cumenzà ils {b}"
 ],
 "ECTS earned (finished courses count in full)": [
 "ECTS obtenus (les cours terminés comptent en entier)",
 "Erreichte ECTS (abgeschlossene Kurse zählen ganz)",
-"ECTS ottenuti (i corsi conclusi contano per intero)"
+"ECTS ottenuti (i corsi conclusi contano per intero)",
+"ECTS cuntanschids (curs terminads quintan dal tuttafatg)"
 ],
 "of {a}": [
 "sur {a}",
 "von {a}",
-"su {a}"
+"su {a}",
+"da {a}"
 ],
 "This week": [
 "Cette semaine",
 "Diese Woche",
-"Questa settimana"
+"Questa settimana",
+"Questa emna"
 ],
 "Ø semester": [
 "Ø semestre",
 "Ø Semester",
-"Ø semestre"
+"Ø semestre",
+"Ø semester"
 ],
 "h/wk": [
 "h/sem.",
 "h/Wo.",
-"h/sett."
+"h/sett.",
+"h/emna"
 ],
 "Study streak": [
 "Série d'étude",
 "Lernserie",
-"Serie di studio"
+"Serie di studio",
+"Seria da studi"
 ],
 "day": [
 "jour",
 "Tag",
-"giorno"
+"giorno",
+"di"
 ],
 "days": [
 "jours",
 "Tage",
-"giorni"
+"giorni",
+"dis"
 ],
 "Time per course": [
 "Temps par cours",
 "Zeit pro Kurs",
-"Tempo per corso"
+"Tempo per corso",
+"Temp per curs"
 ],
 "Needed is the weekly pace to reach the ECTS by the deadline ({a} h per ECTS): ✓ when your semester average covers it, ▲ when it doesn’t": [
 "« Nécessaire » est le rythme hebdomadaire pour atteindre les ECTS avant l'échéance ({a} h par ECTS) : ✓ quand ta moyenne du semestre le couvre, ▲ sinon",
 "«Nötig» ist das Wochentempo, um die ECTS bis zur Frist zu erreichen ({a} h pro ECTS): ✓ wenn dein Semesterschnitt reicht, ▲ wenn nicht",
-"«Necessario» è il ritmo settimanale per raggiungere gli ECTS entro la scadenza ({a} h per ECTS): ✓ se la tua media del semestre basta, ▲ se no"
+"«Necessario» è il ritmo settimanale per raggiungere gli ECTS entro la scadenza ({a} h per ECTS): ✓ se la tua media del semestre basta, ▲ se no",
+"«Necessari» è il ritem per emna per cuntanscher ils ECTS fin il termin ({a} h per ECTS): ✓ sche tia media dal semester basta, ▲ sche betg"
 ],
 "No courses in this semester yet.": [
 "Pas encore de cours ce semestre.",
 "Noch keine Kurse in diesem Semester.",
-"Ancora nessun corso in questo semestre."
+"Ancora nessun corso in questo semestre.",
+"Anc nagins curs en quest semester."
 ],
 "Add a course": [
 "Ajouter un cours",
 "Kurs hinzufügen",
-"Aggiungi un corso"
+"Aggiungi un corso",
+"Agiuntar in curs"
 ],
 "Progress": [
 "Progression",
 "Fortschritt",
-"Avanzamento"
+"Avanzamento",
+"Progress"
 ],
 "Deadline": [
 "Échéance",
 "Frist",
-"Scadenza"
+"Scadenza",
+"Termin"
 ],
 "Needed": [
 "Nécessaire",
 "Nötig",
-"Necessario"
+"Necessario",
+"Necessari"
 ],
 "from {a}": [
 "de {a}",
 "aus {a}",
+"da {a}",
 "da {a}"
 ],
 "across semesters": [
 "sur plusieurs semestres",
 "über mehrere Semester",
-"su più semestri"
+"su più semestri",
+"sur plirs semesters"
 ],
 "✓ done": [
 "✓ fait",
 "✓ erledigt",
-"✓ fatto"
+"✓ fatto",
+"✓ fatg"
 ],
 "▲ past deadline": [
 "▲ échéance dépassée",
 "▲ Frist vorbei",
-"▲ scadenza superata"
+"▲ scadenza superata",
+"▲ termin scadì"
 ],
 "Hours per week": [
 "Heures par semaine",
 "Stunden pro Woche",
-"Ore per settimana"
+"Ore per settimana",
+"Uras per emna"
 ],
 "by category": [
 "par catégorie",
 "nach Kategorie",
-"per categoria"
+"per categoria",
+"tenor categoria"
 ],
 "Daily rhythm": [
 "Rythme quotidien",
 "Tagesrhythmus",
-"Ritmo quotidiano"
+"Ritmo quotidiano",
+"Ritem dal di"
 ],
 "hours per day this semester": [
 "heures par jour ce semestre",
 "Stunden pro Tag in diesem Semester",
-"ore al giorno in questo semestre"
+"ore al giorno in questo semestre",
+"uras per di en quest semester"
 ],
 "Satisfaction": [
 "Satisfaction",
 "Zufriedenheit",
-"Soddisfazione"
+"Soddisfazione",
+"Cuntentientscha"
 ],
 "your 0–10 ratings, weighted by time studied; unrated sessions are left out": [
 "tes notes de 0 à 10, pondérées par le temps d'étude ; les sessions sans note sont ignorées",
 "deine Bewertungen von 0–10, gewichtet nach Lernzeit; Sitzungen ohne Bewertung zählen nicht",
-"i tuoi voti da 0 a 10, ponderati per il tempo di studio; le sessioni senza voto sono escluse"
+"i tuoi voti da 0 a 10, ponderati per il tempo di studio; le sessioni senza voto sono escluse",
+"tias valitaziuns da 0–10, ponderadas tenor il temp da studi; sessiuns senza valitaziun na quintan betg"
 ],
 "No rated sessions yet. When you stop the timer, rate how satisfied you are with what you got done, and your patterns show up here.": [
 "Pas encore de session notée. Quand tu arrêtes le minuteur, indique ta satisfaction de ce que tu as fait, et tes tendances apparaîtront ici.",
 "Noch keine bewerteten Sitzungen. Wenn du den Timer stoppst, bewerte, wie zufrieden du mit dem Erreichten bist; deine Muster erscheinen dann hier.",
-"Ancora nessuna sessione valutata. Quando fermi il timer, indica quanto sei soddisfatto di ciò che hai fatto, e qui vedrai le tue tendenze."
+"Ancora nessuna sessione valutata. Quando fermi il timer, indica quanto sei soddisfatto di ciò che hai fatto, e qui vedrai le tue tendenze.",
+"Anc naginas sessiuns valitadas. Cur che ti fermas il cronometer, valitescha quant cuntent che ti es cun quai che ti has fatg, e tes muster cumparan qua."
 ],
 "semester average": [
 "moyenne du semestre",
 "Semesterschnitt",
-"media del semestre"
+"media del semestre",
+"media dal semester"
 ],
 "this week": [
 "cette semaine",
 "diese Woche",
-"questa settimana"
+"questa settimana",
+"questa emna"
 ],
 "rated sessions, {a}": [
 "sessions notées, {a}",
 "bewertete Sitzungen, {a}",
-"sessioni valutate, {a}"
+"sessioni valutate, {a}",
+"sessiuns valitadas, {a}"
 ],
 "By hour of day": [
 "Par heure de la journée",
 "Nach Tageszeit",
-"Per ora del giorno"
+"Per ora del giorno",
+"Tenor l'ura dal di"
 ],
 "By day": [
 "Par jour",
 "Nach Tag",
-"Per giorno"
+"Per giorno",
+"Tenor di"
 ],
 "By week": [
 "Par semaine",
 "Nach Woche",
-"Per settimana"
+"Per settimana",
+"Tenor emna"
 ],
 "Breaks": [
 "Pauses",
 "Pausen",
-"Pause"
+"Pause",
+"Pausas"
 ],
 "logged when you resume after a pause": [
 "enregistrées quand tu reprends après une pause",
 "erfasst, wenn du nach einer Pause weitermachst",
-"registrate quando riprendi dopo una pausa"
+"registrate quando riprendi dopo una pausa",
+"registradas cur che ti cuntinueschas suenter ina pausa"
 ],
 "break time per study hour": [
 "temps de pause par heure d'étude",
 "Pausenzeit pro Lernstunde",
-"tempo di pausa per ora di studio"
+"tempo di pausa per ora di studio",
+"temp da pausa per ura da studi"
 ],
 "Week {a}, from {b}": [
 "Semaine {a}, dès le {b}",
 "Woche {a}, ab {b}",
-"Settimana {a}, dal {b}"
+"Settimana {a}, dal {b}",
+"Emna {a}, a partir dals {b}"
 ],
 "average {a}": [
 "moyenne {a}",
 "Schnitt {a}",
+"media {a}",
 "media {a}"
 ],
 "not enough rated time": [
 "pas assez de temps noté",
 "zu wenig bewertete Zeit",
-"tempo valutato insufficiente"
+"tempo valutato insufficiente",
+"memia pauc temp valità"
 ],
 "from {a} of rated study": [
 "sur {a} d'étude notée",
 "aus {a} bewerteter Lernzeit",
-"su {a} di studio valutato"
+"su {a} di studio valutato",
+"da {a} studi valità"
 ],
 "Total": [
 "Total",
 "Total",
-"Totale"
+"Totale",
+"Total"
 ],
 "No category": [
 "Sans catégorie",
 "Keine Kategorie",
-"Nessuna categoria"
+"Nessuna categoria",
+"Nagina categoria"
 ],
 "Sessions": [
 "Sessions",
 "Sitzungen",
-"Sessioni"
+"Sessioni",
+"Sessiuns"
 ],
 "Filter by course": [
 "Filtrer par cours",
 "Nach Kurs filtern",
-"Filtra per corso"
+"Filtra per corso",
+"Filtrar tenor curs"
 ],
 "All courses": [
 "Tous les cours",
 "Alle Kurse",
-"Tutti i corsi"
+"Tutti i corsi",
+"Tut ils curs"
 ],
 "Add entry": [
 "Ajouter une entrée",
 "Eintrag hinzufügen",
-"Aggiungi voce"
+"Aggiungi voce",
+"Agiuntar ina inscripziun"
 ],
 "From": [
 "Du",
 "Von",
-"Dal"
+"Dal",
+"Da"
 ],
 "From date": [
 "Date de début",
 "Startdatum",
-"Data di inizio"
+"Data di inizio",
+"Data da cumenzament"
 ],
 "to": [
 "au",
 "bis",
-"al"
+"al",
+"fin"
 ],
 "To date": [
 "Date de fin",
 "Enddatum",
-"Data di fine"
+"Data di fine",
+"Data da la fin"
 ],
 "Last week": [
 "Semaine dernière",
 "Letzte Woche",
-"Settimana scorsa"
+"Settimana scorsa",
+"L'emna passada"
 ],
 "All dates": [
 "Toutes les dates",
 "Alle Daten",
-"Tutte le date"
+"Tutte le date",
+"Tut las datas"
 ],
 "Export .txt": [
 "Exporter .txt",
 ".txt exportieren",
-"Esporta .txt"
+"Esporta .txt",
+"Exportar .txt"
 ],
 "Download the entries shown below as a text file": [
 "Télécharger les entrées affichées dans un fichier texte",
 "Die angezeigten Einträge als Textdatei herunterladen",
-"Scarica le voci mostrate come file di testo"
+"Scarica le voci mostrate come file di testo",
+"Telechargiar las inscripziuns mussadas sco datoteca da text"
 ],
 "Nothing logged here yet. Start the timer, or add a past entry for a day you missed.": [
 "Rien d'enregistré ici pour l'instant. Lance le minuteur ou ajoute une entrée passée pour un jour manqué.",
 "Hier ist noch nichts erfasst. Starte den Timer oder füge einen vergangenen Eintrag für einen verpassten Tag hinzu.",
-"Qui non c'è ancora niente. Avvia il timer o aggiungi una voce passata per un giorno saltato."
+"Qui non c'è ancora niente. Avvia il timer o aggiungi una voce passata per un giorno saltato.",
+"Qua n'è anc nagut registrà. Cumenza il cronometer u agiunta ina inscripziun passada per in di che ti has manchentà."
 ],
 "{a} entries, {b} studied": [
 "{a} entrées, {b} d'étude",
 "{a} Einträge, {b} gelernt",
-"{a} voci, {b} di studio"
+"{a} voci, {b} di studio",
+"{a} inscripziuns, {b} studegià"
 ],
 "{a} entries": [
 "{a} entrées",
 "{a} Einträge",
-"{a} voci"
+"{a} voci",
+"{a} inscripziuns"
 ],
 "no study time": [
 "pas de temps d'étude",
 "keine Lernzeit",
-"nessun tempo di studio"
+"nessun tempo di studio",
+"nagin temp da studi"
 ],
 "whole day": [
 "toute la journée",
 "ganzer Tag",
-"tutto il giorno"
+"tutto il giorno",
+"tut il di"
 ],
 "added by hand": [
 "ajouté à la main",
 "von Hand erfasst",
-"aggiunto a mano"
+"aggiunto a mano",
+"agiuntà a maun"
 ],
 "imported": [
 "importé",
 "importiert",
-"importato"
+"importato",
+"importà"
 ],
 "not study time": [
 "pas du temps d'étude",
 "keine Lernzeit",
-"non è tempo di studio"
+"non è tempo di studio",
+"betg temp da studi"
 ],
 "Show older days ({a} more)": [
 "Afficher les jours plus anciens ({a} de plus)",
 "Ältere Tage zeigen ({a} weitere)",
-"Mostra i giorni precedenti (altri {a})"
+"Mostra i giorni precedenti (altri {a})",
+"Mussar dis pli vegls ({a} ulteriurs)"
 ],
 "Edit": [
 "Modifier",
 "Bearbeiten",
-"Modifica"
+"Modifica",
+"Modifitgar"
 ],
 "Edit entry": [
 "Modifier l'entrée",
 "Eintrag bearbeiten",
-"Modifica voce"
+"Modifica voce",
+"Modifitgar l'inscripziun"
 ],
 "Delete": [
 "Supprimer",
 "Löschen",
-"Elimina"
+"Elimina",
+"Stizzar"
 ],
 "Delete entry": [
 "Supprimer l'entrée",
 "Eintrag löschen",
-"Elimina voce"
+"Elimina voce",
+"Stizzar l'inscripziun"
 ],
 "Satisfaction {a} of 10": [
 "Satisfaction {a} sur 10",
 "Zufriedenheit {a} von 10",
-"Soddisfazione {a} su 10"
+"Soddisfazione {a} su 10",
+"Cuntentientscha {a} da 10"
 ],
 "Entry updated": [
 "Entrée modifiée",
 "Eintrag geändert",
-"Voce aggiornata"
+"Voce aggiornata",
+"Inscripziun modifitgada"
 ],
 "Entry added": [
 "Entrée ajoutée",
 "Eintrag hinzugefügt",
-"Voce aggiunta"
+"Voce aggiunta",
+"Inscripziun agiuntada"
 ],
 "Entry deleted": [
 "Entrée supprimée",
 "Eintrag gelöscht",
-"Voce eliminata"
+"Voce eliminata",
+"Inscripziun stizzada"
 ],
 "this Other entry": [
 "cette entrée Autre",
 "diesen Anderes-Eintrag",
-"questa voce Altro"
+"questa voce Altro",
+"questa inscripziun Auter"
 ],
 "Delete {a} on {b}?": [
 "Supprimer {a} du {b} ?",
 "{a} vom {b} löschen?",
-"Eliminare {a} del {b}?"
+"Eliminare {a} del {b}?",
+"Stizzar {a} dals {b}?"
 ],
 "Delete {a}?": [
 "Supprimer {a} ?",
 "{a} löschen?",
-"Eliminare {a}?"
+"Eliminare {a}?",
+"Stizzar {a}?"
 ],
 "Request failed ({a})": [
 "La requête a échoué ({a})",
 "Anfrage fehlgeschlagen ({a})",
-"Richiesta non riuscita ({a})"
+"Richiesta non riuscita ({a})",
+"La dumonda n'è betg reussida ({a})"
 ],
 "Date": [
 "Date",
 "Datum",
+"Data",
 "Data"
 ],
 "To": [
 "À",
 "Bis",
-"Alle"
+"Alle",
+"Fin"
 ],
 "Whole day, no times": [
 "Toute la journée, sans heures",
 "Ganzer Tag, ohne Zeiten",
-"Tutto il giorno, senza orari"
+"Tutto il giorno, senza orari",
+"Tut il di, senza uras"
 ],
 "Duration (minutes)": [
 "Durée (minutes)",
 "Dauer (Minuten)",
-"Durata (minuti)"
+"Durata (minuti)",
+"Durada (minutas)"
 ],
 "Keeps the end time and moves the start.": [
 "Garde l'heure de fin et déplace le début.",
 "Behält das Ende und verschiebt den Beginn.",
-"Mantiene l'ora di fine e sposta l'inizio."
+"Mantiene l'ora di fine e sposta l'inizio.",
+"Mantegna la fin e sposta il cumenzament."
 ],
 "Breaks in between (minutes)": [
 "Pauses entre-temps (minutes)",
 "Pausen dazwischen (Minuten)",
-"Pause nel mezzo (minuti)"
+"Pause nel mezzo (minuti)",
+"Pausas en il fratemp (minutas)"
 ],
 "Not counted as study time": [
 "Pas compté comme temps d'étude",
 "Zählt nicht als Lernzeit",
-"Non conta come tempo di studio"
+"Non conta come tempo di studio",
+"Na quinta betg sco temp da studi"
 ],
 "Counted as studied: {a}": [
 "Compté comme étude : {a}",
 "Als Lernzeit gezählt: {a}",
-"Conteggiato come studio: {a}"
+"Conteggiato come studio: {a}",
+"Quintà sco studi: {a}"
 ],
 "Breaks must be shorter than the session": [
 "Les pauses doivent être plus courtes que la session",
 "Pausen müssen kürzer sein als die Sitzung",
-"Le pause devono essere più brevi della sessione"
+"Le pause devono essere più brevi della sessione",
+"Las pausas ston esser pli curtas che la sessiun"
 ],
 "Breaks must be shorter than the session.": [
 "Les pauses doivent être plus courtes que la session.",
 "Pausen müssen kürzer sein als die Sitzung.",
-"Le pause devono essere più brevi della sessione."
+"Le pause devono essere più brevi della sessione.",
+"Las pausas ston esser pli curtas che la sessiun."
 ],
 "How satisfied are you with what you got done?": [
 "Es-tu satisfait·e de ce que tu as fait ?",
 "Wie zufrieden bist du mit dem Erreichten?",
-"Quanto sei soddisfatto di ciò che hai fatto?"
+"Quanto sei soddisfatto di ciò che hai fatto?",
+"Quant cuntent es ti cun quai che ti has fatg?"
 ],
 "Compared with what you hoped to get done in this time. Optional.": [
 "Par rapport à ce que tu espérais faire pendant ce temps. Facultatif.",
 "Verglichen mit dem, was du in dieser Zeit schaffen wolltest. Freiwillig.",
-"Rispetto a ciò che speravi di fare in questo tempo. Facoltativo."
+"Rispetto a ciò che speravi di fare in questo tempo. Facoltativo.",
+"Cumpareglià cun quai che ti speravas da far en quest temp. Facultativ."
 ],
 "How satisfied are you with this training?": [
 "Es-tu satisfait·e de cet entraînement ?",
 "Wie zufrieden bist du mit diesem Training?",
-"Quanto sei soddisfatto di questo allenamento?"
+"Quanto sei soddisfatto di questo allenamento?",
+"Quant cuntent es ti cun quest trenament?"
 ],
 "How it went compared with what you hoped for. Optional.": [
 "Comment ça s'est passé par rapport à tes attentes. Facultatif.",
 "Wie es lief, verglichen mit deinen Erwartungen. Freiwillig.",
-"Com'è andata rispetto alle tue aspettative. Facoltativo."
+"Com'è andata rispetto alle tue aspettative. Facoltativo.",
+"Co ch'igl è ì, cumpareglià cun tias spetgas. Facultativ."
 ],
 "Satisfaction from 0 to 10": [
 "Satisfaction de 0 à 10",
 "Zufriedenheit von 0 bis 10",
-"Soddisfazione da 0 a 10"
+"Soddisfazione da 0 a 10",
+"Cuntentientscha da 0 fin 10"
 ],
 "Not at all": [
 "Pas du tout",
 "Gar nicht",
-"Per niente"
+"Per niente",
+"Insumma betg"
 ],
 "Completely": [
 "Complètement",
 "Vollständig",
-"Completamente"
+"Completamente",
+"Cumplettamain"
 ],
 "Notes": [
 "Notes",
 "Notizen",
-"Note"
+"Note",
+"Notizias"
 ],
 "What did you do instead?": [
 "Qu'as-tu fait à la place ?",
 "Was hast du stattdessen gemacht?",
-"Cosa hai fatto invece?"
+"Cosa hai fatto invece?",
+"Tge has ti fatg empè?"
 ],
 "What did you work on?": [
 "Sur quoi as-tu travaillé ?",
 "Woran hast du gearbeitet?",
-"Su cosa hai lavorato?"
+"Su cosa hai lavorato?",
+"Vi da tge has ti lavurà?"
 ],
 "e.g. sick, moving, family visit": [
 "p. ex. malade, déménagement, visite de famille",
 "z. B. krank, Umzug, Familienbesuch",
-"p. es. malato, trasloco, visita di famiglia"
+"p. es. malato, trasloco, visita di famiglia",
+"p.ex. malsaun, midada d'abitaziun, visita da la famiglia"
 ],
 "Cancel": [
 "Annuler",
 "Abbrechen",
-"Annulla"
+"Annulla",
+"Interrumper"
 ],
 "Save changes": [
 "Enregistrer les modifications",
 "Änderungen speichern",
-"Salva le modifiche"
+"Salva le modifiche",
+"Memorisar las midadas"
 ],
 "Save {a} of {b}?": [
 "Enregistrer {a} de {b} ?",
 "{a} {b} speichern?",
-"Salvare {a} di {b}?"
+"Salvare {a} di {b}?",
+"Memorisar {a} da {b}?"
 ],
 "Discard": [
 "Supprimer",
 "Verwerfen",
-"Scarta"
+"Scarta",
+"Rebatter"
 ],
 "Discard this session? The time will not be logged.": [
 "Supprimer cette session ? Le temps ne sera pas enregistré.",
 "Diese Sitzung verwerfen? Die Zeit wird nicht erfasst.",
-"Scartare questa sessione? Il tempo non verrà registrato."
+"Scartare questa sessione? Il tempo non verrà registrato.",
+"Rebatter questa sessiun? Il temp na vegn betg registrà."
 ],
 "Keep studying": [
 "Continuer à étudier",
 "Weiterlernen",
-"Continua a studiare"
+"Continua a studiare",
+"Cuntinuar a studegiar"
 ],
 "Keep going": [
 "Continuer",
 "Weitermachen",
-"Continua"
+"Continua",
+"Cuntinuar"
 ],
 "Save session": [
 "Enregistrer la session",
 "Sitzung speichern",
-"Salva la sessione"
+"Salva la sessione",
+"Memorisar la sessiun"
 ],
 "Today's training": [
 "Entraînement du jour",
 "Heutiges Training",
-"Allenamento di oggi"
+"Allenamento di oggi",
+"Il trenament dad oz"
 ],
 "kg": [
+"kg",
 "kg",
 "kg",
 "kg"
@@ -837,1794 +1004,2153 @@
 "Plates on the bar, both sides together, bar not included.": [
 "Disques sur la barre, les deux côtés ensemble, barre non comprise.",
 "Scheiben auf der Stange, beide Seiten zusammen, ohne Stange.",
-"Dischi sul bilanciere, entrambi i lati insieme, bilanciere escluso."
+"Dischi sul bilanciere, entrambi i lati insieme, bilanciere escluso.",
+"Discs sin la stanga, omaduas varts ensemen, senza la stanga."
 ],
 "Nothing logged yet. Next time this is filled in for you.": [
 "Rien d'enregistré pour l'instant. La prochaine fois, ce sera prérempli.",
 "Noch nichts erfasst. Nächstes Mal wird es für dich ausgefüllt.",
-"Ancora niente di registrato. La prossima volta sarà precompilato."
+"Ancora niente di registrato. La prossima volta sarà precompilato.",
+"Anc nagut registrà. La proxima giada vegn quai emplenì per tai."
 ],
 "Filled in from the same weekday, {a}. Change what changed.": [
 "Repris du même jour de la semaine, {a}. Change ce qui a changé.",
 "Übernommen vom gleichen Wochentag, {a}. Ändere, was sich geändert hat.",
-"Ripreso dallo stesso giorno della settimana, {a}. Cambia ciò che è cambiato."
+"Ripreso dallo stesso giorno della settimana, {a}. Cambia ciò che è cambiato.",
+"Emplenì tenor il medem di da l'emna, {a}. Mida quai ch'è sa midà."
 ],
 "Filled in from your last entry, {a}. Change what changed.": [
 "Repris de ta dernière entrée, {a}. Change ce qui a changé.",
 "Übernommen von deinem letzten Eintrag, {a}. Ändere, was sich geändert hat.",
-"Ripreso dalla tua ultima voce, {a}. Cambia ciò che è cambiato."
+"Ripreso dalla tua ultima voce, {a}. Cambia ciò che è cambiato.",
+"Emplenì tenor tia ultima inscripziun, {a}. Mida quai ch'è sa midà."
 ],
 "4 wk ago {a}": [
 "il y a 4 sem. {a}",
 "vor 4 Wo. {a}",
-"4 sett. fa {a}"
+"4 sett. fa {a}",
+"avant 4 emnas {a}"
 ],
 "{a} in kg": [
 "{a} en kg",
 "{a} in kg",
-"{a} in kg"
+"{a} in kg",
+"{a} en kg"
 ],
 "{a} from 1 to 10": [
 "{a} de 1 à 10",
 "{a} von 1 bis 10",
-"{a} da 1 a 10"
+"{a} da 1 a 10",
+"{a} da 1 fin 10"
 ],
 "Level": [
 "Niveau",
 "Stufe",
-"Livello"
+"Livello",
+"Nivel"
 ],
 "Weights not saved: {a}": [
 "Poids non enregistrés : {a}",
 "Gewichte nicht gespeichert: {a}",
-"Pesi non salvati: {a}"
+"Pesi non salvati: {a}",
+"Pais betg memorisads: {a}"
 ],
 "This month": [
 "Ce mois",
 "Diesen Monat",
-"Questo mese"
+"Questo mese",
+"Quest mais"
 ],
 "Ø per week (last 15)": [
 "Ø par semaine (15 dernières)",
 "Ø pro Woche (letzte 15)",
-"Ø per settimana (ultime 15)"
+"Ø per settimana (ultime 15)",
+"Ø per emna (ultimas 15)"
 ],
 "Days this week": [
 "Jours cette semaine",
 "Tage diese Woche",
-"Giorni questa settimana"
+"Giorni questa settimana",
+"Dis questa emna"
 ],
 "Per week": [
 "Par semaine",
 "Pro Woche",
-"Per settimana"
+"Per settimana",
+"Per emna"
 ],
 "Per month": [
 "Par mois",
 "Pro Monat",
-"Per mese"
+"Per mese",
+"Per mais"
 ],
 "hours from the timer and past entries": [
 "heures du minuteur et des entrées passées",
 "Stunden aus Timer und vergangenen Einträgen",
-"ore dal timer e dalle voci passate"
+"ore dal timer e dalle voci passate",
+"uras dal cronometer e da las inscripziuns passadas"
 ],
 "hours from the timer, commits from your local clones": [
 "heures du minuteur, commits de tes clones locaux",
 "Stunden aus dem Timer, Commits aus deinen lokalen Klonen",
-"ore dal timer, commit dai tuoi cloni locali"
+"ore dal timer, commit dai tuoi cloni locali",
+"uras dal cronometer, commits da tes clons locals"
 ],
 "Commits per week": [
 "Commits par semaine",
 "Commits pro Woche",
-"Commit per settimana"
+"Commit per settimana",
+"Commits per emna"
 ],
 "{a} commits in 16 weeks, +{b} / −{c} lines": [
 "{a} commits en 16 semaines, +{b} / −{c} lignes",
 "{a} Commits in 16 Wochen, +{b} / −{c} Zeilen",
-"{a} commit in 16 settimane, +{b} / −{c} righe"
+"{a} commit in 16 settimane, +{b} / −{c} righe",
+"{a} commits en 16 emnas, +{b} / −{c} lingias"
 ],
 "Week from {a}": [
 "Semaine dès le {a}",
 "Woche ab {a}",
-"Settimana dal {a}"
+"Settimana dal {a}",
+"Emna a partir dals {a}"
 ],
 "Commits, week from {a}": [
 "Commits, semaine dès le {a}",
 "Commits, Woche ab {a}",
-"Commit, settimana dal {a}"
+"Commit, settimana dal {a}",
+"Commits, emna a partir dals {a}"
 ],
 "Satisfaction, last 30 days": [
 "Satisfaction, 30 derniers jours",
 "Zufriedenheit, letzte 30 Tage",
-"Soddisfazione, ultimi 30 giorni"
+"Soddisfazione, ultimi 30 giorni",
+"Cuntentientscha, ultims 30 dis"
 ],
 "no rated sessions": [
 "aucune session notée",
 "keine bewerteten Sitzungen",
-"nessuna sessione valutata"
+"nessuna sessione valutata",
+"naginas sessiuns valitadas"
 ],
 "{a} rated": [
 "{a} notées",
 "{a} bewertet",
-"{a} valutate"
+"{a} valutate",
+"{a} valitadas"
 ],
 "{a} rated, {b} vs. the 30 days before": [
 "{a} notées, {b} par rapport aux 30 jours précédents",
 "{a} bewertet, {b} gegenüber den 30 Tagen davor",
-"{a} valutate, {b} rispetto ai 30 giorni precedenti"
+"{a} valutate, {b} rispetto ai 30 giorni precedenti",
+"{a} valitadas, {b} cumpareglià cun ils 30 dis avant"
 ],
 "Edit sport types": [
 "Modifier les sports",
 "Sportarten bearbeiten",
-"Modifica gli sport"
+"Modifica gli sport",
+"Modifitgar las sorts da sport"
 ],
 "Edit code projects": [
 "Modifier les projets de code",
 "Code-Projekte bearbeiten",
-"Modifica i progetti di codice"
+"Modifica i progetti di codice",
+"Modifitgar ils projects da code"
 ],
 "Name": [
 "Nom",
 "Name",
-"Nome"
+"Nome",
+"Num"
 ],
 "Local git folder": [
 "Dossier git local",
 "Lokaler Git-Ordner",
-"Cartella git locale"
+"Cartella git locale",
+"Ordinatur git local"
 ],
 "Weights in kg, e.g. Squats, Lunges": [
 "Poids en kg, p. ex. Squats, Fentes",
 "Gewichte in kg, z. B. Squats, Lunges",
-"Pesi in kg, p. es. Squat, Affondi"
+"Pesi in kg, p. es. Squat, Affondi",
+"Pais en kg, p.ex. Squats, Lunges"
 ],
 "Weights asked in kg, separated by commas": [
 "Poids demandés en kg, séparés par des virgules",
 "Abgefragte Gewichte in kg, durch Kommas getrennt",
-"Pesi richiesti in kg, separati da virgole"
+"Pesi richiesti in kg, separati da virgole",
+"Pais dumandads en kg, separads cun commas"
 ],
 "Weights to ask for in kg, separated by commas. Empty: no weights.": [
 "Poids à demander en kg, séparés par des virgules. Vide : aucun poids.",
 "Abzufragende Gewichte in kg, durch Kommas getrennt. Leer: keine Gewichte.",
-"Pesi da chiedere in kg, separati da virgole. Vuoto: nessun peso."
+"Pesi da chiedere in kg, separati da virgole. Vuoto: nessun peso.",
+"Pais da dumandar en kg, separads cun commas. Vid: nagins pais."
 ],
 "Ask for a level from 1 to 10": [
 "Demander un niveau de 1 à 10",
 "Eine Stufe von 1 bis 10 abfragen",
-"Chiedi un livello da 1 a 10"
+"Chiedi un livello da 1 a 10",
+"Dumandar in nivel da 1 fin 10"
 ],
 "Level 1–10": [
 "Niveau 1–10",
 "Stufe 1–10",
-"Livello 1–10"
+"Livello 1–10",
+"Nivel 1–10"
 ],
 "Show again": [
 "Réafficher",
 "Wieder zeigen",
-"Mostra di nuovo"
+"Mostra di nuovo",
+"Puspè mussar"
 ],
 "Hide": [
 "Masquer",
 "Ausblenden",
-"Nascondi"
+"Nascondi",
+"Zuppentar"
 ],
 "Add": [
 "Ajouter",
 "Hinzufügen",
-"Aggiungi"
+"Aggiungi",
+"Agiuntar"
 ],
 "New sport, e.g. Climbing": [
 "Nouveau sport, p. ex. Escalade",
 "Neue Sportart, z. B. Klettern",
-"Nuovo sport, p. es. Arrampicata"
+"Nuovo sport, p. es. Arrampicata",
+"Nov sport, p.ex. Rampignar"
 ],
 "New project, e.g. my-repo": [
 "Nouveau projet, p. ex. mon-repo",
 "Neues Projekt, z. B. mein-repo",
-"Nuovo progetto, p. es. mio-repo"
+"Nuovo progetto, p. es. mio-repo",
+"Nov project, p.ex. mes-repo"
 ],
 "{a} added": [
 "{a} ajouté",
 "{a} hinzugefügt",
-"{a} aggiunto"
+"{a} aggiunto",
+"{a} agiuntà"
 ],
 "Weekly averages count from the start date": [
 "Les moyennes hebdomadaires comptent depuis la date de début",
 "Wochenschnitte zählen ab dem Startdatum",
-"Le medie settimanali contano dalla data di inizio"
+"Le medie settimanali contano dalla data di inizio",
+"Las medias per emna quintan a partir da la data da cumenzament"
 ],
 "New semester": [
 "Nouveau semestre",
 "Neues Semester",
-"Nuovo semestre"
+"Nuovo semestre",
+"Nov semester"
 ],
 "Start date": [
 "Date de début",
 "Startdatum",
-"Data di inizio"
+"Data di inizio",
+"Data da cumenzament"
 ],
 "Last tracked day": [
 "Dernier jour suivi",
 "Letzter erfasster Tag",
-"Ultimo giorno registrato"
+"Ultimo giorno registrato",
+"Ultim di registrà"
 ],
 "Save dates": [
 "Enregistrer les dates",
 "Daten speichern",
-"Salva le date"
+"Salva le date",
+"Memorisar las datas"
 ],
 "Add course": [
 "Ajouter un cours",
 "Kurs hinzufügen",
-"Aggiungi corso"
+"Aggiungi corso",
+"Agiuntar in curs"
 ],
 "Edit course": [
 "Modifier le cours",
 "Kurs bearbeiten",
-"Modifica corso"
+"Modifica corso",
+"Modifitgar il curs"
 ],
 "No courses yet. Add the courses you take this semester.": [
 "Pas encore de cours. Ajoute les cours que tu suis ce semestre.",
 "Noch keine Kurse. Füge die Kurse hinzu, die du dieses Semester besuchst.",
-"Ancora nessun corso. Aggiungi i corsi che segui questo semestre."
+"Ancora nessun corso. Aggiungi i corsi che segui questo semestre.",
+"Anc nagins curs. Agiunta ils curs che ti frequentas quest semester."
 ],
 "Semester {a}": [
 "Semestre {a}",
 "Semester {a}",
-"Semestre {a}"
+"Semestre {a}",
+"Semester {a}"
 ],
 "Finished, {a}": [
 "Terminé, {a}",
 "Abgeschlossen, {a}",
-"Concluso, {a}"
+"Concluso, {a}",
+"Terminà, {a}"
 ],
 "no grade": [
 "sans note",
 "ohne Note",
-"senza voto"
+"senza voto",
+"senza nota"
 ],
 "Initials": [
 "Initiales",
 "Kürzel",
-"Sigla"
+"Sigla",
+"Abreviaziun"
 ],
 "Category": [
 "Catégorie",
 "Kategorie",
+"Categoria",
 "Categoria"
 ],
 "None": [
 "Aucune",
 "Keine",
-"Nessuna"
+"Nessuna",
+"Nagina"
 ],
 "Runs across several semesters, like a master thesis": [
 "S'étend sur plusieurs semestres, comme un mémoire de master",
 "Läuft über mehrere Semester, wie eine Masterarbeit",
-"Dura più semestri, come una tesi di master"
+"Dura più semestri, come una tesi di master",
+"Cuntinua sur plirs semesters, sco ina lavur da master"
 ],
 "ECTS count in": [
 "Les ECTS comptent dans",
 "ECTS zählen in",
-"Gli ECTS contano in"
+"Gli ECTS contano in",
+"Ils ECTS quintan en"
 ],
 "It shows up in every semester between its start date and deadline (semesters need a start date, set in this tab). Progress adds up all its hours; weekly numbers and charts count only the hours of the semester you're viewing.": [
 "Il apparaît dans chaque semestre entre sa date de début et son échéance (les semestres ont besoin d'une date de début, à définir dans cet onglet). La progression additionne toutes ses heures ; les chiffres hebdomadaires et les graphiques ne comptent que les heures du semestre affiché.",
 "Er erscheint in jedem Semester zwischen Startdatum und Frist (Semester brauchen ein Startdatum, in diesem Tab festlegen). Der Fortschritt zählt alle seine Stunden; Wochenzahlen und Diagramme zählen nur die Stunden des angezeigten Semesters.",
-"Compare in ogni semestre tra la data di inizio e la scadenza (i semestri hanno bisogno di una data di inizio, da impostare in questa scheda). L'avanzamento somma tutte le sue ore; i numeri settimanali e i grafici contano solo le ore del semestre visualizzato."
+"Compare in ogni semestre tra la data di inizio e la scadenza (i semestri hanno bisogno di una data di inizio, da impostare in questa scheda). L'avanzamento somma tutte le sue ore; i numeri settimanali e i grafici contano solo le ore del semestre visualizzato.",
+"El cumpara en mintga semester tranter sia data da cumenzament e ses termin (ils semesters basegnan ina data da cumenzament, da fixar en quest tab). Il progress suma tut sias uras; las cifras per emna ed ils diagrams quintan mo las uras dal semester mussà."
 ],
 "Finished": [
 "Terminé",
 "Abgeschlossen",
-"Concluso"
+"Concluso",
+"Terminà"
 ],
 "Grade": [
 "Note",
 "Note",
-"Voto"
+"Voto",
+"Nota"
 ],
 "5.5 or passed": [
 "5,5 ou réussi",
 "5,5 oder bestanden",
-"5,5 o superato"
+"5,5 o superato",
+"5.5 u absolvì"
 ],
 "Quantum Field Theory 2": [
 "Théorie quantique des champs 2",
 "Quantenfeldtheorie 2",
-"Teoria quantistica dei campi 2"
+"Teoria quantistica dei campi 2",
+"Teoria quantica dals champs 2"
 ],
 "Create semester": [
 "Créer le semestre",
 "Semester erstellen",
-"Crea semestre"
+"Crea semestre",
+"Crear il semester"
 ],
 "Course updated": [
 "Cours modifié",
 "Kurs geändert",
-"Corso aggiornato"
+"Corso aggiornato",
+"Curs modifitgà"
 ],
 "Course added": [
 "Cours ajouté",
 "Kurs hinzugefügt",
-"Corso aggiunto"
+"Corso aggiunto",
+"Curs agiuntà"
 ],
 "Course deleted": [
 "Cours supprimé",
 "Kurs gelöscht",
-"Corso eliminato"
+"Corso eliminato",
+"Curs stizzà"
 ],
 "Dates saved": [
 "Dates enregistrées",
 "Daten gespeichert",
-"Date salvate"
+"Date salvate",
+"Datas memorisadas"
 ],
 "Semester created": [
 "Semestre créé",
 "Semester erstellt",
-"Semestre creato"
+"Semestre creato",
+"Semester creà"
 ],
 "its own semester": [
 "son propre semestre",
 "seinem eigenen Semester",
-"il suo semestre"
+"il suo semestre",
+"ses agen semester"
 ],
 "Runs {a} to {b}. ECTS count in {c}.": [
 "Du {a} au {b}. Les ECTS comptent dans {c}.",
 "Läuft von {a} bis {b}. ECTS zählen in {c}.",
-"Dal {a} al {b}. Gli ECTS contano in {c}."
+"Dal {a} al {b}. Gli ECTS contano in {c}.",
+"Dals {a} fin ils {b}. Ils ECTS quintan en {c}."
 ],
 "Runs {a} to {b}. ECTS count in {c}; {d} in this semester.": [
 "Du {a} au {b}. Les ECTS comptent dans {c} ; {d} dans ce semestre.",
 "Läuft von {a} bis {b}. ECTS zählen in {c}; {d} in diesem Semester.",
-"Dal {a} al {b}. Gli ECTS contano in {c}; {d} in questo semestre."
+"Dal {a} al {b}. Gli ECTS contano in {c}; {d} in questo semestre.",
+"Dals {a} fin ils {b}. Ils ECTS quintan en {c}; {d} en quest semester."
 ],
 "The end date is before the start date": [
 "La date de fin est avant la date de début",
 "Das Enddatum liegt vor dem Startdatum",
-"La data di fine è prima della data di inizio"
+"La data di fine è prima della data di inizio",
+"La data da la fin è avant la data da cumenzament"
 ],
 "Welcome to Chrono": [
 "Bienvenue dans Chrono",
 "Willkommen bei Chrono",
-"Benvenuto in Chrono"
+"Benvenuto in Chrono",
+"Bainvegni en Chrono"
 ],
 "The study timer (Dashboard, Log, Courses) is always there. Pick what else you want; you can change this any time with the ⚙ button. Switching something off only hides it, nothing is deleted.": [
 "Le minuteur d'étude (Aperçu, Journal, Cours) est toujours là. Choisis ce que tu veux en plus ; tu peux le changer à tout moment avec le bouton ⚙. Désactiver une fonction la masque seulement, rien n'est supprimé.",
 "Der Lerntimer (Übersicht, Protokoll, Kurse) ist immer da. Wähle, was du sonst noch willst; du kannst das jederzeit mit dem ⚙-Knopf ändern. Ausschalten blendet nur aus, nichts wird gelöscht.",
-"Il timer di studio (Panoramica, Registro, Corsi) c'è sempre. Scegli cos'altro vuoi; puoi cambiarlo quando vuoi con il pulsante ⚙. Disattivare una funzione la nasconde soltanto, non si cancella niente."
+"Il timer di studio (Panoramica, Registro, Corsi) c'è sempre. Scegli cos'altro vuoi; puoi cambiarlo quando vuoi con il pulsante ⚙. Disattivare una funzione la nasconde soltanto, non si cancella niente.",
+"Il cronometer da studi (Survista, Protocol, Curs) è adina qua. Tscherna tge che ti vuls anc; ti pos midar quai da tut temp cun il buttun ⚙. Deactivar insatge al zuppenta mo, nagut na vegn stizzà."
 ],
 ": track your sport time, never counted as study time": [
 " : suis ton temps de sport, jamais compté comme temps d'étude",
 ": erfasse deine Sportzeit, nie als Lernzeit gezählt",
-": registra il tempo di sport, mai contato come studio"
+": registra il tempo di sport, mai contato come studio",
+": registrescha tes temp da sport, mai quintà sco temp da studi"
 ],
 ": track coding time on your projects, with commit stats from your local git folders": [
 " : suis ton temps de programmation, avec les statistiques de commits de tes dossiers git locaux",
 ": erfasse deine Programmierzeit, mit Commit-Statistiken aus deinen lokalen Git-Ordnern",
-": registra il tempo di programmazione, con le statistiche dei commit dalle tue cartelle git locali"
+": registra il tempo di programmazione, con le statistiche dei commit dalle tue cartelle git locali",
+": registrescha tes temp da programmar en tes projects, cun statisticas da commits da tes ordinaturs git locals"
 ],
 ": lesson calendar and live lesson timetables from Typst notes": [
 " : calendrier des leçons et déroulements en direct à partir de notes Typst",
 ": Lektionenkalender und Live-Ablaufpläne aus Typst-Notizen",
-": calendario delle lezioni e scalette in diretta da note Typst"
+": calendario delle lezioni e scalette in diretta da note Typst",
+": chalender da lecziuns ed uraris live da notizias Typst"
 ],
 ": sleep diary, schedule, statistics and evidence-based advice": [
 " : journal du sommeil, horaire, statistiques et conseils fondés sur la recherche",
 ": Schlaftagebuch, Zeitplan, Statistiken und evidenzbasierte Tipps",
-": diario del sonno, orari, statistiche e consigli basati su studi"
+": diario del sonno, orari, statistiche e consigli basati su studi",
+": diari dal sien, urari, statisticas e cussegls fundads sin la perscrutaziun"
 ],
 "Chrono is free. If it helps you, you can": [
 "Chrono est gratuit. S'il t'aide, tu peux",
 "Chrono ist gratis. Wenn es dir hilft, kannst du",
-"Chrono è gratuito. Se ti aiuta, puoi"
+"Chrono è gratuito. Se ti aiuta, puoi",
+"Chrono è gratuit. Sch'el ta gida, pos ti"
 ],
 "Done": [
 "Terminé",
 "Fertig",
-"Fatto"
+"Fatto",
+"Fatg"
 ],
 "Started in {a} s.": [
 "Démarré en {a} s.",
 "Gestartet in {a} s.",
-"Avviato in {a} s."
+"Avviato in {a} s.",
+"Avià en {a} s."
 ],
 "Chrono is free, without ads or tracking. If it helps you, a small tip keeps it going. Thank you!": [
 "Chrono est gratuit, sans publicité ni pistage. S'il t'aide, un petit pourboire le fait vivre. Merci !",
 "Chrono ist gratis, ohne Werbung und Tracking. Wenn es dir hilft, hält ein kleines Trinkgeld es am Leben. Danke!",
-"Chrono è gratuito, senza pubblicità né tracciamento. Se ti aiuta, una piccola mancia lo tiene in vita. Grazie!"
+"Chrono è gratuito, senza pubblicità né tracciamento. Se ti aiuta, una piccola mancia lo tiene in vita. Grazie!",
+"Chrono è gratuit, senza reclama e senza tracking. Sch'el ta gida, al tegna ina pitschna bunamaun en vita. Grazia fitg!"
 ],
 "A one-off tip with a card, Apple Pay or Google Pay. No account needed.": [
 "Un pourboire unique par carte, Apple Pay ou Google Pay. Pas besoin de compte.",
 "Ein einmaliges Trinkgeld mit Karte, Apple Pay oder Google Pay. Kein Konto nötig.",
-"Una mancia una tantum con carta, Apple Pay o Google Pay. Nessun account necessario."
+"Una mancia una tantum con carta, Apple Pay o Google Pay. Nessun account necessario.",
+"Ina bunamaun unica cun carta, Apple Pay u Google Pay. Nagin conto necessari."
 ],
 "If you have a GitHub account: one-off or monthly, and all of it reaches me (no fees).": [
 "Si tu as un compte GitHub : unique ou mensuel, et tout m'arrive (sans frais).",
 "Wenn du ein GitHub-Konto hast: einmalig oder monatlich, und alles kommt bei mir an (keine Gebühren).",
-"Se hai un account GitHub: una tantum o mensile, e arriva tutto a me (senza commissioni)."
+"Se hai un account GitHub: una tantum o mensile, e arriva tutto a me (senza commissioni).",
+"Sche ti has in conto GitHub: unica u mensila, e tut arriva tar mai (senza taxas)."
 ],
 "Lessons": [
 "Leçons",
 "Lektionen",
-"Lezioni"
+"Lezioni",
+"Lecziuns"
 ],
 "Click a day to add or open its timetables. Drop .typ files anywhere: they go to their own date.": [
 "Clique sur un jour pour ajouter ou ouvrir ses déroulements. Dépose des fichiers .typ n'importe où : ils vont à leur propre date.",
 "Klicke auf einen Tag, um seine Ablaufpläne hinzuzufügen oder zu öffnen. Zieh .typ-Dateien irgendwohin: sie landen an ihrem eigenen Datum.",
-"Clicca su un giorno per aggiungere o aprire le sue scalette. Trascina file .typ ovunque: vanno alla loro data."
+"Clicca su un giorno per aggiungere o aprire le sue scalette. Trascina file .typ ovunque: vanno alla loro data.",
+"Clicca sin in di per agiuntar u avrir ses uraris. Tira datotecas .typ nua che ti vuls: ellas van a lur atgna data."
 ],
 "Today": [
 "Aujourd'hui",
 "Heute",
-"Oggi"
+"Oggi",
+"Oz"
 ],
 "← Calendar": [
 "← Calendrier",
 "← Kalender",
-"← Calendario"
+"← Calendario",
+"← Chalender"
 ],
 "Calendar": [
 "Calendrier",
 "Kalender",
-"Calendario"
+"Calendario",
+"Chalender"
 ],
 "Timetables": [
 "Déroulements",
 "Ablaufpläne",
-"Scalette"
+"Scalette",
+"Uraris"
 ],
 "Show live": [
 "Afficher en direct",
 "Live zeigen",
-"Mostra in diretta"
+"Mostra in diretta",
+"Mussar live"
 ],
 "Download the Typst timetable": [
 "Télécharger le déroulement Typst",
 "Typst-Ablaufplan herunterladen",
-"Scarica la scaletta Typst"
+"Scarica la scaletta Typst",
+"Telechargiar l'urari Typst"
 ],
 "Add a timetable": [
 "Ajouter un déroulement",
 "Ablaufplan hinzufügen",
-"Aggiungi una scaletta"
+"Aggiungi una scaletta",
+"Agiuntar in urari"
 ],
 "{a} timetable": [
 "{a} déroulement",
 "{a} Ablaufplan",
-"{a} scaletta"
+"{a} scaletta",
+"{a} urari"
 ],
 "{a} timetables": [
 "{a} déroulements",
 "{a} Ablaufpläne",
-"{a} scalette"
+"{a} scalette",
+"{a} uraris"
 ],
 "As many as you like, as long as their times do not overlap": [
 "Autant que tu veux, tant que leurs horaires ne se chevauchent pas",
 "So viele du willst, solange sich ihre Zeiten nicht überschneiden",
-"Quante vuoi, purché gli orari non si sovrappongano"
+"Quante vuoi, purché gli orari non si sovrappongano",
+"Uschè blers sco che ti vuls, sche lur uras na sa surponan betg"
 ],
 "Drop one or more": [
 "Dépose un ou plusieurs",
 "Zieh eine oder mehrere",
-"Trascina uno o più"
+"Trascina uno o più",
+"Tira ina u pliras"
 ],
 "files here (notes or timetables), choose them, or paste the": [
 "fichiers ici (notes ou déroulements), choisis-les, ou colle le",
 "Dateien hierher (Notizen oder Ablaufpläne), wähle sie aus oder füge den",
-"file qui (note o scalette), sceglili, o incolla il"
+"file qui (note o scalette), sceglili, o incolla il",
+"datotecas qua (notizias u uraris), tschernas ellas u encolla il"
 ],
 "block. A timetable with its own": [
 "bloc. Un déroulement avec sa propre",
 "Block ein. Ein Ablaufplan mit eigenem",
-"blocco. Una scaletta con la sua"
+"blocco. Una scaletta con la sua",
+"bloc. In urari cun sia atgna"
 ],
 "date": [
 "date",
 "Datum",
+"data",
 "data"
 ],
 "goes to that day.": [
 "va à ce jour-là.",
 "kommt an diesen Tag.",
-"va a quel giorno."
+"va a quel giorno.",
+"va a quel di."
 ],
 "Choose files": [
 "Choisir des fichiers",
 "Dateien wählen",
-"Scegli i file"
+"Scegli i file",
+"Tscherner datotecas"
 ],
 "Save pasted timetable": [
 "Enregistrer le déroulement collé",
 "Eingefügten Ablaufplan speichern",
-"Salva la scaletta incollata"
+"Salva la scaletta incollata",
+"Memorisar l'urari encollà"
 ],
 "New in the editor": [
 "Nouveau dans l'éditeur",
 "Neu im Editor",
-"Nuova nell'editor"
+"Nuova nell'editor",
+"Nov en l'editur"
 ],
 "Examples:": [
 "Exemples :",
 "Beispiele:",
-"Esempi:"
+"Esempi:",
+"Exempels:"
 ],
 "1 hour": [
 "1 heure",
 "1 Stunde",
-"1 ora"
+"1 ora",
+"1 ura"
 ],
 "2 hours": [
 "2 heures",
 "2 Stunden",
-"2 ore"
+"2 ore",
+"2 uras"
 ],
 "▶ live": [
 "▶ en direct",
 "▶ live",
-"▶ in diretta"
+"▶ in diretta",
+"▶ live"
 ],
 "edit": [
 "modifier",
 "bearbeiten",
-"modifica"
+"modifica",
+"modifitgar"
 ],
 "← Back": [
 "← Retour",
 "← Zurück",
-"← Indietro"
+"← Indietro",
+"← Enavos"
 ],
 "Click ▶ to run one live": [
 "Clique sur ▶ pour en lancer un en direct",
 "Klicke ▶, um einen live laufen zu lassen",
-"Clicca ▶ per avviarne una in diretta"
+"Clicca ▶ per avviarne una in diretta",
+"Clicca ▶ per mussar in live"
 ],
 "None yet for this day": [
 "Aucun pour ce jour",
 "Noch keiner für diesen Tag",
-"Ancora nessuna per questo giorno"
+"Ancora nessuna per questo giorno",
+"Anc nagins per quest di"
 ],
 "{a} % buffer": [
 "{a} % de réserve",
 "{a} % Puffer",
-"{a} % di riserva"
+"{a} % di riserva",
+"{a} % reserva"
 ],
 "Institution": [
 "Établissement",
 "Schule",
-"Istituto"
+"Istituto",
+"Instituziun"
 ],
 "ETH, a school": [
 "ETH, une école",
 "ETH, eine Schule",
-"ETH, una scuola"
+"ETH, una scuola",
+"ETH, ina scola"
 ],
 "Class": [
 "Classe",
 "Klasse",
-"Classe"
+"Classe",
+"Classa"
 ],
 "Physics, Physik SF": [
 "Physique, Physik SF",
 "Physik, Physik SF",
+"Fisica, Physik SF",
 "Fisica, Physik SF"
 ],
 "Topic": [
 "Sujet",
 "Thema",
-"Argomento"
+"Argomento",
+"Tema"
 ],
 "Elektromotor": [
 "Moteur électrique",
 "Elektromotor",
-"Motore elettrico"
+"Motore elettrico",
+"Motor electric"
 ],
 "Hour (min)": [
 "Heure (min)",
 "Lektion (min)",
-"Ora (min)"
+"Ora (min)",
+"Ura (min)"
 ],
 "Break (min)": [
 "Pause (min)",
 "Pause (min)",
+"Pausa (min)",
 "Pausa (min)"
 ],
 "Buffer at the start of each hour": [
 "Réserve au début de chaque heure",
 "Puffer zu Beginn jeder Lektion",
-"Riserva all'inizio di ogni ora"
+"Riserva all'inizio di ogni ora",
+"Reserva al cumenzament da mintga ura"
 ],
 "none": [
 "aucune",
 "keiner",
-"nessuna"
+"nessuna",
+"nagina"
 ],
 "Give the missing or extra minutes to the last activity": [
 "Donner les minutes manquantes ou en trop à la dernière activité",
 "Fehlende oder überzählige Minuten der letzten Aktivität geben",
-"Assegna i minuti mancanti o in più all'ultima attività"
+"Assegna i minuti mancanti o in più all'ultima attività",
+"Attribuir las minutas mancantas u supplementaras a l'ultima activitad"
 ],
 "fit": [
 "ajuster",
 "anpassen",
-"adatta"
+"adatta",
+"adattar"
 ],
 "Remove hour": [
 "Retirer l'heure",
 "Lektion entfernen",
-"Rimuovi l'ora"
+"Rimuovi l'ora",
+"Allontanar l'ura"
 ],
 "Up": [
 "Monter",
 "Nach oben",
-"Su"
+"Su",
+"Ensi"
 ],
 "Down": [
 "Descendre",
 "Nach unten",
-"Giù"
+"Giù",
+"Engiu"
 ],
 "Activity": [
 "Activité",
 "Aktivität",
-"Attività"
+"Attività",
+"Activitad"
 ],
 "Sum of the steps": [
 "Somme des étapes",
 "Summe der Schritte",
-"Somma dei passi"
+"Somma dei passi",
+"Summa dals pass"
 ],
 "+ step": [
 "+ étape",
 "+ Schritt",
-"+ passo"
+"+ passo",
+"+ pass"
 ],
 "Remove": [
 "Retirer",
 "Entfernen",
-"Rimuovi"
+"Rimuovi",
+"Allontanar"
 ],
 "Step": [
 "Étape",
 "Schritt",
-"Passo"
+"Passo",
+"Pass"
 ],
 "+ Activity": [
 "+ Activité",
 "+ Aktivität",
-"+ Attività"
+"+ Attività",
+"+ Activitad"
 ],
 "+ Hour": [
 "+ Heure",
 "+ Lektion",
-"+ Ora"
+"+ Ora",
+"+ Ura"
 ],
 "▶ Run now": [
 "▶ Lancer maintenant",
 "▶ Jetzt starten",
-"▶ Avvia ora"
+"▶ Avvia ora",
+"▶ Aviar ussa"
 ],
 "Copy Typst": [
 "Copier le Typst",
 "Typst kopieren",
-"Copia Typst"
+"Copia Typst",
+"Copiar Typst"
 ],
 "Download .typ": [
 "Télécharger .typ",
 ".typ herunterladen",
-"Scarica .typ"
+"Scarica .typ",
+"Telechargiar .typ"
 ],
 "Typst for the notes": [
 "Typst pour les notes",
 "Typst für die Notizen",
-"Typst per le note"
+"Typst per le note",
+"Typst per las notizias"
 ],
 "Save to calendar": [
 "Enregistrer dans le calendrier",
 "Im Kalender speichern",
-"Salva nel calendario"
+"Salva nel calendario",
+"Memorisar en il chalender"
 ],
 "Each hour: {a} min buffer, plan {b} min. Live, Chrono stretches the plan over the whole hour.": [
 "Chaque heure : {a} min de réserve, plan de {b} min. En direct, Chrono étire le plan sur toute l'heure.",
 "Jede Lektion: {a} min Puffer, Plan {b} min. Live verteilt Chrono den Plan über die ganze Lektion.",
-"Ogni ora: {a} min di riserva, piano di {b} min. In diretta, Chrono distribuisce il piano su tutta l'ora."
+"Ogni ora: {a} min di riserva, piano di {b} min. In diretta, Chrono distribuisce il piano su tutta l'ora.",
+"Mintga ura: {a} min reserva, plan {b} min. Live extenda Chrono il plan sur l'entira ura."
 ],
 "Hour {a}": [
 "Heure {a}",
 "Lektion {a}",
-"Ora {a}"
+"Ora {a}",
+"Ura {a}"
 ],
 "Hour 1": [
 "Heure 1",
 "Lektion 1",
-"Ora 1"
+"Ora 1",
+"Ura 1"
 ],
 "Hour 2": [
 "Heure 2",
 "Lektion 2",
-"Ora 2"
+"Ora 2",
+"Ura 2"
 ],
 "Hour 3": [
 "Heure 3",
 "Lektion 3",
-"Ora 3"
+"Ora 3",
+"Ura 3"
 ],
 "Hour 4": [
 "Heure 4",
 "Lektion 4",
-"Ora 4"
+"Ora 4",
+"Ura 4"
 ],
 "Hour 5": [
 "Heure 5",
 "Lektion 5",
-"Ora 5"
+"Ora 5",
+"Ura 5"
 ],
 "Hour 6": [
 "Heure 6",
 "Lektion 6",
-"Ora 6"
+"Ora 6",
+"Ura 6"
 ],
 "Day": [
 "Jour",
 "Tag",
-"Giorno"
+"Giorno",
+"Di"
 ],
 "Next:": [
 "Ensuite :",
 "Als Nächstes:",
-"Poi:"
+"Poi:",
+"Lura:"
 ],
 "Empty: right after the break": [
 "Vide : juste après la pause",
 "Leer: direkt nach der Pause",
-"Vuoto: subito dopo la pausa"
+"Vuoto: subito dopo la pausa",
+"Vid: directamain suenter la pausa"
 ],
 "Buffer (%)": [
 "Réserve (%)",
 "Puffer (%)",
-"Riserva (%)"
+"Riserva (%)",
+"Reserva (%)"
 ],
 "Start now": [
 "Commencer maintenant",
 "Jetzt beginnen",
-"Inizia ora"
+"Inizia ora",
+"Cumenzar ussa"
 ],
 "Everything one minute earlier": [
 "Tout une minute plus tôt",
 "Alles eine Minute früher",
-"Tutto un minuto prima"
+"Tutto un minuto prima",
+"Tut ina minuta pli baud"
 ],
 "Everything one minute later": [
 "Tout une minute plus tard",
 "Alles eine Minute später",
-"Tutto un minuto dopo"
+"Tutto un minuto dopo",
+"Tut ina minuta pli tard"
 ],
 "Back to plan": [
 "Revenir au plan",
 "Zurück zum Plan",
-"Torna al piano"
+"Torna al piano",
+"Enavos al plan"
 ],
 "Plan": [
 "Plan",
 "Plan",
-"Piano"
+"Piano",
+"Plan"
 ],
 "lesson ends in {a}": [
 "la leçon finit dans {a}",
 "Lektion endet in {a}",
-"la lezione finisce tra {a}"
+"la lezione finisce tra {a}",
+"la lecziun finescha en {a}"
 ],
 "This timetable is dated {a}. Times are shown for today.": [
 "Ce déroulement est daté du {a}. Les heures sont affichées pour aujourd'hui.",
 "Dieser Ablaufplan ist auf {a} datiert. Die Zeiten gelten für heute.",
-"Questa scaletta è datata {a}. Gli orari sono mostrati per oggi."
+"Questa scaletta è datata {a}. Gli orari sono mostrati per oggi.",
+"Quest urari è datà dals {a}. Las uras vegnan mussadas per oz."
 ],
 "Stretched over the whole hour (planned minutes in brackets). Click a row to start it now": [
 "Étiré sur toute l'heure (minutes prévues entre parenthèses). Clique sur une ligne pour la commencer maintenant",
 "Über die ganze Lektion verteilt (geplante Minuten in Klammern). Klicke auf eine Zeile, um sie jetzt zu beginnen",
-"Distribuito su tutta l'ora (minuti previsti tra parentesi). Clicca su una riga per iniziarla ora"
+"Distribuito su tutta l'ora (minuti previsti tra parentesi). Clicca su una riga per iniziarla ora",
+"Extendì sur l'entira ura (minutas planisadas en parantesas). Clicca sin ina lingia per la cumenzar ussa"
 ],
 "Click a row to start it now": [
 "Clique sur une ligne pour la commencer maintenant",
 "Klicke auf eine Zeile, um sie jetzt zu beginnen",
-"Clicca su una riga per iniziarla ora"
+"Clicca su una riga per iniziarla ora",
+"Clicca sin ina lingia per la cumenzar ussa"
 ],
 "planned {a} min": [
 "prévu {a} min",
 "geplant {a} min",
-"previsti {a} min"
+"previsti {a} min",
+"planisà {a} min"
 ],
 "details add up to {a} min": [
 "les détails font {a} min",
 "die Details ergeben {a} min",
-"i dettagli sommano {a} min"
+"i dettagli sommano {a} min",
+"ils detagls fan {a} min"
 ],
 "Break {a}–{b}": [
 "Pause {a}–{b}",
 "Pause {a}–{b}",
+"Pausa {a}–{b}",
 "Pausa {a}–{b}"
 ],
 "Start {a} now": [
 "Commencer {a} maintenant",
 "{a} jetzt beginnen",
-"Inizia {a} ora"
+"Inizia {a} ora",
+"Cumenzar {a} ussa"
 ],
 "shifted < 1 min": [
 "décalé < 1 min",
 "verschoben < 1 min",
-"spostato < 1 min"
+"spostato < 1 min",
+"spustà < 1 min"
 ],
 "{a} later than planned": [
 "{a} plus tard que prévu",
 "{a} später als geplant",
-"{a} più tardi del previsto"
+"{a} più tardi del previsto",
+"{a} pli tard che planisà"
 ],
 "{a} earlier than planned": [
 "{a} plus tôt que prévu",
 "{a} früher als geplant",
-"{a} prima del previsto"
+"{a} prima del previsto",
+"{a} pli baud che planisà"
 ],
 "starts at {a}": [
 "commence à {a}",
 "beginnt um {a}",
-"inizia alle {a}"
+"inizia alle {a}",
+"cumenza a las {a}"
 ],
 "ended at {a}": [
 "terminé à {a}",
 "endete um {a}",
-"finita alle {a}"
+"finita alle {a}",
+"terminà a las {a}"
 ],
 "break until {a}": [
 "pause jusqu'à {a}",
 "Pause bis {a}",
-"pausa fino alle {a}"
+"pausa fino alle {a}",
+"pausa fin a las {a}"
 ],
 "{a} ends in {b}": [
 "{a} finit dans {b}",
 "{a} endet in {b}",
-"{a} finisce tra {b}"
+"{a} finisce tra {b}",
+"{a} finescha en {b}"
 ],
 "{a} starts at {b}": [
 "{a} commence à {b}",
 "{a} beginnt um {b}",
-"{a} inizia alle {b}"
+"{a} inizia alle {b}",
+"{a} cumenza a las {b}"
 ],
 "Starts soon": [
 "Commence bientôt",
 "Beginnt bald",
-"Inizia presto"
+"Inizia presto",
+"Cumenza prest"
 ],
 "Lesson over": [
 "Leçon terminée",
 "Lektion vorbei",
-"Lezione finita"
+"Lezione finita",
+"Lecziun finida"
 ],
 "Break": [
 "Pause",
 "Pause",
+"Pausa",
 "Pausa"
 ],
 "Spare time": [
 "Temps libre",
 "Freie Zeit",
-"Tempo libero"
+"Tempo libero",
+"Temp liber"
 ],
 "Wrap up": [
 "Conclure",
 "Abschliessen",
-"Concludere"
+"Concludere",
+"Concluder"
 ],
 "First: {a}": [
 "D'abord : {a}",
 "Zuerst: {a}",
-"Prima: {a}"
+"Prima: {a}",
+"L'emprim: {a}"
 ],
 "of {a} min": [
 "sur {a} min",
 "von {a} min",
-"su {a} min"
+"su {a} min",
+"da {a} min"
 ],
 "until start": [
 "avant le début",
 "bis zum Beginn",
-"all'inizio"
+"all'inizio",
+"fin al cumenzament"
 ],
 "No timetable found. Paste the  #let lesson = ( … )  block (with hour1, hour2) or drop the notes file.": [
 "Aucun déroulement trouvé. Colle le bloc  #let lesson = ( … )  (avec hour1, hour2) ou dépose le fichier de notes.",
 "Kein Ablaufplan gefunden. Füge den Block  #let lesson = ( … )  (mit hour1, hour2) ein oder zieh die Notizdatei hierher.",
-"Nessuna scaletta trovata. Incolla il blocco  #let lesson = ( … )  (con hour1, hour2) o trascina il file di note."
+"Nessuna scaletta trovata. Incolla il blocco  #let lesson = ( … )  (con hour1, hour2) o trascina il file di note.",
+"Nagin urari chattà. Encolla il bloc  #let lesson = ( … )  (cun hour1, hour2) u tira la datoteca da notizias."
 ],
 "Timetable saved": [
 "Déroulement enregistré",
 "Ablaufplan gespeichert",
-"Scaletta salvata"
+"Scaletta salvata",
+"Urari memorisà"
 ],
 "{a} timetables saved": [
 "{a} déroulements enregistrés",
 "{a} Ablaufpläne gespeichert",
-"{a} scalette salvate"
+"{a} scalette salvate",
+"{a} uraris memorisads"
 ],
 "Delete “{a}”?": [
 "Supprimer « {a} » ?",
 "«{a}» löschen?",
-"Eliminare «{a}»?"
+"Eliminare «{a}»?",
+"Stizzar «{a}»?"
 ],
 "Example: {a}": [
 "Exemple : {a}",
 "Beispiel: {a}",
-"Esempio: {a}"
+"Esempio: {a}",
+"Exempel: {a}"
 ],
 "Untitled": [
 "Sans titre",
 "Ohne Titel",
-"Senza titolo"
+"Senza titolo",
+"Senza titel"
 ],
 "Every hour needs at least one activity.": [
 "Chaque heure doit avoir au moins une activité.",
 "Jede Lektion braucht mindestens eine Aktivität.",
-"Ogni ora ha bisogno di almeno un'attività."
+"Ogni ora ha bisogno di almeno un'attività.",
+"Mintga ura basegna almain ina activitad."
 ],
 "Pick a date first.": [
 "Choisis d'abord une date.",
 "Wähle zuerst ein Datum.",
-"Scegli prima una data."
+"Scegli prima una data.",
+"Tscherna l'emprim ina data."
 ],
 "Saved": [
 "Enregistré",
 "Gespeichert",
-"Salvato"
+"Salvato",
+"Memorisà"
 ],
 "Typst copied": [
 "Typst copié",
 "Typst kopiert",
-"Typst copiato"
+"Typst copiato",
+"Typst copià"
 ],
 "Copy failed: select the text below": [
 "La copie a échoué : sélectionne le texte ci-dessous",
 "Kopieren fehlgeschlagen: markiere den Text unten",
-"Copia non riuscita: seleziona il testo qui sotto"
+"Copia non riuscita: seleziona il testo qui sotto",
+"Copiar n'è betg reussì: tscherna il text sutvart"
 ],
 "A [ ... ] block is not closed.": [
 "Un bloc [ ... ] n'est pas fermé.",
 "Ein [ ... ]-Block ist nicht geschlossen.",
-"Un blocco [ ... ] non è chiuso."
+"Un blocco [ ... ] non è chiuso.",
+"In bloc [ ... ] n'è betg serrà."
 ],
 "A ( ... ) list is not closed.": [
 "Une liste ( ... ) n'est pas fermée.",
 "Eine ( ... )-Liste ist nicht geschlossen.",
-"Una lista ( ... ) non è chiusa."
+"Una lista ( ... ) non è chiusa.",
+"Ina glista ( ... ) n'è betg serrada."
 ],
 "Mo": [
 "Lu",
 "Mo",
-"Lu"
+"Lu",
+"Gl"
 ],
 "Tu": [
 "Ma",
 "Di",
+"Ma",
 "Ma"
 ],
 "We": [
 "Me",
 "Mi",
+"Me",
 "Me"
 ],
 "Th": [
 "Je",
 "Do",
+"Gi",
 "Gi"
 ],
 "Fr": [
 "Ve",
 "Fr",
+"Ve",
 "Ve"
 ],
 "Sa": [
 "Sa",
 "Sa",
-"Sa"
+"Sa",
+"So"
 ],
 "Su": [
 "Di",
 "So",
-"Do"
+"Do",
+"Du"
 ],
 "Show on phone": [
 "Afficher sur le téléphone",
 "Auf dem Handy zeigen",
-"Mostra sul telefono"
+"Mostra sul telefono",
+"Mussar sin il telefonin"
 ],
 "Shows a QR code: scan it and this live view runs on your phone": [
 "Affiche un code QR : scanne-le et cette vue en direct tourne sur ton téléphone",
 "Zeigt einen QR-Code: Scanne ihn, und diese Live-Ansicht läuft auf deinem Handy",
-"Mostra un codice QR: scansionalo e questa vista dal vivo gira sul tuo telefono"
+"Mostra un codice QR: scansionalo e questa vista dal vivo gira sul tuo telefono",
+"Mussa in code QR: scanna el e questa vista live funcziuna sin tes telefonin"
 ],
 "Scan the code with your phone's camera. The timetable is inside the code, so the phone needs no connection to this laptop. Changes you make here afterwards do not reach the phone: use its own Start now and ±1 min buttons.": [
 "Scanne le code avec l'appareil photo de ton téléphone. Le déroulement est dans le code : le téléphone n'a besoin d'aucune connexion avec cet ordinateur. Ce que tu changes ici ensuite n'arrive pas sur le téléphone : utilise ses propres boutons Commencer maintenant et ±1 min.",
 "Scanne den Code mit der Kamera deines Handys. Der Ablaufplan steckt im Code, das Handy braucht also keine Verbindung zu diesem Laptop. Was du hier danach änderst, kommt nicht auf dem Handy an: Nutze dort die Knöpfe Jetzt beginnen und ±1 min.",
-"Scansiona il codice con la fotocamera del telefono. La scaletta è dentro il codice, quindi il telefono non ha bisogno di alcuna connessione con questo portatile. Le modifiche che fai qui dopo non arrivano al telefono: usa i suoi pulsanti Inizia ora e ±1 min."
+"Scansiona il codice con la fotocamera del telefono. La scaletta è dentro il codice, quindi il telefono non ha bisogno di alcuna connessione con questo portatile. Le modifiche che fai qui dopo non arrivano al telefono: usa i suoi pulsanti Inizia ora e ±1 min.",
+"Scanna il code cun la camera da tes telefonin. L'urari è en il code, perquai na dovra il telefonin nagina connexiun cun quest laptop. Midadas che ti fas qua pli tard n'arrivan betg sin il telefonin: dovra ses agens buttuns Cumenzar ussa e ±1 min."
 ],
 "This timetable is too long for a QR code. Copy the link and send it to your phone.": [
 "Ce déroulement est trop long pour un code QR. Copie le lien et envoie-le sur ton téléphone.",
 "Dieser Ablaufplan ist zu lang für einen QR-Code. Kopiere den Link und schick ihn auf dein Handy.",
-"Questa scaletta è troppo lunga per un codice QR. Copia il link e invialo al tuo telefono."
+"Questa scaletta è troppo lunga per un codice QR. Copia il link e invialo al tuo telefono.",
+"Quest urari è memia lung per in code QR. Copiescha il link e trametta el a tes telefonin."
 ],
 "Copy link": [
 "Copier le lien",
 "Link kopieren",
-"Copia il link"
+"Copia il link",
+"Copiar il link"
 ],
 "Link copied": [
 "Lien copié",
 "Link kopiert",
-"Link copiato"
+"Link copiato",
+"Link copià"
 ],
 "Could not copy the link": [
 "Impossible de copier le lien",
 "Der Link konnte nicht kopiert werden",
-"Impossibile copiare il link"
+"Impossibile copiare il link",
+"Il link n'ha betg pudì vegnir copià"
 ],
 "No timetable yet.": [
 "Pas encore de déroulement.",
 "Noch kein Ablaufplan.",
-"Ancora nessuna scaletta."
+"Ancora nessuna scaletta.",
+"Anc nagin urari."
 ],
 "In Chrono on your laptop, open a timetable in the Teach tab, press Show on phone and scan the code with this phone.": [
 "Dans Chrono sur ton ordinateur, ouvre un déroulement dans l'onglet Enseigner, appuie sur Afficher sur le téléphone et scanne le code avec ce téléphone.",
 "Öffne in Chrono auf deinem Laptop einen Ablaufplan im Reiter Unterrichten, drücke Auf dem Handy zeigen und scanne den Code mit diesem Handy.",
-"In Chrono sul tuo portatile, apri una scaletta nella scheda Insegnare, premi Mostra sul telefono e scansiona il codice con questo telefono."
+"In Chrono sul tuo portatile, apri una scaletta nella scheda Insegnare, premi Mostra sul telefono e scansiona il codice con questo telefono.",
+"En Chrono sin tes laptop, avra in urari en il tab Instruir, smatga Mussar sin il telefonin e scanna il code cun quest telefonin."
 ],
 "This link does not hold a timetable. Scan the code again.": [
 "Ce lien ne contient pas de déroulement. Scanne le code à nouveau.",
 "Dieser Link enthält keinen Ablaufplan. Scanne den Code noch einmal.",
-"Questo link non contiene una scaletta. Scansiona di nuovo il codice."
+"Questo link non contiene una scaletta. Scansiona di nuovo il codice.",
+"Quest link na cuntegna nagin urari. Scanna il code anc ina giada."
 ],
 "This browser is too old to read the link. Update it, or open the link in Chrome or Firefox.": [
 "Ce navigateur est trop ancien pour lire le lien. Mets-le à jour, ou ouvre le lien dans Chrome ou Firefox.",
 "Dieser Browser ist zu alt, um den Link zu lesen. Aktualisiere ihn oder öffne den Link in Chrome oder Firefox.",
-"Questo browser è troppo vecchio per leggere il link. Aggiornalo, oppure apri il link in Chrome o Firefox."
+"Questo browser è troppo vecchio per leggere il link. Aggiornalo, oppure apri il link in Chrome o Firefox.",
+"Quest navigatur è memia vegl per leger il link. Actualisescha el u avra il link en Chrome u Firefox."
 ],
 "Tap a row to start it now": [
 "Touche une ligne pour la commencer maintenant",
 "Tippe auf eine Zeile, um sie jetzt zu beginnen",
-"Tocca una riga per iniziarla ora"
+"Tocca una riga per iniziarla ora",
+"Tutga ina lingia per la cumenzar ussa"
 ],
 "Plan moved: this part starts now": [
 "Plan déplacé : cette partie commence maintenant",
 "Plan verschoben: Dieser Teil beginnt jetzt",
-"Piano spostato: questa parte inizia ora"
+"Piano spostato: questa parte inizia ora",
+"Plan spustà: questa part cumenza ussa"
 ],
 "Undo": [
 "Annuler",
 "Rückgängig",
-"Annulla"
+"Annulla",
+"Revocar"
 ],
 "Back where it was": [
 "Remis comme avant",
 "Wieder wie vorher",
-"Di nuovo com'era"
+"Di nuovo com'era",
+"Puspè sco avant"
 ],
 "Settings": [
 "Réglages",
 "Einstellungen",
-"Impostazioni"
+"Impostazioni",
+"Parameters"
 ],
 "Keep the screen on": [
 "Garder l'écran allumé",
 "Bildschirm eingeschaltet lassen",
-"Tieni lo schermo acceso"
+"Tieni lo schermo acceso",
+"Laschar il visur activ"
 ],
 "Changes here stay on this phone. To load another timetable, scan its code in Chrono on the laptop.": [
 "Les changements faits ici restent sur ce téléphone. Pour charger un autre déroulement, scanne son code dans Chrono sur l'ordinateur.",
 "Änderungen hier bleiben auf diesem Handy. Um einen anderen Ablaufplan zu laden, scanne dessen Code in Chrono auf dem Laptop.",
-"Le modifiche qui restano su questo telefono. Per caricare un'altra scaletta, scansiona il suo codice in Chrono sul portatile."
+"Le modifiche qui restano su questo telefono. Per caricare un'altra scaletta, scansiona il suo codice in Chrono sul portatile.",
+"Midadas qua restan sin quest telefonin. Per chargiar in auter urari, scanna ses code en Chrono sin il laptop."
 ],
 "a nap instead": [
 "plutôt une sieste",
 "stattdessen ein Mittagsschlaf",
-"invece un pisolino"
+"invece un pisolino",
+"empè in sien curt"
 ],
 "a night instead": [
 "plutôt une nuit",
 "stattdessen eine Nacht",
-"invece una notte"
+"invece una notte",
+"empè ina notg"
 ],
 "Previous night": [
 "Nuit précédente",
 "Vorherige Nacht",
-"Notte precedente"
+"Notte precedente",
+"Notg precedenta"
 ],
 "Next night": [
 "Nuit suivante",
 "Nächste Nacht",
-"Notte successiva"
+"Notte successiva",
+"Proxima notg"
 ],
 "Night": [
 "Nuit",
 "Nacht",
-"Notte"
+"Notte",
+"Notg"
 ],
 "Edit nap": [
 "Modifier la sieste",
 "Mittagsschlaf bearbeiten",
-"Modifica pisolino"
+"Modifica pisolino",
+"Modifitgar il sien curt"
 ],
 "Log a nap": [
 "Noter une sieste",
 "Mittagsschlaf erfassen",
-"Registra un pisolino"
+"Registra un pisolino",
+"Registrar in sien curt"
 ],
 "✓ logged, change and save": [
 "✓ noté, modifie et enregistre",
 "✓ erfasst, ändern und speichern",
-"✓ registrata, modifica e salva"
+"✓ registrata, modifica e salva",
+"✓ registrada, mida e memorisescha"
 ],
 "not logged yet": [
 "pas encore noté",
 "noch nicht erfasst",
-"non ancora registrata"
+"non ancora registrata",
+"anc betg registrada"
 ],
 "bed {a}": [
 "coucher {a}",
 "Bett {a}",
-"a letto {a}"
+"a letto {a}",
+"en letg {a}"
 ],
 "up {a}": [
 "lever {a}",
 "auf {a}",
-"in piedi {a}"
+"in piedi {a}",
+"levà {a}"
 ],
 "Bedtime": [
 "Coucher",
 "Schlafenszeit",
-"Ora di andare a letto"
+"Ora di andare a letto",
+"Ura d'ir a letg"
 ],
 "Wake-up": [
 "Réveil",
 "Aufwachen",
-"Sveglia"
+"Sveglia",
+"Sa dasdar"
 ],
 "In bed, lights out": [
 "Au lit, lumière éteinte",
 "Im Bett, Licht aus",
-"A letto, luce spenta"
+"A letto, luce spenta",
+"En letg, glisch stizzada"
 ],
 "Woke up (final)": [
 "Réveil (définitif)",
 "Aufgewacht (endgültig)",
-"Sveglio (definitivo)"
+"Sveglio (definitivo)",
+"Dasdà (definitiv)"
 ],
 "Fell asleep after (min)": [
 "Endormi·e après (min)",
 "Eingeschlafen nach (min)",
-"Addormentato dopo (min)"
+"Addormentato dopo (min)",
+"Durmentà suenter (min)"
 ],
 "optional": [
 "facultatif",
 "freiwillig",
-"facoltativo"
+"facoltativo",
+"facultativ"
 ],
 "Awake during the night (min)": [
 "Éveillé·e pendant la nuit (min)",
 "Wach in der Nacht (min)",
-"Sveglio durante la notte (min)"
+"Sveglio durante la notte (min)",
+"Dasdà durant la notg (min)"
 ],
 "How rested do you feel?": [
 "Te sens-tu reposé·e ?",
 "Wie ausgeruht fühlst du dich?",
-"Quanto ti senti riposato?"
+"Quanto ti senti riposato?",
+"Quant ruassà ta sentas ti?"
 ],
 "Free day after (no obligations in the morning)": [
 "Jour libre après (pas d'obligations le matin)",
 "Freier Tag danach (keine Verpflichtungen am Morgen)",
-"Giorno libero dopo (nessun impegno al mattino)"
+"Giorno libero dopo (nessun impegno al mattino)",
+"Di liber suenter (naginas obligaziuns la damaun)"
 ],
 "Woke with an alarm": [
 "Réveillé·e par un réveil",
 "Mit Wecker aufgewacht",
-"Svegliato dalla sveglia"
+"Svegliato dalla sveglia",
+"Dasdà cun la sveglia"
 ],
 "optional: caffeine late, exam, ill, ...": [
 "facultatif : caféine tard, examen, malade, ...",
 "freiwillig: spät Koffein, Prüfung, krank, ...",
-"facoltativo: caffeina tardi, esame, malato, ..."
+"facoltativo: caffeina tardi, esame, malato, ...",
+"facultativ: caffein tard, examen, malsaun, ..."
 ],
 "Save": [
 "Enregistrer",
 "Speichern",
-"Salva"
+"Salva",
+"Memorisar"
 ],
 "Tonight": [
 "Ce soir",
 "Heute Nacht",
-"Stanotte"
+"Stanotte",
+"Questa notg"
 ],
 "Edit schedule": [
 "Modifier l'horaire",
 "Zeitplan bearbeiten",
-"Modifica gli orari"
+"Modifica gli orari",
+"Modifitgar l'urari"
 ],
 "Free day tomorrow": [
 "Jour libre demain",
 "Morgen frei",
-"Domani giorno libero"
+"Domani giorno libero",
+"Damaun di liber"
 ],
 "Work day tomorrow": [
 "Jour de travail demain",
 "Morgen Arbeitstag",
-"Domani giorno lavorativo"
+"Domani giorno lavorativo",
+"Damaun di da lavur"
 ],
 "Free day tomorrow · bedtime in {a}": [
 "Jour libre demain · coucher dans {a}",
 "Morgen frei · ins Bett in {a}",
-"Domani giorno libero · a letto tra {a}"
+"Domani giorno libero · a letto tra {a}",
+"Damaun di liber · ir a letg en {a}"
 ],
 "Work day tomorrow · bedtime in {a}": [
 "Jour de travail demain · coucher dans {a}",
 "Morgen Arbeitstag · ins Bett in {a}",
-"Domani giorno lavorativo · a letto tra {a}"
+"Domani giorno lavorativo · a letto tra {a}",
+"Damaun di da lavur · ir a letg en {a}"
 ],
 "Free day tomorrow · bedtime now": [
 "Jour libre demain · au lit maintenant",
 "Morgen frei · jetzt ins Bett",
-"Domani giorno libero · a letto adesso"
+"Domani giorno libero · a letto adesso",
+"Damaun di liber · ussa ir a letg"
 ],
 "Work day tomorrow · bedtime now": [
 "Jour de travail demain · au lit maintenant",
 "Morgen Arbeitstag · jetzt ins Bett",
-"Domani giorno lavorativo · a letto adesso"
+"Domani giorno lavorativo · a letto adesso",
+"Damaun di da lavur · ussa ir a letg"
 ],
 "For {a} h of sleep with your usual time to fall asleep: in bed by {b} on work nights.": [
 "Pour {a} h de sommeil avec ton temps habituel d'endormissement : au lit à {b} les soirs de travail.",
 "Für {a} h Schlaf mit deiner üblichen Einschlafzeit: an Arbeitsabenden um {b} im Bett.",
-"Per {a} h di sonno con il tuo solito tempo per addormentarti: a letto alle {b} nelle sere lavorative."
+"Per {a} h di sonno con il tuo solito tempo per addormentarti: a letto alle {b} nelle sere lavorative.",
+"Per {a} h sien cun tes temp usità per ta durmentar: en letg a las {b} las sairas da lavur."
 ],
 "Sleep I aim for (hours)": [
 "Sommeil visé (heures)",
 "Angestrebter Schlaf (Stunden)",
-"Sonno che punto ad avere (ore)"
+"Sonno che punto ad avere (ore)",
+"Sien che jau vi avair (uras)"
 ],
 "Free days (the mornings without obligations)": [
 "Jours libres (matins sans obligations)",
 "Freie Tage (Morgen ohne Verpflichtungen)",
-"Giorni liberi (mattine senza impegni)"
+"Giorni liberi (mattine senza impegni)",
+"Dis libers (las damauns senza obligaziuns)"
 ],
 "Work nights: bed": [
 "Soirs de travail : coucher",
 "Arbeitsabende: Bett",
-"Sere lavorative: a letto"
+"Sere lavorative: a letto",
+"Sairas da lavur: letg"
 ],
 "Work days: wake": [
 "Jours de travail : lever",
 "Arbeitstage: aufstehen",
-"Giorni lavorativi: sveglia"
+"Giorni lavorativi: sveglia",
+"Dis da lavur: sa dasdar"
 ],
 "Free nights: bed": [
 "Soirs libres : coucher",
 "Freie Abende: Bett",
-"Sere libere: a letto"
+"Sere libere: a letto",
+"Sairas libras: letg"
 ],
 "Free days: wake": [
 "Jours libres : lever",
 "Freie Tage: aufstehen",
-"Giorni liberi: sveglia"
+"Giorni liberi: sveglia",
+"Dis libers: sa dasdar"
 ],
 "Keep the two wake-up times within about an hour of each other: that is what keeps your rhythm regular.": [
 "Garde les deux heures de lever à environ une heure d'écart : c'est ce qui garde ton rythme régulier.",
 "Halte die beiden Aufstehzeiten etwa eine Stunde auseinander: Das hält deinen Rhythmus regelmässig.",
-"Tieni i due orari di sveglia entro circa un'ora l'uno dall'altro: è questo che mantiene regolare il tuo ritmo."
+"Tieni i due orari di sveglia entro circa un'ora l'uno dall'altro: è questo che mantiene regolare il tuo ritmo.",
+"Tegna las duas uras da sa dasdar entaifer var in'ura ina da l'autra: quai tegna tes ritem regular."
 ],
 "Save schedule": [
 "Enregistrer l'horaire",
 "Zeitplan speichern",
-"Salva gli orari"
+"Salva gli orari",
+"Memorisar l'urari"
 ],
 "Schedule saved": [
 "Horaire enregistré",
 "Zeitplan gespeichert",
-"Orari salvati"
+"Orari salvati",
+"Urari memorisà"
 ],
 "Your sleep": [
 "Ton sommeil",
 "Dein Schlaf",
-"Il tuo sonno"
+"Il tuo sonno",
+"Tes sien"
 ],
 "{a} days": [
 "{a} jours",
 "{a} Tage",
-"{a} giorni"
+"{a} giorni",
+"{a} dis"
 ],
 "Average sleep": [
 "Sommeil moyen",
 "Schlaf im Schnitt",
-"Sonno medio"
+"Sonno medio",
+"Sien en media"
 ],
 "Nights with 7 h or more": [
 "Nuits de 7 h ou plus",
 "Nächte mit 7 h oder mehr",
-"Notti di 7 h o più"
+"Notti di 7 h o più",
+"Notgs cun 7 h u dapli"
 ],
 "Regularity (SRI, 0–100)": [
 "Régularité (SRI, 0–100)",
 "Regelmässigkeit (SRI, 0–100)",
-"Regolarità (SRI, 0–100)"
+"Regolarità (SRI, 0–100)",
+"Regularitad (SRI, 0–100)"
 ],
 "needs 4+ nights in a row": [
 "demande 4+ nuits d'affilée",
 "braucht 4+ Nächte am Stück",
-"servono 4+ notti di fila"
+"servono 4+ notti di fila",
+"basegna 4+ notgs ina suenter l'autra"
 ],
 "Bedtime / wake-up": [
 "Coucher / lever",
 "Bett / Aufstehen",
-"A letto / sveglia"
+"A letto / sveglia",
+"Ir a letg / sa dasdar"
 ],
 "wake-up varies ± {a} min": [
 "le lever varie de ± {a} min",
 "Aufstehen schwankt um ± {a} min",
-"la sveglia varia di ± {a} min"
+"la sveglia varia di ± {a} min",
+"l'ura da sa dasdar varia ± {a} min"
 ],
 "Social jet lag": [
 "Décalage horaire social",
 "Sozialer Jetlag",
-"Jet lag sociale"
+"Jet lag sociale",
+"Jet lag social"
 ],
 "mid-sleep {a} work · {b} free": [
 "mi-sommeil {a} travail · {b} libre",
 "Schlafmitte {a} Arbeit · {b} frei",
-"metà sonno {a} lavoro · {b} libero"
+"metà sonno {a} lavoro · {b} libero",
+"mesadad dal sien {a} lavur · {b} liber"
 ],
 "asleep {a} % of the time in bed": [
 "endormi·e {a} % du temps au lit",
 "{a} % der Bettzeit geschlafen",
-"addormentato il {a} % del tempo a letto"
+"addormentato il {a} % del tempo a letto",
+"durmentà {a} % dal temp en letg"
 ],
 "Last 7 nights below your goal": [
 "7 dernières nuits sous ton objectif",
 "Letzte 7 Nächte unter deinem Ziel",
-"Ultime 7 notti sotto il tuo obiettivo"
+"Ultime 7 notti sotto il tuo obiettivo",
+"Ultimas 7 notgs sut tia finamira"
 ],
 "No nights in this period yet. Log your first one above: it takes ten seconds each morning.": [
 "Pas encore de nuit sur cette période. Note la première ci-dessus : dix secondes chaque matin.",
 "Noch keine Nächte in diesem Zeitraum. Erfasse oben die erste: Es dauert zehn Sekunden pro Morgen.",
-"Ancora nessuna notte in questo periodo. Registra la prima qui sopra: bastano dieci secondi ogni mattina."
+"Ancora nessuna notte in questo periodo. Registra la prima qui sopra: bastano dieci secondi ogni mattina.",
+"Anc naginas notgs en quest temp. Registrescha l'emprima survart: quai dura diesch secundas mintga damaun."
 ],
 "Your schedule": [
 "Ton horaire",
 "Dein Zeitplan",
-"I tuoi orari"
+"I tuoi orari",
+"Tes urari"
 ],
 "your schedule": [
 "ton horaire",
 "dein Zeitplan",
-"i tuoi orari"
+"i tuoi orari",
+"tes urari"
 ],
 "asleep": [
 "endormi·e",
 "geschlafen",
-"addormentato"
+"addormentato",
+"durmentà"
 ],
 "under 7 h (▲)": [
 "moins de 7 h (▲)",
 "unter 7 h (▲)",
-"meno di 7 h (▲)"
+"meno di 7 h (▲)",
+"sut 7 h (▲)"
 ],
 "in bed, awake": [
 "au lit, éveillé·e",
 "im Bett, wach",
-"a letto, sveglio"
+"a letto, sveglio",
+"en letg, dasdà"
 ],
 "free day after": [
 "jour libre après",
 "freier Tag danach",
-"giorno libero dopo"
+"giorno libero dopo",
+"di liber suenter"
 ],
 "What your data says": [
 "Ce que disent tes données",
 "Was deine Daten sagen",
-"Cosa dicono i tuoi dati"
+"Cosa dicono i tuoi dati",
+"Tge che tias datas din"
 ],
 "Each point is tied to a published study or guideline": [
 "Chaque point s'appuie sur une étude ou une recommandation publiée",
 "Jeder Punkt stützt sich auf eine veröffentlichte Studie oder Leitlinie",
-"Ogni punto si basa su uno studio o una linea guida pubblicati"
+"Ogni punto si basa su uno studio o una linea guida pubblicati",
+"Mintga punct sa basa sin in studi u sin ina directiva publitgada"
 ],
 "Chrono is not a doctor. See one if you snore loudly or stop breathing in your sleep, or if you are often sleepy during the day despite enough time in bed.": [
 "Chrono n'est pas médecin. Consultes-en un si tu ronfles fort ou arrêtes de respirer en dormant, ou si tu as souvent sommeil pendant la journée malgré assez de temps au lit.",
 "Chrono ist kein Arzt. Geh zu einer Ärztin oder einem Arzt, wenn du laut schnarchst oder im Schlaf Atemaussetzer hast, oder wenn du tagsüber oft müde bist, obwohl du genug Zeit im Bett verbringst.",
-"Chrono non è un medico. Consultane uno se russi forte o smetti di respirare nel sonno, o se hai spesso sonno di giorno nonostante abbastanza tempo a letto."
+"Chrono non è un medico. Consultane uno se russi forte o smetti di respirare nel sonno, o se hai spesso sonno di giorno nonostante abbastanza tempo a letto.",
+"Chrono n'è betg in medi. Va tar in medi sche ti respiras fitg ramurus u chalas da respirar durant il sien, u sche ti es savens stanchel durant il di malgrà avunda temp en letg."
 ],
 "Diary": [
 "Journal",
 "Tagebuch",
-"Diario"
+"Diario",
+"Diari"
 ],
 "{a} min to fall asleep": [
 "{a} min pour s'endormir",
 "{a} min zum Einschlafen",
-"{a} min per addormentarsi"
+"{a} min per addormentarsi",
+"{a} min per ta durmentar"
 ],
 "{a} min awake": [
 "{a} min éveillé·e",
 "{a} min wach",
-"{a} min sveglio"
+"{a} min sveglio",
+"{a} min dasdà"
 ],
 "rested {a}/5": [
 "reposé·e {a}/5",
 "ausgeruht {a}/5",
-"riposato {a}/5"
+"riposato {a}/5",
+"ruassà {a}/5"
 ],
 "free day": [
 "jour libre",
 "freier Tag",
-"giorno libero"
+"giorno libero",
+"di liber"
 ],
 "{a} · nap": [
 "{a} · sieste",
 "{a} · Mittagsschlaf",
-"{a} · pisolino"
+"{a} · pisolino",
+"{a} · sien curt"
 ],
 "{a} h {b} min asleep": [
 "{a} h {b} min de sommeil",
 "{a} h {b} min geschlafen",
-"{a} h {b} min di sonno"
+"{a} h {b} min di sonno",
+"{a} h {b} min durmì"
 ],
 "Nap logged": [
 "Sieste notée",
 "Mittagsschlaf erfasst",
-"Pisolino registrato"
+"Pisolino registrato",
+"Sien curt registrà"
 ],
 "Night logged": [
 "Nuit notée",
 "Nacht erfasst",
-"Notte registrata"
+"Notte registrata",
+"Notg registrada"
 ],
 "Delete the night of {a}?": [
 "Supprimer la nuit du {a} ?",
 "Die Nacht vom {a} löschen?",
-"Eliminare la notte del {a}?"
+"Eliminare la notte del {a}?",
+"Stizzar la notg dals {a}?"
 ],
 "Delete the nap of {a}?": [
 "Supprimer la sieste du {a} ?",
 "Den Mittagsschlaf vom {a} löschen?",
-"Eliminare il pisolino del {a}?"
+"Eliminare il pisolino del {a}?",
+"Stizzar il sien curt dals {a}?"
 ],
 "Log a week or two first": [
 "Note d'abord une semaine ou deux",
 "Erfasse zuerst ein, zwei Wochen",
-"Registra prima una o due settimane"
+"Registra prima una o due settimane",
+"Registrescha l'emprim ina u duas emnas"
 ],
 "{a} night(s) so far. Averages and regularity get meaningful after about 7 nights, and the free-day comparison needs a few free days too.": [
 "{a} nuit(s) jusqu'ici. Les moyennes et la régularité deviennent parlantes après environ 7 nuits, et la comparaison avec les jours libres demande aussi quelques jours libres.",
 "Bisher {a} Nacht/Nächte. Durchschnitte und Regelmässigkeit werden nach etwa 7 Nächten aussagekräftig, und der Vergleich mit freien Tagen braucht auch ein paar freie Tage.",
-"{a} notte/i finora. Medie e regolarità diventano significative dopo circa 7 notti, e il confronto con i giorni liberi richiede anche alcuni giorni liberi."
+"{a} notte/i finora. Medie e regolarità diventano significative dopo circa 7 notti, e il confronto con i giorni liberi richiede anche alcuni giorni liberi.",
+"{a} notg(s) fin ussa. Medias e regularitad daventan significantas suenter var 7 notgs, e la cumparegliaziun cun ils dis libers basegna er insaquants dis libers."
 ],
 "You sleep less than 7 hours on average": [
 "Tu dors moins de 7 heures en moyenne",
 "Du schläfst im Schnitt weniger als 7 Stunden",
-"Dormi in media meno di 7 ore"
+"Dormi in media meno di 7 ore",
+"Ti dormas en media main che 7 uras"
 ],
 "Average {a} of sleep; {b} of {c} nights were under 7 h. The AASM and the Sleep Research Society recommend 7 or more hours per night on a regular basis for adults; less is associated with impaired performance, more errors, weight gain and other health risks. With your usual time to fall asleep, being in bed by {d} on work nights would give you {e} h.": [
 "En moyenne {a} de sommeil ; {b} nuits sur {c} étaient sous 7 h. L'AASM et la Sleep Research Society recommandent aux adultes 7 heures ou plus par nuit de façon régulière ; moins est associé à de moins bonnes performances, plus d'erreurs, une prise de poids et d'autres risques pour la santé. Avec ton temps habituel d'endormissement, être au lit à {d} les soirs de travail te donnerait {e} h.",
 "Im Schnitt {a} Schlaf; {b} von {c} Nächten lagen unter 7 h. Die AASM und die Sleep Research Society empfehlen Erwachsenen regelmässig 7 oder mehr Stunden pro Nacht; weniger hängt mit schlechterer Leistung, mehr Fehlern, Gewichtszunahme und anderen Gesundheitsrisiken zusammen. Mit deiner üblichen Einschlafzeit gäbe dir Zubettgehen um {d} an Arbeitsabenden {e} h.",
-"In media {a} di sonno; {b} notti su {c} sono state sotto le 7 h. L'AASM e la Sleep Research Society raccomandano agli adulti 7 o più ore per notte in modo regolare; meno è associato a prestazioni peggiori, più errori, aumento di peso e altri rischi per la salute. Con il tuo solito tempo per addormentarti, andare a letto alle {d} nelle sere lavorative ti darebbe {e} h."
+"In media {a} di sonno; {b} notti su {c} sono state sotto le 7 h. L'AASM e la Sleep Research Society raccomandano agli adulti 7 o più ore per notte in modo regolare; meno è associato a prestazioni peggiori, più errori, aumento di peso e altri rischi per la salute. Con il tuo solito tempo per addormentarti, andare a letto alle {d} nelle sere lavorative ti darebbe {e} h.",
+"En media {a} sien; {b} da {c} notgs eran sut 7 h. L'AASM e la Sleep Research Society recumondan a creschids 7 u dapli uras per notg regularmain; main è associà cun prestaziuns pli debilas, dapli sbagls, augment dal pais ed auters ristgs per la sanadad. Cun tes temp usità per ta durmentar, ir a letg a las {d} las sairas da lavur ta dess {e} h."
 ],
 "an earlier time": [
 "une heure plus tôt",
 "eine frühere Zeit",
-"un orario più presto"
+"un orario più presto",
+"in'ura pli baud"
 ],
 "You sleep more than 9 hours on average": [
 "Tu dors plus de 9 heures en moyenne",
 "Du schläfst im Schnitt mehr als 9 Stunden",
-"Dormi in media più di 9 ore"
+"Dormi in media più di 9 ore",
+"Ti dormas en media dapli che 9 uras"
 ],
 "Average {a}. The consensus statement says regularly sleeping more than 9 hours may be appropriate for young adults and people recovering from sleep debt. If you still feel sleepy during the day, talk to a doctor.": [
 "En moyenne {a}. Selon la déclaration de consensus, dormir régulièrement plus de 9 heures peut convenir aux jeunes adultes et aux personnes qui récupèrent d'une dette de sommeil. Si tu as quand même sommeil dans la journée, parles-en à un médecin.",
 "Im Schnitt {a}. Laut Konsenserklärung kann regelmässig mehr als 9 Stunden Schlaf für junge Erwachsene und Menschen mit Schlafschuld angemessen sein. Wenn du tagsüber trotzdem müde bist, sprich mit einer Ärztin oder einem Arzt.",
-"In media {a}. Secondo la dichiarazione di consenso, dormire regolarmente più di 9 ore può essere adatto ai giovani adulti e a chi recupera un debito di sonno. Se di giorno hai comunque sonno, parlane con un medico."
+"In media {a}. Secondo la dichiarazione di consenso, dormire regolarmente più di 9 ore può essere adatto ai giovani adulti e a chi recupera un debito di sonno. Se di giorno hai comunque sonno, parlane con un medico.",
+"En media {a}. Tenor la declaraziun da consens po esser adattà da durmir regularmain dapli che 9 uras per giuvens creschids e per persunas che recuperan in deficit da sien. Sche ti es tuttina stanchel durant il di, discurra cun in medi."
 ],
 "Enough sleep on average": [
 "Assez de sommeil en moyenne",
 "Im Schnitt genug Schlaf",
-"In media dormi abbastanza"
+"In media dormi abbastanza",
+"En media avunda sien"
 ],
 "Average {a}, within the recommended 7 hours or more.": [
 "En moyenne {a}, dans les 7 heures ou plus recommandées.",
 "Im Schnitt {a}, im empfohlenen Bereich von 7 Stunden oder mehr.",
-"In media {a}, entro le 7 ore o più raccomandate."
+"In media {a}, entro le 7 ore o più raccomandate.",
+"En media {a}, entaifer las 7 uras u dapli recumandadas."
 ],
 "Still, {a} of {b} nights were under 7 h; the recommendation is about most nights, not the average.": [
 "Pourtant, {a} nuits sur {b} étaient sous 7 h ; la recommandation vaut pour la plupart des nuits, pas pour la moyenne.",
 "Trotzdem lagen {a} von {b} Nächten unter 7 h; die Empfehlung gilt für die meisten Nächte, nicht für den Schnitt.",
-"Eppure {a} notti su {b} sono state sotto le 7 h; la raccomandazione riguarda la maggior parte delle notti, non la media."
+"Eppure {a} notti su {b} sono state sotto le 7 h; la raccomandazione riguarda la maggior parte delle notti, non la media.",
+"Tuttina eran {a} da {b} notgs sut 7 h; la recumandaziun pertutga la gronda part da las notgs, betg la media."
 ],
 "Your sleep times vary a lot": [
 "Tes heures de sommeil varient beaucoup",
 "Deine Schlafzeiten schwanken stark",
-"I tuoi orari di sonno variano molto"
+"I tuoi orari di sonno variano molto",
+"Tias uras da sien varieschan fitg"
 ],
 "Sleep Regularity Index {a} (100 = same times every day). In a UK Biobank study (accelerometers, median 81), people in the least regular fifth (below about 72) had a higher risk of death than the other four fifths, and regularity predicted it better than duration. In Harvard students, irregular sleepers had a body clock shifted about 2.5 h later and lower grades. The single most effective step: get up at the same time every day, weekends included (±30 min), and get daylight soon after waking. Note: a diary misses awakenings at night, so diary values come out somewhat higher than accelerometer values.": [
 "Indice de régularité du sommeil {a} (100 = mêmes heures chaque jour). Dans une étude UK Biobank (accéléromètres, médiane 81), le cinquième le moins régulier (sous environ 72) avait un risque de décès plus élevé que les quatre autres cinquièmes, et la régularité le prédisait mieux que la durée. Chez des étudiants de Harvard, les dormeurs irréguliers avaient une horloge interne décalée d'environ 2,5 h plus tard et de moins bonnes notes. Le geste le plus efficace : se lever à la même heure chaque jour, week-ends compris (±30 min), et prendre la lumière du jour peu après le réveil. Remarque : un journal ne voit pas les réveils nocturnes, donc ses valeurs sont un peu plus hautes que celles des accéléromètres.",
 "Schlafregelmässigkeitsindex {a} (100 = jeden Tag dieselben Zeiten). In einer UK-Biobank-Studie (Beschleunigungsmesser, Median 81) hatte das am wenigsten regelmässige Fünftel (unter etwa 72) ein höheres Sterberisiko als die anderen vier Fünftel, und die Regelmässigkeit sagte es besser voraus als die Dauer. Bei Harvard-Studierenden hatten unregelmässige Schläfer eine um etwa 2,5 h verschobene innere Uhr und schlechtere Noten. Der wirksamste Schritt: jeden Tag zur selben Zeit aufstehen, auch am Wochenende (±30 min), und bald nach dem Aufwachen Tageslicht tanken. Hinweis: Ein Tagebuch erfasst nächtliches Aufwachen nicht, deshalb fallen Tagebuchwerte etwas höher aus als Messwerte von Beschleunigungsmessern.",
-"Indice di regolarità del sonno {a} (100 = stessi orari ogni giorno). In uno studio UK Biobank (accelerometri, mediana 81), il quinto meno regolare (sotto circa 72) aveva un rischio di morte più alto degli altri quattro quinti, e la regolarità lo prevedeva meglio della durata. Negli studenti di Harvard, chi dormiva in modo irregolare aveva l'orologio biologico spostato di circa 2,5 h più tardi e voti più bassi. Il passo più efficace: alzarsi alla stessa ora ogni giorno, weekend compresi (±30 min), e prendere luce del giorno subito dopo il risveglio. Nota: un diario non registra i risvegli notturni, quindi i suoi valori risultano un po' più alti di quelli degli accelerometri."
+"Indice di regolarità del sonno {a} (100 = stessi orari ogni giorno). In uno studio UK Biobank (accelerometri, mediana 81), il quinto meno regolare (sotto circa 72) aveva un rischio di morte più alto degli altri quattro quinti, e la regolarità lo prevedeva meglio della durata. Negli studenti di Harvard, chi dormiva in modo irregolare aveva l'orologio biologico spostato di circa 2,5 h più tardi e voti più bassi. Il passo più efficace: alzarsi alla stessa ora ogni giorno, weekend compresi (±30 min), e prendere luce del giorno subito dopo il risveglio. Nota: un diario non registra i risvegli notturni, quindi i suoi valori risultano un po' più alti di quelli degli accelerometri.",
+"Index da regularitad dal sien {a} (100 = mintga di las medemas uras). En in studi da la UK Biobank (accelerometers, median 81) avevan las persunas en il tschintgavel il main regular (sut var 72) in ristg da mort pli aut che ils auters quatter tschintgavels, e la regularitad al prediva meglier che la durada. Tar students da Harvard aveva quels che durmivan irregularmain in'ura biologica spustada var 2,5 h pli tard e notas pli bassas. Il pass il pli effectiv: star si mintga di a la medema ura, era la fin d'emna (±30 min), e prender glisch dal di curt suenter sa dasdar. Remartga: in diari na registrescha betg las dasdadas durant la notg, perquai èn las valurs dal diari in pau pli autas che quellas dals accelerometers."
 ],
 "Regular sleep times": [
 "Heures de sommeil régulières",
 "Regelmässige Schlafzeiten",
-"Orari di sonno regolari"
+"Orari di sonno regolari",
+"Uras da sien regularas"
 ],
 "Sleep Regularity Index {a}. In the UK Biobank study the median was 81; regularity predicted mortality better than duration did. Keep it up.": [
 "Indice de régularité du sommeil {a}. Dans l'étude UK Biobank, la médiane était de 81 ; la régularité prédisait la mortalité mieux que la durée. Continue ainsi.",
 "Schlafregelmässigkeitsindex {a}. In der UK-Biobank-Studie lag der Median bei 81; die Regelmässigkeit sagte die Sterblichkeit besser voraus als die Dauer. Weiter so.",
-"Indice di regolarità del sonno {a}. Nello studio UK Biobank la mediana era 81; la regolarità prevedeva la mortalità meglio della durata. Continua così."
+"Indice di regolarità del sonno {a}. Nello studio UK Biobank la mediana era 81; la regolarità prevedeva la mortalità meglio della durata. Continua così.",
+"Index da regularitad dal sien {a}. En il studi da la UK Biobank era il median 81; la regularitad prediva la mortalitad meglier che la durada. Cuntinua uschia."
 ],
 "Your wake-up time moves a lot": [
 "Ton heure de lever bouge beaucoup",
 "Deine Aufstehzeit schwankt stark",
-"L'ora della tua sveglia cambia molto"
+"L'ora della tua sveglia cambia molto",
+"Tia ura da sa dasdar sa mida fitg"
 ],
 "Your wake-up time varies by ±{a} min. Getting up at the same time every day anchors the body clock.": [
 "Ton heure de lever varie de ±{a} min. Se lever à la même heure chaque jour ancre l'horloge interne.",
 "Deine Aufstehzeit schwankt um ±{a} min. Jeden Tag zur selben Zeit aufzustehen verankert die innere Uhr.",
-"L'ora della tua sveglia varia di ±{a} min. Alzarsi alla stessa ora ogni giorno ancora l'orologio biologico."
+"L'ora della tua sveglia varia di ±{a} min. Alzarsi alla stessa ora ogni giorno ancora l'orologio biologico.",
+"Tia ura da sa dasdar varia per ±{a} min. Star si mintga di a la medema ura stabilisescha l'ura biologica."
 ],
 "Social jet lag of {a}": [
 "Décalage horaire social de {a}",
 "Sozialer Jetlag von {a}",
-"Jet lag sociale di {a}"
+"Jet lag sociale di {a}",
+"Jet lag social da {a}"
 ],
 "The middle of your sleep shifts this much between work days and free days, as if you flew across time zones every weekend. In a study of about 65 000 people, each hour of social jet lag went with roughly 33 % higher odds of being overweight (an association, not proof of cause). Keep free-day wake-up within about an hour of work days, and go outside in the morning on free days too.": [
 "Le milieu de ton sommeil se décale d'autant entre jours de travail et jours libres, comme si tu changeais de fuseau horaire chaque week-end. Dans une étude d'environ 65 000 personnes, chaque heure de décalage social allait avec un risque de surpoids environ 33 % plus élevé (une association, pas une preuve de cause). Garde le lever des jours libres à environ une heure de celui des jours de travail, et sors le matin les jours libres aussi.",
 "Die Mitte deines Schlafs verschiebt sich so stark zwischen Arbeitstagen und freien Tagen, als ob du jedes Wochenende Zeitzonen überfliegen würdest. In einer Studie mit etwa 65 000 Personen ging jede Stunde sozialer Jetlag mit rund 33 % höherer Wahrscheinlichkeit für Übergewicht einher (ein Zusammenhang, kein Beweis für die Ursache). Halte das Aufstehen an freien Tagen innerhalb etwa einer Stunde der Arbeitstage, und geh auch an freien Tagen morgens nach draussen.",
-"Il centro del tuo sonno si sposta così tanto tra giorni lavorativi e liberi, come se ogni weekend attraversassi dei fusi orari. In uno studio su circa 65 000 persone, ogni ora di jet lag sociale andava con una probabilità di sovrappeso più alta di circa il 33 % (un'associazione, non una prova di causa). Tieni la sveglia dei giorni liberi entro circa un'ora da quella dei giorni lavorativi, ed esci al mattino anche nei giorni liberi."
+"Il centro del tuo sonno si sposta così tanto tra giorni lavorativi e liberi, come se ogni weekend attraversassi dei fusi orari. In uno studio su circa 65 000 persone, ogni ora di jet lag sociale andava con una probabilità di sovrappeso più alta di circa il 33 % (un'associazione, non una prova di causa). Tieni la sveglia dei giorni liberi entro circa un'ora da quella dei giorni lavorativi, ed esci al mattino anche nei giorni liberi.",
+"Il center da tes sien sa sposta uschè fitg tranter dis da lavur e dis libers, sco sche ti sgolassas mintga fin d'emna sur zonas d'urari. En in studi cun var 65 000 persunas era mintga ura da jet lag social associada cun var 33 % pli auta probabilitad da surpais (ina associaziun, betg ina cumprova da la chaschun). Tegna l'ura da sa dasdar dals dis libers entaifer var in'ura da quella dals dis da lavur, e va ora la damaun er ils dis libers."
 ],
 "Little social jet lag": [
 "Peu de décalage horaire social",
 "Wenig sozialer Jetlag",
-"Poco jet lag sociale"
+"Poco jet lag sociale",
+"Pauc jet lag social"
 ],
 "Your mid-sleep moves only {a} between work and free days.": [
 "Ton mi-sommeil ne bouge que de {a} entre jours de travail et jours libres.",
 "Deine Schlafmitte verschiebt sich nur um {a} zwischen Arbeits- und freien Tagen.",
-"La metà del tuo sonno si sposta solo di {a} tra giorni lavorativi e liberi."
+"La metà del tuo sonno si sposta solo di {a} tra giorni lavorativi e liberi.",
+"Il center da tes sien sa sposta mo {a} tranter dis da lavur e dis libers."
 ],
 "You catch up on free days": [
 "Tu rattrapes les jours libres",
 "Du holst an freien Tagen nach",
-"Recuperi nei giorni liberi"
+"Recuperi nei giorni liberi",
+"Ti recuperas ils dis libers"
 ],
 "You sleep {a} more on free days than on work days: a sign of sleep debt during the week. In a controlled study, sleeping in at the weekend did not undo the metabolic effects of too little sleep during the week. Shift some of that sleep to work nights instead.": [
 "Tu dors {a} de plus les jours libres que les jours de travail : signe d'une dette de sommeil en semaine. Dans une étude contrôlée, faire la grasse matinée le week-end n'a pas annulé les effets métaboliques d'un sommeil trop court en semaine. Déplace plutôt une partie de ce sommeil sur les soirs de travail.",
 "Du schläfst an freien Tagen {a} mehr als an Arbeitstagen: ein Zeichen für Schlafschuld unter der Woche. In einer kontrollierten Studie machte Ausschlafen am Wochenende die Stoffwechselfolgen von zu wenig Schlaf unter der Woche nicht rückgängig. Verlege lieber einen Teil dieses Schlafs auf die Arbeitsabende.",
-"Nei giorni liberi dormi {a} in più che nei giorni lavorativi: segno di un debito di sonno durante la settimana. In uno studio controllato, dormire di più nel weekend non ha annullato gli effetti metabolici del poco sonno durante la settimana. Sposta piuttosto parte di quel sonno sulle sere lavorative."
+"Nei giorni liberi dormi {a} in più che nei giorni lavorativi: segno di un debito di sonno durante la settimana. In uno studio controllato, dormire di più nel weekend non ha annullato gli effetti metabolici del poco sonno durante la settimana. Sposta piuttosto parte di quel sonno sulle sere lavorative.",
+"Ils dis libers dormas ti {a} dapli che ils dis da lavur: in segn d'in deficit da sien durant l'emna. En in studi controllà n'ha il durmir pli ditg la fin d'emna betg eliminà ils effects metabolics da memia pauc sien durant l'emna. Sposta empè ina part da quest sien sin las sairas da lavur."
 ],
 "you take {a} min on average to fall asleep ({b} nights over 30 min)": [
 "tu mets en moyenne {a} min à t'endormir ({b} nuits à plus de 30 min)",
 "du brauchst im Schnitt {a} min zum Einschlafen ({b} Nächte über 30 min)",
-"impieghi in media {a} min ad addormentarti ({b} notti oltre 30 min)"
+"impieghi in media {a} min ad addormentarti ({b} notti oltre 30 min)",
+"ti dovras en media {a} min per ta durmentar ({b} notgs sur 30 min)"
 ],
 "you sleep {a} % of the time in bed": [
 "tu dors {a} % du temps passé au lit",
 "du schläfst {a} % der Zeit im Bett",
-"dormi il {a} % del tempo a letto"
+"dormi il {a} % del tempo a letto",
+"ti dormas {a} % dal temp en letg"
 ],
 " and ": [
 " et ",
 " und ",
+" e ",
 " e "
 ],
 "Trouble falling or staying asleep": [
 "Difficultés à s'endormir ou à rester endormi·e",
 "Probleme beim Ein- oder Durchschlafen",
-"Difficoltà ad addormentarsi o a restare addormentato"
+"Difficoltà ad addormentarsi o a restare addormentato",
+"Difficultads da ta durmentar u da restar durmentà"
 ],
 "In your diary, {a}.": [
 "Dans ton journal, {a}.",
 "Laut deinem Tagebuch {a}.",
-"Nel tuo diario, {a}."
+"Nel tuo diario, {a}.",
+"En tes diari, {a}."
 ],
 "What helps most, per the AASM guideline, is cognitive behavioural therapy for insomnia (CBT-I); one part you can start now is stimulus control: go to bed only when sleepy, get up if you can't sleep after about 20 minutes, and get up at the same time every morning. Sleep hygiene tips alone are not recommended as a treatment. If this happens three or more nights a week for three months and affects your days, see a doctor: that matches the definition of chronic insomnia.": [
 "Ce qui aide le plus, selon la recommandation de l'AASM, est la thérapie cognitivo-comportementale de l'insomnie (TCC-I) ; une partie que tu peux commencer maintenant est le contrôle du stimulus : n'aller au lit qu'en ayant sommeil, te lever si tu ne dors pas après environ 20 minutes, et te lever à la même heure chaque matin. Les conseils d'hygiène du sommeil seuls ne sont pas recommandés comme traitement. Si cela arrive trois nuits ou plus par semaine pendant trois mois et affecte tes journées, consulte un médecin : cela correspond à la définition de l'insomnie chronique.",
 "Am meisten hilft laut AASM-Leitlinie die kognitive Verhaltenstherapie bei Insomnie (KVT-I); ein Teil davon, mit dem du jetzt beginnen kannst, ist die Stimuluskontrolle: nur schläfrig ins Bett gehen, aufstehen, wenn du nach etwa 20 Minuten nicht schläfst, und jeden Morgen zur selben Zeit aufstehen. Schlafhygiene-Tipps allein werden als Behandlung nicht empfohlen. Wenn das drei oder mehr Nächte pro Woche während drei Monaten vorkommt und deine Tage beeinträchtigt, geh zu einer Ärztin oder einem Arzt: Das entspricht der Definition chronischer Insomnie.",
-"Ciò che aiuta di più, secondo la linea guida dell'AASM, è la terapia cognitivo-comportamentale per l'insonnia (CBT-I); una parte che puoi iniziare subito è il controllo dello stimolo: andare a letto solo quando hai sonno, alzarti se non dormi dopo circa 20 minuti, e alzarti alla stessa ora ogni mattina. I soli consigli di igiene del sonno non sono raccomandati come trattamento. Se succede tre o più notti a settimana per tre mesi e incide sulle tue giornate, consulta un medico: corrisponde alla definizione di insonnia cronica."
+"Ciò che aiuta di più, secondo la linea guida dell'AASM, è la terapia cognitivo-comportamentale per l'insonnia (CBT-I); una parte che puoi iniziare subito è il controllo dello stimolo: andare a letto solo quando hai sonno, alzarti se non dormi dopo circa 20 minuti, e alzarti alla stessa ora ogni mattina. I soli consigli di igiene del sonno non sono raccomandati come trattamento. Se succede tre o più notti a settimana per tre mesi e incide sulle tue giornate, consulta un medico: corrisponde alla definizione di insonnia cronica.",
+"Tenor la directiva da l'AASM gida il pli fitg la terapia cognitiva da cumportament per l'insomnia (CBT-I); ina part che ti pos cumenzar ussa è la controlla dals stimuls: va a letg mo cur che ti es stanchel, sta si sche ti na pos betg durmir suenter var 20 minutas, e sta si mintga damaun a la medema ura. Cussegls d'igiena dal sien sulets na vegnan betg recumandads sco tractament. Sche quai capita trais u dapli notgs per emna durant trais mais e pertutga tes dis, va tar in medi: quai correspunda a la definiziun d'insomnia cronica."
 ],
 "You are a late type": [
 "Tu es du soir",
 "Du bist ein Spättyp",
-"Sei un tipo serale"
+"Sei un tipo serale",
+"Ti es in tip da la saira"
 ],
 "Your sleep-corrected mid-sleep on free days is {a}, which counts as late. Late types carry the most sleep debt into the work week. Morning daylight and dim light in the evening move the body clock earlier.": [
 "Ton mi-sommeil corrigé des jours libres est à {a}, ce qui compte comme tardif. Les types du soir emportent le plus de dette de sommeil dans la semaine de travail. La lumière du jour le matin et une lumière tamisée le soir avancent l'horloge interne.",
 "Deine schlafkorrigierte Schlafmitte an freien Tagen liegt bei {a}, das gilt als spät. Spättypen nehmen die meiste Schlafschuld mit in die Arbeitswoche. Tageslicht am Morgen und gedämpftes Licht am Abend verschieben die innere Uhr nach vorne.",
-"La metà del tuo sonno corretta nei giorni liberi è alle {a}, il che conta come tardi. I tipi serali portano il debito di sonno più grande nella settimana lavorativa. La luce del giorno al mattino e una luce soffusa la sera anticipano l'orologio biologico."
+"La metà del tuo sonno corretta nei giorni liberi è alle {a}, il che conta come tardi. I tipi serali portano il debito di sonno più grande nella settimana lavorativa. La luce del giorno al mattino e una luce soffusa la sera anticipano l'orologio biologico.",
+"La mesadad da tes sien ils dis libers, curregida tenor il sien, è a las {a}, quai che vala sco tard. Tips da la saira portan il pli grond deficit da sien en l'emna da lavur. Glisch dal di la damaun e glisch flaivla la saira spostan l'ura biologica pli baud."
 ],
 "Your plan and your nights differ": [
 "Ton plan et tes nuits diffèrent",
 "Dein Plan und deine Nächte weichen ab",
-"Il tuo piano e le tue notti non coincidono"
+"Il tuo piano e le tue notti non coincidono",
+"Tes plan e tias notgs na correspundan betg"
 ],
 "You go to bed {a} away from your planned time on average. A plan you keep beats an ideal one: set the planned wake-up time you can hold every day, then count back the sleep you need.": [
 "Tu te couches en moyenne à {a} de l'heure prévue. Un plan que tu tiens vaut mieux qu'un plan idéal : fixe l'heure de lever que tu peux tenir chaque jour, puis compte à rebours le sommeil dont tu as besoin.",
 "Du gehst im Schnitt {a} neben deiner geplanten Zeit ins Bett. Ein Plan, den du einhältst, ist besser als ein idealer: Leg die Aufstehzeit fest, die du jeden Tag halten kannst, und rechne den nötigen Schlaf zurück.",
-"Vai a letto in media a {a} dall'orario previsto. Un piano che rispetti vale più di uno ideale: fissa l'ora di sveglia che puoi tenere ogni giorno, poi conta all'indietro il sonno che ti serve."
+"Vai a letto in media a {a} dall'orario previsto. Un piano che rispetti vale più di uno ideale: fissa l'ora di sveglia che puoi tenere ogni giorno, poi conta all'indietro il sonno che ti serve.",
+"Ti vas a letg en media {a} davent da l'ura planisada. In plan che ti tegnas è meglier ch'in plan ideal: fixescha l'ura da sa dasdar che ti pos tegnair mintga di, e quinta lura enavos il sien che ti dovras."
 ],
 "A course across semesters needs a start date and a deadline.": [
 "Un cours sur plusieurs semestres a besoin d'une date de début et d'une échéance.",
 "Ein Kurs über mehrere Semester braucht ein Startdatum und eine Frist.",
-"Un corso su più semestri ha bisogno di una data di inizio e di una scadenza."
+"Un corso su più semestri ha bisogno di una data di inizio e di una scadenza.",
+"In curs sur plirs semesters basegna ina data da cumenzament ed in termin."
 ],
 "A timer is already running. Stop it first.": [
 "Un minuteur tourne déjà. Arrête-le d'abord.",
 "Es läuft bereits ein Timer. Stoppe ihn zuerst.",
-"Un timer è già in corso. Fermalo prima."
+"Un timer è già in corso. Fermalo prima.",
+"In cronometer è gia en funcziun. Ferma el l'emprim."
 ],
 "Another entry already logs this night.": [
 "Une autre entrée note déjà cette nuit.",
 "Ein anderer Eintrag erfasst diese Nacht schon.",
-"Un'altra voce registra già questa notte."
+"Un'altra voce registra già questa notte.",
+"In'autra inscripziun registrescha gia questa notg."
 ],
 "Course not found.": [
 "Cours introuvable.",
 "Kurs nicht gefunden.",
-"Corso non trovato."
+"Corso non trovato.",
+"Curs betg chattà."
 ],
 "Create a semester first.": [
 "Crée d'abord un semestre.",
 "Erstelle zuerst ein Semester.",
-"Crea prima un semestre."
+"Crea prima un semestre.",
+"Creescha l'emprim in semester."
 ],
 "End must be after start.": [
 "La fin doit être après le début.",
 "Das Ende muss nach dem Beginn liegen.",
-"La fine deve essere dopo l'inizio."
+"La fine deve essere dopo l'inizio.",
+"La fin sto esser suenter il cumenzament."
 ],
 "Falling asleep and time awake take longer than the whole time in bed.": [
 "L'endormissement et le temps éveillé durent plus longtemps que tout le temps au lit.",
 "Einschlafen und Wachzeit dauern länger als die ganze Zeit im Bett.",
-"Addormentarsi e il tempo da sveglio durano più di tutto il tempo a letto."
+"Addormentarsi e il tempo da sveglio durano più di tutto il tempo a letto.",
+"Sa durmentar ed il temp dasdà duran pli ditg che l'entir temp en letg."
 ],
 "Give it a name.": [
 "Donne-lui un nom.",
 "Gib einen Namen ein.",
-"Dagli un nome."
+"Dagli un nome.",
+"Dà in num."
 ],
 "No such session.": [
 "Session introuvable.",
 "Sitzung nicht gefunden.",
-"Sessione non trovata."
+"Sessione non trovata.",
+"Sessiun betg chattada."
 ],
 "No such sport.": [
 "Sport introuvable.",
 "Sportart nicht gefunden.",
-"Sport non trovato."
+"Sport non trovato.",
+"Sport betg chattà."
 ],
 "No such timetable.": [
 "Déroulement introuvable.",
 "Ablaufplan nicht gefunden.",
-"Scaletta non trovata."
+"Scaletta non trovata.",
+"Urari betg chattà."
 ],
 "No timer to stop.": [
 "Aucun minuteur à arrêter.",
 "Kein Timer zum Stoppen.",
-"Nessun timer da fermare."
+"Nessun timer da fermare.",
+"Nagin cronometer da fermar."
 ],
 "Not found.": [
 "Introuvable.",
 "Nicht gefunden.",
-"Non trovato."
+"Non trovato.",
+"Betg chattà."
 ],
 "Other is built in and can't be deleted.": [
 "Autre est intégré et ne peut pas être supprimé.",
 "Anderes ist eingebaut und kann nicht gelöscht werden.",
-"Altro è integrato e non si può eliminare."
+"Altro è integrato e non si può eliminare.",
+"Auter è integrà e na po betg vegnir stizzà."
 ],
 "Semester not found.": [
 "Semestre introuvable.",
 "Semester nicht gefunden.",
-"Semestre non trovato."
+"Semestre non trovato.",
+"Semester betg chattà."
 ],
 "Studied time must be positive and fit between start and end.": [
 "Le temps d'étude doit être positif et tenir entre le début et la fin.",
 "Die Lernzeit muss positiv sein und zwischen Beginn und Ende passen.",
-"Il tempo di studio deve essere positivo e stare tra inizio e fine."
+"Il tempo di studio deve essere positivo e stare tra inizio e fine.",
+"Il temp da studi sto esser positiv e star tranter il cumenzament e la fin."
 ],
 "That is more than 20 hours in bed. Check the dates.": [
 "Cela fait plus de 20 heures au lit. Vérifie les dates.",
 "Das sind mehr als 20 Stunden im Bett. Prüfe die Daten.",
-"Sono più di 20 ore a letto. Controlla le date."
+"Sono più di 20 ore a letto. Controlla le date.",
+"Quai èn dapli che 20 uras en letg. Controllescha las datas."
 ],
 "The end date is before the start date.": [
 "La date de fin est avant la date de début.",
 "Das Enddatum liegt vor dem Startdatum.",
-"La data di fine è prima della data di inizio."
+"La data di fine è prima della data di inizio.",
+"La data da la fin è avant la data da cumenzament."
 ],
 "The start date is after the deadline.": [
 "La date de début est après l'échéance.",
 "Das Startdatum liegt nach der Frist.",
-"La data di inizio è dopo la scadenza."
+"La data di inizio è dopo la scadenza.",
+"La data da cumenzament è suenter il termin."
 ],
 "The time must fit between start and end.": [
 "Le temps doit tenir entre le début et la fin.",
 "Die Zeit muss zwischen Beginn und Ende passen.",
-"Il tempo deve stare tra inizio e fine."
+"Il tempo deve stare tra inizio e fine.",
+"Il temp sto star tranter il cumenzament e la fin."
 ],
 "The timer is running for this course. Stop it first.": [
 "Le minuteur tourne pour ce cours. Arrête-le d'abord.",
 "Der Timer läuft für diesen Kurs. Stoppe ihn zuerst.",
-"Il timer è in corso per questo corso. Fermalo prima."
+"Il timer è in corso per questo corso. Fermalo prima.",
+"Il cronometer funcziuna per quest curs. Ferma el l'emprim."
 ],
 "The timer isn't paused.": [
 "Le minuteur n'est pas en pause.",
 "Der Timer ist nicht pausiert.",
-"Il timer non è in pausa."
+"Il timer non è in pausa.",
+"Il cronometer n'è betg en pausa."
 ],
 "The timer isn't running.": [
 "Le minuteur ne tourne pas.",
 "Der Timer läuft nicht.",
-"Il timer non è in corso."
+"Il timer non è in corso.",
+"Il cronometer n'è betg en funcziun."
 ],
 "The timetable ends before it starts.": [
 "Le déroulement finit avant de commencer.",
 "Der Ablaufplan endet, bevor er beginnt.",
-"La scaletta finisce prima di iniziare."
+"La scaletta finisce prima di iniziare.",
+"L'urari finescha avant ch'el cumenza."
 ],
 "The wake-up time must come after the bedtime.": [
 "L'heure de lever doit venir après l'heure de coucher.",
 "Die Aufstehzeit muss nach der Schlafenszeit liegen.",
-"L'ora della sveglia deve venire dopo l'ora di andare a letto."
+"L'ora della sveglia deve venire dopo l'ora di andare a letto.",
+"L'ura da sa dasdar sto esser suenter l'ura d'ir a letg."
 ],
 "This night is already logged. Edit it in the list instead.": [
 "Cette nuit est déjà notée. Modifie-la plutôt dans la liste.",
 "Diese Nacht ist schon erfasst. Bearbeite sie stattdessen in der Liste.",
-"Questa notte è già registrata. Modificala nell'elenco."
+"Questa notte è già registrata. Modificala nell'elenco.",
+"Questa notg è gia registrada. Modifitgescha la empè en la glista."
 ],
 "Times look like 23:00.": [
 "Les heures s'écrivent comme 23:00.",
 "Zeiten sehen so aus: 23:00.",
-"Gli orari si scrivono come 23:00."
+"Gli orari si scrivono come 23:00.",
+"Uras sa scrivan sco 23:00."
 ],
 "Write what you did, that's the point of an Other entry.": [
 "Écris ce que tu as fait, c'est le but d'une entrée Autre.",
 "Schreib, was du gemacht hast; dafür ist ein Anderes-Eintrag da.",
-"Scrivi cosa hai fatto, è lo scopo di una voce Altro."
+"Scrivi cosa hai fatto, è lo scopo di una voce Altro.",
+"Scriva tge che ti has fatg, quai è il senn d'ina inscripziun Auter."
 ],
 "'{a}' already exists.": [
 "« {a} » existe déjà.",
 "«{a}» gibt es schon.",
-"«{a}» esiste già."
+"«{a}» esiste già.",
+"«{a}» exista gia."
 ],
 "A course with initials '{a}' already exists in this semester.": [
 "Un cours avec les initiales « {a} » existe déjà dans ce semestre.",
 "Ein Kurs mit dem Kürzel «{a}» gibt es in diesem Semester schon.",
-"Un corso con la sigla «{a}» esiste già in questo semestre."
+"Un corso con la sigla «{a}» esiste già in questo semestre.",
+"In curs cun l'abreviaziun «{a}» exista gia en quest semester."
 ],
 "Semester {a} already exists.": [
 "Le semestre {a} existe déjà.",
 "Das Semester {a} gibt es schon.",
-"Il semestre {a} esiste già."
+"Il semestre {a} esiste già.",
+"Il semester {a} exista gia."
 ],
 "It has {a} logged sessions. Hide it instead, so they stay in your history.": [
 "Il a {a} sessions enregistrées. Masque-le plutôt, pour qu'elles restent dans ton historique.",
 "Es hat {a} erfasste Sitzungen. Blende es stattdessen aus, damit sie in deinem Verlauf bleiben.",
-"Ha {a} sessioni registrate. Nascondilo invece, così restano nella tua cronologia."
+"Ha {a} sessioni registrate. Nascondilo invece, così restano nella tua cronologia.",
+"El ha {a} sessiuns registradas. Zuppenta el empè, uschia restan ellas en tia istorgia."
 ],
 "How are your courses counted?": [
 "Comment tes cours sont-ils comptés ?",
 "Wie werden deine Kurse gezählt?",
-"Come vengono contati i tuoi corsi?"
+"Come vengono contati i tuoi corsi?",
+"Co vegnan quintads tes curs?"
 ],
 "Credits (ECTS)": [
 "Crédits (ECTS)",
 "Kreditpunkte (ECTS)",
-"Crediti (ECTS)"
+"Crediti (ECTS)",
+"Credits (ECTS)"
 ],
 "University, university of applied sciences: each course has ECTS and a deadline.": [
 "Université, haute école : chaque cours a des ECTS et une échéance.",
 "Universität, Fachhochschule: Jeder Kurs hat ECTS und eine Frist.",
-"Università, scuola universitaria professionale: ogni corso ha ECTS e una scadenza."
+"Università, scuola universitaria professionale: ogni corso ha ECTS e una scadenza.",
+"Universitad, scola auta spezialisada: mintga curs ha ECTS ed in termin."
 ],
 "1 ECTS =": [
+"1 ECTS =",
 "1 ECTS =",
 "1 ECTS =",
 "1 ECTS ="
@@ -2632,281 +3158,337 @@
 "Hours per ECTS": [
 "Heures par ECTS",
 "Stunden pro ECTS",
-"Ore per ECTS"
+"Ore per ECTS",
+"Uras per ECTS"
 ],
 "Lessons per week": [
 "Leçons par semaine",
 "Lektionen pro Woche",
-"Lezioni per settimana"
+"Lezioni per settimana",
+"Lecziuns per emna"
 ],
 "School, Gymnasium, vocational school: each subject has its lessons per week, and you set how much study you aim for per lesson.": [
 "École, gymnase, école professionnelle : chaque branche a ses leçons par semaine, et tu fixes combien d'étude tu vises par leçon.",
 "Schule, Gymnasium, Berufsschule: Jedes Fach hat seine Lektionen pro Woche, und du legst fest, wie viel Lernzeit du pro Lektion anstrebst.",
-"Scuola, liceo, scuola professionale: ogni materia ha le sue lezioni settimanali, e tu decidi quanto studio vuoi per lezione."
+"Scuola, liceo, scuola professionale: ogni materia ha le sue lezioni settimanali, e tu decidi quanto studio vuoi per lezione.",
+"Scola, gimnasi, scola professiunala: mintga rom ha sias lecziuns per emna, e ti fixeschas quant studi che ti vuls per lecziun."
 ],
 "Study per lesson:": [
 "Étude par leçon :",
 "Lernzeit pro Lektion:",
-"Studio per lezione:"
+"Studio per lezione:",
+"Studi per lecziun:"
 ],
 "Minutes of study per lesson": [
 "Minutes d'étude par leçon",
 "Lernminuten pro Lektion",
-"Minuti di studio per lezione"
+"Minuti di studio per lezione",
+"Minutas da studi per lecziun"
 ],
 "Just hours": [
 "Seulement des heures",
 "Nur Stunden",
-"Solo ore"
+"Solo ore",
+"Mo uras"
 ],
 "No credits: each course can have a weekly goal in hours, or none.": [
 "Sans crédits : chaque cours peut avoir un objectif hebdomadaire en heures, ou aucun.",
 "Ohne Kreditpunkte: Jeder Kurs kann ein Wochenziel in Stunden haben, oder keines.",
-"Senza crediti: ogni corso può avere un obiettivo settimanale in ore, o nessuno."
+"Senza crediti: ogni corso può avere un obiettivo settimanale in ore, o nessuno.",
+"Senza credits: mintga curs po avair ina finamira per emna en uras, u nagina."
 ],
 "You can switch later; what you entered for each course is kept.": [
 "Tu peux changer plus tard ; ce que tu as saisi pour chaque cours est conservé.",
 "Du kannst später wechseln; was du für jeden Kurs eingegeben hast, bleibt erhalten.",
-"Puoi cambiare più tardi; ciò che hai inserito per ogni corso resta."
+"Puoi cambiare più tardi; ciò che hai inserito per ogni corso resta.",
+"Ti pos midar pli tard; quai che ti has endatà per mintga curs resta."
 ],
 "Weekly goals met": [
 "Objectifs de la semaine atteints",
 "Wochenziele erreicht",
-"Obiettivi settimanali raggiunti"
+"Obiettivi settimanali raggiunti",
+"Finamiras per emna cuntanschidas"
 ],
 "Weeks on target in a row": [
 "Semaines dans l'objectif d'affilée",
 "Wochen im Ziel in Folge",
-"Settimane in obiettivo di fila"
+"Settimane in obiettivo di fila",
+"Emnas cun finamira cuntanschida ina suenter l'autra"
 ],
 "week": [
 "semaine",
 "Woche",
-"settimana"
+"settimana",
+"emna"
 ],
 "weeks": [
 "semaines",
 "Wochen",
-"settimane"
+"settimane",
+"emnas"
 ],
 "Weeks met": [
 "Semaines atteintes",
 "Wochen erreicht",
-"Settimane raggiunte"
+"Settimane raggiunte",
+"Emnas cuntanschidas"
 ],
 "Goal": [
 "Objectif",
 "Ziel",
-"Obiettivo"
+"Obiettivo",
+"Finamira"
 ],
 "Full weeks in which you reached the goal": [
 "Semaines complètes où tu as atteint l'objectif",
 "Ganze Wochen, in denen du das Ziel erreicht hast",
-"Settimane intere in cui hai raggiunto l'obiettivo"
+"Settimane intere in cui hai raggiunto l'obiettivo",
+"Emnas entiras en las qualas ti has cuntanschì la finamira"
 ],
 "{a} lessons/wk": [
 "{a} leçons/sem.",
 "{a} Lektionen/Wo.",
-"{a} lezioni/sett."
+"{a} lezioni/sett.",
+"{a} lecziuns/emna"
 ],
 "{a} h/wk goal": [
 "objectif {a} h/sem.",
 "Ziel {a} h/Wo.",
-"obiettivo {a} h/sett."
+"obiettivo {a} h/sett.",
+"finamira {a} h/emna"
 ],
 "no goal": [
 "sans objectif",
 "kein Ziel",
-"nessun obiettivo"
+"nessun obiettivo",
+"nagina finamira"
 ],
 "Goal per week: lessons × {a} min of study. ✓ when this week reaches it, ▲ what is still missing": [
 "Objectif par semaine : leçons × {a} min d'étude. ✓ quand cette semaine l'atteint, ▲ ce qui manque encore",
 "Wochenziel: Lektionen × {a} min Lernzeit. ✓ wenn diese Woche es erreicht, ▲ was noch fehlt",
-"Obiettivo settimanale: lezioni × {a} min di studio. ✓ quando questa settimana lo raggiunge, ▲ quanto manca ancora"
+"Obiettivo settimanale: lezioni × {a} min di studio. ✓ quando questa settimana lo raggiunge, ▲ quanto manca ancora",
+"Finamira per emna: lecziuns × {a} min studi. ✓ cur che questa emna la cuntanscha, ▲ quai che manca anc"
 ],
 "Goal per week in hours: ✓ when this week reaches it, ▲ what is still missing": [
 "Objectif par semaine en heures : ✓ quand cette semaine l'atteint, ▲ ce qui manque encore",
 "Wochenziel in Stunden: ✓ wenn diese Woche es erreicht, ▲ was noch fehlt",
-"Obiettivo settimanale in ore: ✓ quando questa settimana lo raggiunge, ▲ quanto manca ancora"
+"Obiettivo settimanale in ore: ✓ quando questa settimana lo raggiunge, ▲ quanto manca ancora",
+"Finamira per emna en uras: ✓ cur che questa emna la cuntanscha, ▲ quai che manca anc"
 ],
 "▲ {a} h to go": [
 "▲ encore {a} h",
 "▲ noch {a} h",
-"▲ mancano {a} h"
+"▲ mancano {a} h",
+"▲ mancan anc {a} h"
 ],
 "Goal (h per week)": [
 "Objectif (h par semaine)",
 "Ziel (h pro Woche)",
-"Obiettivo (h a settimana)"
+"Obiettivo (h a settimana)",
+"Finamira (h per emna)"
 ],
 "Counts in": [
 "Compte dans",
 "Zählt in",
-"Conta in"
+"Conta in",
+"Quinta en"
 ],
 "Runs {a} to {b}. Counts in {c}.": [
 "Du {a} au {b}. Compte dans {c}.",
 "Läuft von {a} bis {b}. Zählt in {c}.",
-"Dal {a} al {b}. Conta in {c}."
+"Dal {a} al {b}. Conta in {c}.",
+"Dals {a} fin ils {b}. Quinta en {c}."
 ],
 "Runs {a} to {b}. Counts in {c}; {d} in this semester.": [
 "Du {a} au {b}. Compte dans {c} ; {d} dans ce semestre.",
 "Läuft von {a} bis {b}. Zählt in {c}; {d} in diesem Semester.",
-"Dal {a} al {b}. Conta in {c}; {d} in questo semestre."
+"Dal {a} al {b}. Conta in {c}; {d} in questo semestre.",
+"Dals {a} fin ils {b}. Quinta en {c}; {d} en quest semester."
 ],
 "Saved to {a}": [
 "Enregistré dans {a}",
 "Gespeichert unter {a}",
-"Salvato in {a}"
+"Salvato in {a}",
+"Memorisà en {a}"
 ],
 "Could not save: {a}": [
 "Impossible d'enregistrer : {a}",
 "Speichern nicht möglich: {a}",
-"Impossibile salvare: {a}"
+"Impossibile salvare: {a}",
+"Betg pussaivel da memorisar: {a}"
 ],
 "Mathematics": [
 "Mathématiques",
 "Mathematik",
+"Matematica",
 "Matematica"
 ],
 "Unknown counting.": [
 "Mode de comptage inconnu.",
 "Unbekannte Zählweise.",
-"Modo di conteggio sconosciuto."
+"Modo di conteggio sconosciuto.",
+"Moda da quintar nunenconuschenta."
 ],
 "Weekly plan": [
 "Programme de la semaine",
 "Wochenplan",
-"Piano settimanale"
+"Piano settimanale",
+"Plan da l'emna"
 ],
 "Planned trainings are not logged on their own: confirm the ones you did": [
 "Les entraînements prévus ne sont pas enregistrés tout seuls : confirme ceux que tu as faits",
 "Geplante Trainings werden nicht von selbst erfasst: Bestätige die, die du gemacht hast",
-"Gli allenamenti previsti non vengono registrati da soli: conferma quelli che hai fatto"
+"Gli allenamenti previsti non vengono registrati da soli: conferma quelli che hai fatto",
+"Trenaments planisads na vegnan betg registrads automaticamain: conferma quels che ti has fatg"
 ],
 "Edit plan": [
 "Modifier le programme",
 "Plan bearbeiten",
-"Modifica il piano"
+"Modifica il piano",
+"Modifitgar il plan"
 ],
 "No usual trainings yet. Click Edit plan to add them.": [
 "Pas encore d'entraînements habituels. Clique sur Modifier le programme pour les ajouter.",
 "Noch keine üblichen Trainings. Klicke auf Plan bearbeiten, um sie hinzuzufügen.",
-"Ancora nessun allenamento abituale. Clicca su Modifica il piano per aggiungerli."
+"Ancora nessun allenamento abituale. Clicca su Modifica il piano per aggiungerli.",
+"Anc nagins trenaments usitads. Clicca sin Modifitgar il plan per als agiuntar."
 ],
 "To confirm": [
 "À confirmer",
 "Zu bestätigen",
-"Da confermare"
+"Da confermare",
+"Da confermar"
 ],
 "Log it": [
 "Enregistrer",
 "Erfassen",
-"Registra"
+"Registra",
+"Registrar"
 ],
 "Skipped": [
 "Pas fait",
 "Ausgelassen",
-"Saltato"
+"Saltato",
+"Laschà ora"
 ],
 "Add a training": [
 "Ajouter un entraînement",
 "Training hinzufügen",
-"Aggiungi un allenamento"
+"Aggiungi un allenamento",
+"Agiuntar in trenament"
 ],
 "Save plan": [
 "Enregistrer le programme",
 "Plan speichern",
-"Salva il piano"
+"Salva il piano",
+"Memorisar il plan"
 ],
 "Plan saved": [
 "Programme enregistré",
 "Plan gespeichert",
-"Piano salvato"
+"Piano salvato",
+"Plan memorisà"
 ],
 "Marked as skipped": [
 "Marqué comme pas fait",
 "Als ausgelassen markiert",
-"Segnato come saltato"
+"Segnato come saltato",
+"Marcà sco laschà ora"
 ],
 "Yesterday": [
 "Hier",
 "Gestern",
-"Ieri"
+"Ieri",
+"Ier"
 ],
 "{a} planned trainings to confirm": [
 "{a} entraînements prévus à confirmer",
 "{a} geplante Trainings zu bestätigen",
-"{a} allenamenti previsti da confermare"
+"{a} allenamenti previsti da confermare",
+"{a} trenaments planisads da confermar"
 ],
 "Times look like 20:05.": [
 "Les heures s'écrivent comme 20:05.",
 "Zeiten sehen so aus: 20:05.",
-"Gli orari si scrivono come 20:05."
+"Gli orari si scrivono come 20:05.",
+"Uras sa scrivan sco 20:05."
 ],
 "The end time must come after the start time.": [
 "L'heure de fin doit venir après l'heure de début.",
 "Das Ende muss nach dem Beginn liegen.",
-"L'ora di fine deve venire dopo l'ora di inizio."
+"L'ora di fine deve venire dopo l'ora di inizio.",
+"L'ura da la fin sto esser suenter l'ura dal cumenzament."
 ],
 "Unknown sport in the plan.": [
 "Sport inconnu dans le programme.",
 "Unbekannte Sportart im Plan.",
-"Sport sconosciuto nel piano."
+"Sport sconosciuto nel piano.",
+"Sport nunenconuschent en il plan."
 ],
 "Dates look like 2026-11-16.": [
 "Les dates s'écrivent comme 2026-11-16.",
 "Daten sehen so aus: 2026-11-16.",
-"Le date si scrivono come 2026-11-16."
+"Le date si scrivono come 2026-11-16.",
+"Datas sa scrivan sco 2026-11-16."
 ],
 "Weekly plan, sport": [
 "Programme de la semaine, sport",
 "Wochenplan, Sport",
-"Piano settimanale, sport"
+"Piano settimanale, sport",
+"Plan da l'emna, sport"
 ],
 "{a}: planned sessions are not logged on their own, confirm the ones you did": [
 "{a} : les séances prévues ne sont pas enregistrées toutes seules, confirme celles que tu as faites",
 "{a}: Geplantes wird nicht von selbst erfasst, bestätige, was du gemacht hast",
-"{a}: le sessioni previste non vengono registrate da sole, conferma quelle che hai fatto"
+"{a}: le sessioni previste non vengono registrate da sole, conferma quelle che hai fatto",
+"{a}: sessiuns planisadas na vegnan betg registradas automaticamain, conferma quellas che ti has fatg"
 ],
 "Set this semester's start date in the Courses tab, so the plan knows which days belong to it.": [
 "Indique la date de début de ce semestre dans l'onglet Cours, pour que le programme sache quels jours en font partie.",
 "Trage im Tab Kurse das Startdatum dieses Semesters ein, damit der Plan weiss, welche Tage dazugehören.",
-"Inserisci la data di inizio di questo semestre nella scheda Corsi, così il piano sa quali giorni ne fanno parte."
+"Inserisci la data di inizio di questo semestre nella scheda Corsi, così il piano sa quali giorni ne fanno parte.",
+"Fixescha la data da cumenzament da quest semester en il tab Curs, uschia sa il plan tge dis che tutgan tar el."
 ],
 "No usual sessions yet. Click Edit plan to add your lectures, TA hours and trainings.": [
 "Pas encore de séances habituelles. Clique sur Modifier le programme pour ajouter tes cours, tes heures d'assistanat et tes entraînements.",
 "Noch keine üblichen Termine. Klicke auf Plan bearbeiten, um Vorlesungen, TA-Stunden und Trainings hinzuzufügen.",
-"Ancora nessuna sessione abituale. Clicca su Modifica il piano per aggiungere lezioni, ore da assistente e allenamenti."
+"Ancora nessuna sessione abituale. Clicca su Modifica il piano per aggiungere lezioni, ore da assistente e allenamenti.",
+"Anc naginas sessiuns usitadas. Clicca sin Modifitgar il plan per agiuntar tias prelecziuns, uras d'assistent e trenaments."
 ],
 "Add a session": [
 "Ajouter une séance",
 "Termin hinzufügen",
-"Aggiungi una sessione"
+"Aggiungi una sessione",
+"Agiuntar ina sessiun"
 ],
 "Copy from {a}": [
 "Copier de {a}",
 "Aus {a} übernehmen",
-"Copia da {a}"
+"Copia da {a}",
+"Copiar da {a}"
 ],
 "{a} copied from {b}": [
 "{a} copiées de {b}",
 "{a} aus {b} übernommen",
-"{a} copiate da {b}"
+"{a} copiate da {b}",
+"{a} copiadas da {b}"
 ],
 "Nothing from {a} applies here": [
 "Rien de {a} ne s'applique ici",
 "Nichts aus {a} passt hierher",
-"Niente di {a} vale qui"
+"Niente di {a} vale qui",
+"Nagut da {a} na vala qua"
 ],
 "{a} planned sessions to confirm": [
 "{a} séances prévues à confirmer",
 "{a} geplante Termine zu bestätigen",
-"{a} sessioni previste da confermare"
+"{a} sessioni previste da confermare",
+"{a} sessiuns planisadas da confermar"
 ],
 "Unknown course in the plan.": [
 "Cours inconnu dans le programme.",
 "Unbekannter Kurs im Plan.",
-"Corso sconosciuto nel piano."
+"Corso sconosciuto nel piano.",
+"Curs nunenconuschent en il plan."
 ]
 }

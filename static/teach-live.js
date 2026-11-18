@@ -200,7 +200,7 @@
     return {
       id: null, hours, title: o.t === undefined ? "" : str(o.t, 300),
       date: typeof o.d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.d) ? o.d : null,
-      lang: ["en", "fr", "de", "it"].includes(o.l) ? o.l : null,
+      lang: ["en", "fr", "de", "it", "rm"].includes(o.l) ? o.l : null,
       settings: { start1: hm(o.s[0]), start2: o.s[1] ? hm(o.s[1]) : null, hourLength: int(o.s[2], 5, 180), breakLength: int(o.s[3], 0, 120), buffer: int(o.s[4], 0, 60) },
       shiftSec, shiftDay: shiftSec ? today : null,
     };

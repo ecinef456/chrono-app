@@ -4,7 +4,7 @@
 // arrives on the second opening. The timetable itself is never here: it lives in the link and
 // in the page's local storage.
 // .github/workflows/pages.yml publishes this same list of files: keep the two in step.
-const CACHE = "chrono-live-v1";
+const CACHE = "chrono-live-v2";
 const FILES = [
   "live.html", "live.css", "live.js", "live.webmanifest", "style.css",
   "i18n.js", "i18n.json", "teach.js", "teach-live.js", "vendor/alpine.min.js",

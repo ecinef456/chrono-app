@@ -195,9 +195,9 @@ With lessons or hours, the dashboard compares this week with each goal (✓ reac
 
 ## Languages
 
-Chrono speaks English, French, German and Italian. Switch with the translate icon at the top (文A); the choice is remembered. On the first start it follows the language of your system.
+Chrono speaks English, French, German, Italian and Romansh (Rumantsch Grischun). Switch with the translate icon at the top (文A); the choice is remembered. On the first start it follows the language of your system.
 
-The texts live in `i18n_source.py` (English → French, German, Italian; German in Swiss spelling). After editing it, run `python3 i18n_source.py` to rebuild `static/i18n.json`. The page is written in English and translated as it is drawn, so a new English text simply shows in English until it gets an entry. Your own names (courses, sports, notes) are never translated. Text exports (.txt) stay in English.
+The texts live in `i18n_source.py` (English → French, German, Italian, Romansh; German in Swiss spelling, Romansh in Rumantsch Grischun). After editing it, run `python3 i18n_source.py` to rebuild `static/i18n.json`. The page is written in English and translated as it is drawn, so a new English text simply shows in English until it gets an entry. Your own names (courses, sports, notes) are never translated. Text exports (.txt) stay in English.
 
 ## Your data
 
