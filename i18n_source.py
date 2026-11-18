@@ -18,6 +18,7 @@ T = {
     "Code": ("Code", "Code", "Codice", "Code"),
     "Teach": ("Enseigner", "Unterrichten", "Insegnare", "Instruir"),
     "Sleep": ("Sommeil", "Schlaf", "Sonno", "Sien"),
+    "Nap": ("Sieste", "Nickerchen", "Pisolino", "Sien curt"),
     "Support Chrono": ("Soutenir Chrono", "Chrono unterstützen", "Sostieni Chrono", "Sustegnair Chrono"),
     "Buy me a coffee": ("Offre-moi un café", "Spendier mir einen Kaffee", "Offrimi un caffè", "Paja a mai in caffè"),
     "buy me a coffee": ("m'offrir un café", "mir einen Kaffee spendieren", "offrirmi un caffè", "ma pajar in caffè"),
@@ -751,6 +752,23 @@ T = {
     "Plan saved": ("Programme enregistré", "Plan gespeichert", "Piano salvato", "Plan memorisà"),
     "Marked as skipped": ("Marqué comme pas fait", "Als ausgelassen markiert", "Segnato come saltato", "Marcà sco laschà ora"),
     "Yesterday": ("Hier", "Gestern", "Ieri", "Ier"),
+
+    # ---------------------------------------------------------------- day strip on the timer
+    "Yesterday,": ("Hier,", "Gestern", "Ieri,", "Ier,"),
+    "Tomorrow,": ("Demain,", "Morgen", "Domani,", "Damaun,"),
+    "Previous day": ("Jour précédent", "Vorheriger Tag", "Giorno precedente", "Di precedent"),
+    "Next day": ("Jour suivant", "Nächster Tag", "Giorno successivo", "Proxim di"),
+    "Back to today": ("Revenir à aujourd'hui", "Zurück zu heute", "Torna a oggi", "Enavos ad oz"),
+    "Drag across the bar to add an entry": ("Glisse sur la barre pour ajouter une entrée", "Über den Balken ziehen, um einen Eintrag hinzuzufügen", "Trascina sulla barra per aggiungere una voce", "Tira sur la trav per agiuntar ina inscripziun"),
+    "next day": ("jour suivant", "nächster Tag", "giorno dopo", "di suenter"),
+    "day before": ("veille", "Vortag", "giorno prima", "di avant"),
+
+    # ---------------------------------------------------------------- sleep: first guess from laptop use
+    "From your laptop: off at {a}, on again at {b}.": ("D'après ton ordinateur : éteint à {a}, rallumé à {b}.", "Laut deinem Laptop: aus um {a}, wieder an um {b}.", "Dal tuo portatile: spento alle {a}, riacceso alle {b}.", "Tenor tes laptop: deactivà a las {a}, puspè activà a las {b}."),
+    "From Chrono: last used at {a}, opened at {b}.": ("D'après Chrono : dernière utilisation à {a}, ouvert à {b}.", "Laut Chrono: zuletzt benutzt um {a}, geöffnet um {b}.", "Da Chrono: ultimo uso alle {a}, aperto alle {b}.", "Tenor Chrono: duvrà l'ultima giada a las {a}, avert a las {b}."),
+    "You probably went to bed a bit later and woke up a bit earlier: fix the times.": ("Tu t'es sans doute couché un peu plus tard et réveillé un peu plus tôt : corrige les heures.", "Wahrscheinlich bist du etwas später ins Bett und etwas früher aufgewacht: korrigiere die Zeiten.", "Probabilmente sei andato a letto un po' più tardi e ti sei svegliato un po' prima: correggi gli orari.", "Probablamain es ti ì a letg in pau pli tard e ta dasdà in pau pli baud: curregia las uras."),
+    "Use my schedule instead": ("Utiliser mon horaire", "Stattdessen meinen Plan verwenden", "Usa il mio orario", "Duvrar empè mes urari"),
+    "Good morning. Check last night's times and save.": ("Bonjour. Vérifie les heures de la nuit dernière et enregistre.", "Guten Morgen. Prüf die Zeiten der letzten Nacht und speichere.", "Buongiorno. Controlla gli orari di stanotte e salva.", "Bun di. Controllescha las uras da la notg passada e memorisescha."),
     "{a} planned trainings to confirm": ("{a} entraînements prévus à confirmer", "{a} geplante Trainings zu bestätigen", "{a} allenamenti previsti da confermare", "{a} trenaments planisads da confermar"),
     "Times look like 20:05.": ("Les heures s'écrivent comme 20:05.", "Zeiten sehen so aus: 20:05.", "Gli orari si scrivono come 20:05.", "Uras sa scrivan sco 20:05."),
     "The end time must come after the start time.": ("L'heure de fin doit venir après l'heure de début.", "Das Ende muss nach dem Beginn liegen.", "L'ora di fine deve venire dopo l'ora di inizio.", "L'ura da la fin sto esser suenter l'ura dal cumenzament."),

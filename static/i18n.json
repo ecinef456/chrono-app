@@ -53,6 +53,12 @@
 "Sonno",
 "Sien"
 ],
+"Nap": [
+"Sieste",
+"Nickerchen",
+"Pisolino",
+"Sien curt"
+],
 "Support Chrono": [
 "Soutenir Chrono",
 "Chrono unterstützen",
@@ -3400,6 +3406,84 @@
 "Gestern",
 "Ieri",
 "Ier"
+],
+"Yesterday,": [
+"Hier,",
+"Gestern",
+"Ieri,",
+"Ier,"
+],
+"Tomorrow,": [
+"Demain,",
+"Morgen",
+"Domani,",
+"Damaun,"
+],
+"Previous day": [
+"Jour précédent",
+"Vorheriger Tag",
+"Giorno precedente",
+"Di precedent"
+],
+"Next day": [
+"Jour suivant",
+"Nächster Tag",
+"Giorno successivo",
+"Proxim di"
+],
+"Back to today": [
+"Revenir à aujourd'hui",
+"Zurück zu heute",
+"Torna a oggi",
+"Enavos ad oz"
+],
+"Drag across the bar to add an entry": [
+"Glisse sur la barre pour ajouter une entrée",
+"Über den Balken ziehen, um einen Eintrag hinzuzufügen",
+"Trascina sulla barra per aggiungere una voce",
+"Tira sur la trav per agiuntar ina inscripziun"
+],
+"next day": [
+"jour suivant",
+"nächster Tag",
+"giorno dopo",
+"di suenter"
+],
+"day before": [
+"veille",
+"Vortag",
+"giorno prima",
+"di avant"
+],
+"From your laptop: off at {a}, on again at {b}.": [
+"D'après ton ordinateur : éteint à {a}, rallumé à {b}.",
+"Laut deinem Laptop: aus um {a}, wieder an um {b}.",
+"Dal tuo portatile: spento alle {a}, riacceso alle {b}.",
+"Tenor tes laptop: deactivà a las {a}, puspè activà a las {b}."
+],
+"From Chrono: last used at {a}, opened at {b}.": [
+"D'après Chrono : dernière utilisation à {a}, ouvert à {b}.",
+"Laut Chrono: zuletzt benutzt um {a}, geöffnet um {b}.",
+"Da Chrono: ultimo uso alle {a}, aperto alle {b}.",
+"Tenor Chrono: duvrà l'ultima giada a las {a}, avert a las {b}."
+],
+"You probably went to bed a bit later and woke up a bit earlier: fix the times.": [
+"Tu t'es sans doute couché un peu plus tard et réveillé un peu plus tôt : corrige les heures.",
+"Wahrscheinlich bist du etwas später ins Bett und etwas früher aufgewacht: korrigiere die Zeiten.",
+"Probabilmente sei andato a letto un po' più tardi e ti sei svegliato un po' prima: correggi gli orari.",
+"Probablamain es ti ì a letg in pau pli tard e ta dasdà in pau pli baud: curregia las uras."
+],
+"Use my schedule instead": [
+"Utiliser mon horaire",
+"Stattdessen meinen Plan verwenden",
+"Usa il mio orario",
+"Duvrar empè mes urari"
+],
+"Good morning. Check last night's times and save.": [
+"Bonjour. Vérifie les heures de la nuit dernière et enregistre.",
+"Guten Morgen. Prüf die Zeiten der letzten Nacht und speichere.",
+"Buongiorno. Controlla gli orari di stanotte e salva.",
+"Bun di. Controllescha las uras da la notg passada e memorisescha."
 ],
 "{a} planned trainings to confirm": [
 "{a} entraînements prévus à confirmer",

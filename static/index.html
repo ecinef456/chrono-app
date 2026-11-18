@@ -7,11 +7,11 @@
 <meta name="theme-color" content="#13223a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css?v=28">
-<script defer src="/static/i18n.js?v=4"></script>
+<link rel="stylesheet" href="/static/style.css?v=32">
+<script defer src="/static/i18n.js?v=8"></script>
 <script defer src="/static/teach.js?v=2"></script>
 <script defer src="/static/teach-live.js?v=1"></script>
-<script defer src="/static/app.js?v=32"></script>
+<script defer src="/static/app.js?v=36"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 <body x-data="chrono()" @keydown.window="hotkey($event)" :class="{frameless: frameless}">
@@ -154,19 +154,35 @@
 
     <div class="daystrip" x-show="stats">
       <div class="daystrip-meta">
-        <span>Today, <b x-text="hoursFmt(todayHours())"></b> studied</span>
-        <span x-text="dayStripRange().label"></span>
+        <span><span x-text="stripDayName() + ','"></span> <b x-text="hoursFmt(todayHours())"></b> studied</span>
+        <span class="daystrip-sel" x-show="stripSelView()" x-text="stripSelView()?.label"></span>
+        <span x-show="!stripSelView()">
+          <button type="button" class="linkbtn" x-show="stripOff !== 0" @click="stripGo(0)">Back to today</button>
+          <span class="daystrip-hint" x-show="stripOff === 0">Drag across the bar to add an entry</span>
+        </span>
       </div>
-      <div class="daystrip-track">
-        <template x-for="seg in daySegments()" :key="seg.key">
-          <div class="daystrip-seg" :class="{live: seg.live, act: seg.act}" :style="seg.style" :title="seg.title"></div>
-        </template>
-        <template x-for="t in hourTicks()" :key="t.h">
-          <div class="daystrip-tick" :style="'left:' + t.left + '%'"></div>
-        </template>
-        <div class="daystrip-now" :style="'left:' + nowPct() + '%'"></div>
+      <div class="daystrip-row">
+        <button type="button" class="btn small daystrip-nav" @click="stripStep(-1)" title="Previous day" aria-label="Previous day">←</button>
+        <div class="daystrip-mid">
+          <div class="daystrip-track" x-ref="strack" @pointerdown.prevent="stripDown($event)" @pointermove="stripHoverMove($event)" @pointerleave="if (!stripSel) stripHover = null" @pointerup="if ($event.pointerType === 'touch') stripHover = null" :class="{dragging: stripSel}">
+            <template x-for="seg in daySegments()" :key="seg.key">
+              <div class="daystrip-seg" :class="{live: seg.live, act: seg.act, sleep: seg.sleep}" :style="seg.style" :title="seg.title"></div>
+            </template>
+            <template x-for="t in hourTicks()" :key="t.h">
+              <div class="daystrip-tick" :style="'left:' + t.left + '%'"></div>
+            </template>
+            <div class="daystrip-now" x-show="stripOff === 0" :style="'left:' + nowPct() + '%'"></div>
+            <template x-if="stripSelView()">
+              <div class="daystrip-pick" :class="{offl: stripSelView().offL, offr: stripSelView().offR}" :style="stripSelView().style"></div>
+            </template>
+          </div>
+          <template x-if="stripHoverView()">
+            <div class="daystrip-hover" :style="'left:' + stripHoverView().left + '%'" x-text="stripHoverView().text" aria-hidden="true"></div>
+          </template>
+          <div class="daystrip-scale"><template x-for="t in dayStripRange().ticks"><span x-text="t"></span></template></div>
+        </div>
+        <button type="button" class="btn small daystrip-nav" @click="stripStep(1)" title="Next day" aria-label="Next day">→</button>
       </div>
-      <div class="daystrip-scale"><template x-for="t in dayStripRange().ticks"><span x-text="t"></span></template></div>
     </div>
   </section>
 
@@ -834,6 +850,10 @@
                     <label class="f">In bed, lights out<input type="time" x-model="sleepForm.bedT"></label>
                     <label class="f">Woke up (final)<input type="time" x-model="sleepForm.wakeT"></label>
                     <div class="f">&nbsp;<div class="ns-sum" x-text="sleepFormHours()"></div></div>
+                  </div>
+                  <div class="sleep-guess" x-show="sleepForm.guess && !sleepForm.id">
+                    <span><b x-text="sleepGuessText()"></b> <span>You probably went to bed a bit later and woke up a bit earlier: fix the times.</span></span>
+                    <button type="button" class="linkbtn" @click="sleepUseSchedule()">Use my schedule instead</button>
                   </div>
                 </div>
               </template>
