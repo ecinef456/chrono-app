@@ -195,6 +195,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .daystrip-track { isolation: isolate; position: relative; height: 26px; border-radius: 7px; background: var(--track); overflow: hidden; }
 .daystrip-seg { position: absolute; top: 0; bottom: 0; border-radius: 4px; min-width: 3px; box-shadow: 0 0 0 1px var(--panel); }
 .daystrip-seg.live { animation: pulse 1.6s ease-in-out infinite; }
+/* sleep: hatched, so it reads apart from study (solid) and sport/code/other (dotted) */
+.daystrip-seg.sleep {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 38%, transparent) 0 1.5px, transparent 1.5px 5px),
+              color-mix(in srgb, var(--ink) 8%, var(--track));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 40%, transparent), 0 0 0 1px var(--panel);
+}
 .daystrip-tick {
   position: absolute; bottom: 0; height: 9px; width: 1px; margin-left: -0.5px;
   background: #fff; mix-blend-mode: difference; pointer-events: none;
@@ -203,6 +209,27 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .daystrip-scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-3); margin-top: 5px; }
 .daystrip-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); margin-bottom: 7px; }
 .daystrip-meta b { color: var(--ink); font-weight: 650; }
+.daystrip-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start; }
+.daystrip-nav { height: 26px; padding: 0 9px; }
+.daystrip-mid { min-width: 0; position: relative; }
+.daystrip-hover {
+  position: absolute; bottom: calc(100% + 3px); transform: translateX(-50%); z-index: 3; pointer-events: none;
+  padding: 1px 5px; border-radius: 5px; background: var(--ink); color: var(--panel);
+  font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.4; white-space: nowrap;
+}
+.daystrip-track { cursor: crosshair; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.daystrip-track.dragging .daystrip-seg { pointer-events: none; }
+.daystrip-pick {
+  position: absolute; top: 0; bottom: 0; z-index: 2; pointer-events: none; border-radius: 4px;
+  background: color-mix(in srgb, var(--ink) 22%, transparent); box-shadow: inset 0 0 0 2px var(--ink);
+}
+/* the selection goes on into the next day / the day before */
+.daystrip-pick.offr { border-top-right-radius: 0; border-bottom-right-radius: 0; box-shadow: inset 2px 0 0 var(--ink), inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+.daystrip-pick.offl { border-top-left-radius: 0; border-bottom-left-radius: 0; box-shadow: inset -2px 0 0 var(--ink), inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+.daystrip-pick.offl.offr { box-shadow: inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+.daystrip-sel { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.daystrip-hint { color: var(--ink-3); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 /* ---------- summary figures */
 .figures { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); border-top: 1px solid var(--rule); }
@@ -742,3 +769,7 @@ body:not(.ready) > :not(.splash) { visibility: hidden; }
   .pending-row { grid-template-columns: 1fr auto; }
   .pending-row .acts { grid-column: 1 / -1; }
 }
+
+/* first guess for last night (laptop / Chrono use) */
+.sleep-guess { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; justify-content: space-between; margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: var(--sunk); font-size: 13.5px; color: var(--ink-2); }
+.sleep-guess b { color: var(--ink); font-weight: 650; }
