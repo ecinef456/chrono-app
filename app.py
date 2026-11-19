@@ -1107,11 +1107,51 @@ def delete_activity_type(tid: int):
 
 
 _GIT_CACHE = {}
+_FETCHED = {}           # repo path -> time of the last fetch attempt
+_FETCHING = set()       # repo paths with a fetch running now
+_FETCH_LOCK = threading.Lock()
+FETCH_EVERY = 15 * 60   # seconds between automatic fetches of the same clone
+
+
+def _fetch_in_background(path):
+    """Run `git fetch --all` on a clone at most every FETCH_EVERY seconds, in a background
+    thread, so commits pushed from elsewhere (e.g. the server) show up without a manual fetch.
+    Never asks for a password or passphrase: without working credentials it just fails quietly.
+    Off with "auto_fetch": false in chrono.local.json."""
+    if not path or load_local().get("auto_fetch", True) is False:
+        return
+    repo = Path(os.path.expanduser(path))
+    if not (repo / ".git").exists():
+        return
+    with _FETCH_LOCK:
+        if path in _FETCHING or time.time() - _FETCHED.get(path, 0) < FETCH_EVERY:
+            return
+        _FETCHING.add(path)
+        _FETCHED[path] = time.time()
+
+    def run():
+        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0",
+               "GIT_SSH_COMMAND": "ssh -o BatchMode=yes -o ConnectTimeout=10"}
+        try:
+            out = subprocess.run(["git", "-C", str(repo), "fetch", "--all", "--prune", "--quiet"],
+                                 capture_output=True, text=True, timeout=120, env=env)
+            if out.returncode == 0:
+                for key in [k for k in _GIT_CACHE if k[0] == path]:
+                    _GIT_CACHE.pop(key, None)   # next view reads the fresh commits
+        except (OSError, subprocess.SubprocessError):
+            pass
+        finally:
+            with _FETCH_LOCK:
+                _FETCHING.discard(path)
+
+    threading.Thread(target=run, daemon=True).start()
 
 
 def git_commits(path, since: date, github_user=None):
     """Your commits in a local clone since a date (all branches, incl. fetched remote ones).
-    Returns (list of {when, subject, added, deleted}, error or None). Cached for a minute."""
+    Returns (list of {when, subject, added, deleted}, error or None). Cached for a minute.
+    Also starts a background fetch now and then (see _fetch_in_background)."""
+    _fetch_in_background(path)
     key = (path, since, github_user)
     hit = _GIT_CACHE.get(key)
     if hit and time.time() - hit[0] < 60:
